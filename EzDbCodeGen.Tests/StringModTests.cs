@@ -8,14 +8,12 @@ namespace EzDbCodeGen.Test
 {
 	public class StringModTests
     {
-		[Fact]
-		public void CaseTestPluralize(string singular, string plural)
+        internal void CaseTestPluralize(string singular, string plural)
         {
             Assert.True(singular.ToPlural().Equals(plural), string.Format("{0} plural should be {1}, it was {2}", singular, plural, singular.ToPlural()));
         }
 
-		[Fact]
-        public void CaseTestSingularize(string plural, string singular)
+        internal void CaseTestSingularize(string plural, string singular)
         {
 			Assert.True(plural.ToSingular().Equals(singular), string.Format("{0} singular should be {1}, it was {2}", plural, singular, plural.ToSingular()));
         }

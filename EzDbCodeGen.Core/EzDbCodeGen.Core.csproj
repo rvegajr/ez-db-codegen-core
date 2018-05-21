@@ -4,12 +4,16 @@
     <TargetFramework>netstandard2.0</TargetFramework>
   </PropertyGroup>
 
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <NoWarn>1701;1702;1705;NU1701</NoWarn>
+  </PropertyGroup>
+
   <ItemGroup>
+    <PackageReference Include="EzDbSchema.Core" Version="1.0.3-rc4" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="CompareNETObjects" Version="4.53.0" />
     <PackageReference Include="Handlebars.Net" Version="1.9.3" />
     <PackageReference Include="Pluralize.NET.Core" Version="1.0.0" />
-    <PackageReference Include="EzDbSchema.Core" Version="1.0.3-rc5" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Classes\" />
