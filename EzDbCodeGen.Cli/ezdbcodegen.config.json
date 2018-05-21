@@ -1,0 +1,35 @@
+﻿{
+    "Entities": [
+        {
+            "Name": "ViewName",
+            "Ignore": false,
+            "Overrides": {
+                "PrimaryKey": [
+                    { "FieldName": "DrillGroupId" }
+                ]
+            }
+        },
+        {
+            "Name": "SysDiagramIds",
+            "Ignore": true
+        },
+        {
+            "Name": "UserSysdiagrams",
+            "Ignore": true
+        },
+        {
+            "Name": "*Temporal",
+            "Ignore": true
+        },
+        {
+            "Name": "*TemporalHistoryFor*",
+            "Ignore": true
+        }
+    ],
+    "PluralizerCrossReference": [
+        {
+            "SingleWord": "ProductCurve",
+            "PluralWord": "ProductCurves"
+        }
+    ]
+}
