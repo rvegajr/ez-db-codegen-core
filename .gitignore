@@ -299,8 +299,8 @@ __pycache__/
 *.pyc
 
 # Cake - Uncomment if you are using it
-# tools/**
-# !tools/packages.config
+tools/**
+!tools/packages.config
 
 # Tabs Studio
 *.tss
@@ -328,3 +328,26 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+
+# Extra
+[Bb]in/
+[Oo]bj/
+[Ww]orking*/
+Build/Temp/
+Doc/doc.shfbproj_*
+TestResults/
+AppPackages/
+BenchmarkDotNet.Artifacts/
+*.suo
+*.user
+*.userprefs
+_ReSharper.*
+*.ReSharper.user
+*.resharper.user
+.vs/
+.vscode/
+*.lock.json
+*.nuget.props
+*.nuget.targets
+*.orig
+.DS_Store

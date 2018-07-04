@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
+  <metadata>
+    <id>EzDbCodeGen</id>
+    <version>1.0.0</version>
+    <authors>Ricardo Vega Jr</authors>
+    <owners>Ricardo Vega Jr</owners>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <licenseUrl>https://github.com/rvegajr/ez-db-codegen-core/blob/master/LICENSE</licenseUrl>
+    <projectUrl>https://github.com/rvegajr/ez-db-codegen-core</projectUrl>
+    <description>A class library that uses EzDbSchema and Handlebars to add code generation based off a database easily to any project.</description>
+    <releaseNotes>Application now is multitarget for .net</releaseNotes>
+    <copyright>2018</copyright>
+    <tags>database schema codegeneration</tags>
+    <dependencies>
+      <group targetFramework=".NETFramework4.6.1">
+        <dependency id="EzDbSchema" version="1.0.9" exclude="Build,Analyzers" />
+        <dependency id="Handlebars.Net" version="1.9.5" exclude="Build,Analyzers" />
+        <dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="11.0.2" exclude="Build,Analyzers" />
+        <dependency id="Pluralize.NET" version="4.5.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETCoreApp2.0">
+        <dependency id="EzDbSchema" version="1.0.9" exclude="Build,Analyzers" />
+        <dependency id="Handlebars.Net" version="1.9.5" exclude="Build,Analyzers" />
+        <dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="11.0.2" exclude="Build,Analyzers" />
+        <dependency id="Pluralize.NET" version="4.5.0" exclude="Build,Analyzers" />
+      </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="EzDbSchema" version="1.0.9" exclude="Build,Analyzers" />
+        <dependency id="Handlebars.Net" version="1.9.5" exclude="Build,Analyzers" />
+        <dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="11.0.2" exclude="Build,Analyzers" />
+        <dependency id="Pluralize.NET" version="4.5.0" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+  <files>
+    <file src="..\EzDbSchema.Core\bin\Release\net461\EzDbCodeGen.Core.dll" target="lib/net461" />
+    <file src="..\EzDbSchema.Core\bin\Release\netcoreapp2.0\EzDbSchema.Core.dll" target="lib/netcoreapp2.0" />
+    <file src="..\EzDbSchema.Core\bin\Release\netstandard2.0\EzDbSchema.Core.dll" target="lib/netstandard2.0" />
+  </files>
+</package>
