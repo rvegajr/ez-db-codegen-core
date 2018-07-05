@@ -100,7 +100,7 @@ namespace Plex.CodeGen.Cli
                         }
                         var CodeGen = new CodeGenerator(); 
 
-                        var returnCode = ReturnCode.Ok;
+                        var returnCode = new ReturnCodes();
                         ITemplateInput Source = null;
                         if (sourceSchemaFileName.HasValue())
                             Source = new TemplateInputFileSource(sourceSchemaFileName.Value());
@@ -122,7 +122,7 @@ namespace Plex.CodeGen.Cli
                             returnCode = CodeGen.ProcessTemplate(TemplateFileName, Source, CompareTo, pathName.Value());
                         }
                         Console.WriteLine(pfx + "" + CommandName + " of " + templateFileName.Value() + " Completed!");
-                        Environment.ExitCode = (int)returnCode;
+                        Environment.ExitCode = (int)returnCode.Result;
                         Environment.Exit(Environment.ExitCode);
                         return Environment.ExitCode;
                     }
