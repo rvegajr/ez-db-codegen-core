@@ -19,14 +19,17 @@ using EzDbCodeGen.Core.Extentions.Strings;
 
 namespace EzDbCodeGen.Core
 {
-	public abstract class CodeGenBase
+    public abstract class CodeGenBase
 	{
 		public static string OP_FILE = "<FILE>";
 		public static string OP_ENTITY_KEY = "<ENTITY_KEY>";
-		public static string OP_FILE_END = "</FILE>";
+        public static string OP_OUTPUT_PATH = "<OUTPUT_PATH>";
+        public static string OP_FILE_END = "</FILE>";
 		public static string OP_ENTITY_KEY_END = "</ENTITY_KEY>";
+        public static string OP_OUTPUT_PATH_END = "</OUTPUT_PATH>";
+        public static string VAR_THIS_PATH = "$THIS_PATH$";
 
-		public virtual string TemplatePath { get; set; } = "";
+        public virtual string TemplatePath { get; set; } = "";
 		public virtual string OutputPath { get; set; } = "";
 		public virtual string ConnectionString { get; set; } = "";
 		public TemplatePathOption TemplatePathOption { get; set; } = TemplatePathOption.Auto;
@@ -39,31 +42,31 @@ namespace EzDbCodeGen.Core
 			return model.Keys.Where(k => !k.EndsWith("_Archive", StringComparison.OrdinalIgnoreCase)).ToArray();
 		}
 
-		public CodeGenBase(string connectionString, string templatePath, string outputPath)
+        public CodeGenBase()
+        {
+
+        }
+
+        public CodeGenBase(string connectionString, string templatePath, string outputPath)
 		{
 			this.TemplatePath = templatePath;
 			this.OutputPath = outputPath;
 			this.ConnectionString = connectionString;
 		}
 
-		public ReturnCode ProcessTemplate()
+        /// <summary>
+        /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings.
+        /// </summary>
+        /// <param name="templateFileName">Name of the template file.</param>
+        /// <param name="templateInput">The template input class,  could be an object of type IDatabase or if type schema</param>
+        /// <param name="OutputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  if there is a file specifier,  then it will write to the file resolved between the FILE tags</param>
+        /// <returns>A return code </returns>
+        /// <exception cref="Exception"></exception>
+        public ReturnCode ProcessTemplate(string templateFileName, ITemplateInput templateInput, string outputPath)
 		{
 			try
 			{
-				this.Schema = new EzDbSchema.MsSql.Database().Render(SchemaName, ConnectionString);
-				return ProcessTemplate(new TemplateInputDirectObject(this.Schema), null);
-			}
-			catch (Exception ex)
-			{
-				throw new Exception(string.Format("Failed on ProcessTemplate. {0}", ex.Message), ex);
-			}
-		}
-
-		public ReturnCode ProcessTemplate(ITemplateInput templateInput)
-		{
-			try
-			{
-				return ProcessTemplate(templateInput, null);
+				return ProcessTemplate(templateFileName, templateInput, null, outputPath);
 			}
 			catch (Exception ex)
 			{
@@ -86,15 +89,19 @@ namespace EzDbCodeGen.Core
 			Console.WriteLine(errorMessage);
 		}
 
-		/// <summary>
-		/// Processes the template using passed Template Inputs.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings.
-		/// </summary>
-		/// <returns><c>true</c>, if template was processed, <c>false</c> otherwise.</returns>
-		/// <param name="originalTemplateInputSource">Original template input source.  Pass the input to here if you want to generate using only 1 schema</param>
-		/// <param name="compareToTemplateInputSource">Optional - Compare to template input source.  This will process only the differences. </param>
-		public ReturnCode ProcessTemplate(ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource)
+        /// <summary>
+        /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings.
+        /// </summary>
+        /// <returns><c>true</c>, if template was processed, <c>false</c> otherwise.</returns>
+        /// <param name="templateFileName">File name of an existing handlebards template file name</param>
+        /// <param name="originalTemplateInputSource">Original template input source.  Pass the input to here if you want to generate using only 1 schema</param>
+        /// <param name="compareToTemplateInputSource">Optional - Compare to template input source.  This will process only the differences. </param>
+        /// <param name="outputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  if there is a file specifier,  then it will write to the file resolved between the FILE tags</param>
+        public ReturnCode ProcessTemplate(string templateFileName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
 		{
-			var CurrentTask = "Entering ProcessTemplate";
+            this.OutputPath = outputPath;
+            if (!File.Exists(templateFileName)) templateFileName = ("{ASSEMBLY_PATH}" + templateFileName).ResolvePathVars();
+            var CurrentTask = "Entering ProcessTemplate";
 			var returnCode = ReturnCode.OkNoAddDels;
 			try
 			{
@@ -104,19 +111,7 @@ namespace EzDbCodeGen.Core
 				IDatabase schema = originalTemplateInputSource.LoadSchema();
 				if (schema == null) throw new Exception(@"originalTemplateInputSource is not a valid template");
 
-				CurrentTask = "Reading Assembly Name";
-				string assemblyBasePath = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().GetName().CodeBase).Replace("file:\\", "").Replace("file:", "") + Path.DirectorySeparatorChar.ToString();
-				string FullTemplatePath = assemblyBasePath + TemplatePath;
-				CurrentTask = "Template path is " + FullTemplatePath;
-				string outputDirectory = Path.GetDirectoryName(OutputPath) + Path.DirectorySeparatorChar;
-				if (!File.Exists(FullTemplatePath)) throw new FileNotFoundException("Template File " + FullTemplatePath + " is not found");
-				CurrentTask = string.Format("Checking to see if outpath of {0} exists?", outputDirectory);
-
-				if (!Directory.Exists(outputDirectory))
-				{
-					CurrentTask = string.Format("It doesn't... sp lets try to create it");
-					Directory.CreateDirectory(outputDirectory);
-				}
+				CurrentTask = "Template path is " + templateFileName;
 
 				string result = "";
 				try
@@ -132,9 +127,27 @@ namespace EzDbCodeGen.Core
 							Pluralizer.Instance.AddWord(item.SingleWord, item.PluralWord);
 					}
 
-					CurrentTask = string.Format("Reading Template from '{0}'", FullTemplatePath);
-					var templateAsString = File.ReadAllText(FullTemplatePath);
-					CurrentTask = string.Format("Registering Handlbar helpers");
+					CurrentTask = string.Format("Reading Template from '{0}'", templateFileName);
+					var templateAsString = File.ReadAllText(templateFileName);
+                    //Does template have and Output path override? if so, override the local outputDirectory and strip it 
+                    if (templateAsString.Contains(CodeGenBase.OP_OUTPUT_PATH))
+                    {
+                        this.OutputPath = templateAsString.Pluck(CodeGenBase.OP_OUTPUT_PATH, CodeGenBase.OP_OUTPUT_PATH_END, out templateAsString).Trim();
+
+                        if (this.OutputPath.StartsWith("@"))  //An @ at the beginning forces the app to treat this as a path and delete and attempt to recreate it 
+                        {
+                            this.OutputPath = this.OutputPath.Substring(1);
+                            if (Directory.Exists(this.OutputPath)) Directory.Delete(this.OutputPath, true);
+                            if (!Directory.Exists(this.OutputPath)) Directory.CreateDirectory(this.OutputPath);
+                        }
+                        if (this.OutputPath.Contains(CodeGenBase.VAR_THIS_PATH)) this.OutputPath = Path.GetFullPath(this.OutputPath.Replace(CodeGenBase.VAR_THIS_PATH, Path.GetDirectoryName(templateFileName)));
+                        templateAsString = templateAsString.Replace(CodeGenBase.OP_OUTPUT_PATH, "").Replace(CodeGenBase.OP_OUTPUT_PATH_END, "").Trim();
+                    }
+
+                    if (!File.Exists(templateFileName)) throw new FileNotFoundException("Template File " + templateFileName + " is not found");
+                    CurrentTask = string.Format("Checking to see if outpath of {0} exists?", this.OutputPath);
+
+                    CurrentTask = string.Format("Registering Handlbar helpers");
 					HandlebarsUtility.RegisterHelpers();
 					HandlebarsCsUtility.RegisterHelpers();
 					HandlebarsTsUtility.RegisterHelpers();
@@ -154,11 +167,12 @@ namespace EzDbCodeGen.Core
 				{
 					CurrentTask = string.Format("Template Preocess Completed");
 				}
-				result = result.Replace("<t>", "")
+
+                result = result.Replace("<t>", "")
 					.Replace("<t/>", "")
 					.Replace("<t />", "")
 					.Replace("</t>", "")
-					.Replace("$OUTPUT_PATH$", outputDirectory).TrimStart();
+					.Replace("$OUTPUT_PATH$", this.OutputPath).TrimStart();
 
 				CurrentTask = string.Format("Template Preocess Compeleted");
 				/* If the entity key specifier doesn't exist */
@@ -166,10 +180,18 @@ namespace EzDbCodeGen.Core
 				CurrentTask = string.Format("Does the file contain FILE operator?");
 				if (result.Contains(CodeGenBase.OP_FILE)) /* File seperation specifier - this will split by the files specified by  */
 				{
-					CurrentTask = string.Format("Parsing files");
+                    if (!Directory.Exists(this.OutputPath))  //This does contain a FILE specifier,  so we need to make this a directoy and try to create it if it doesn't exist
+                    {
+                        this.OutputPath = Path.GetDirectoryName(this.OutputPath) + Path.DirectorySeparatorChar;
+                        CurrentTask = string.Format("It doesn't... so lets try to create it");
+                        Directory.CreateDirectory(this.OutputPath);
+                    }
+
+
+                    CurrentTask = string.Format("Parsing files");
 					/* First, lets get all the files currently in the path */
 					var FileActions = new Dictionary<string, TemplateFileAction>();
-					string[] FilesinOutputDirectory = Directory.GetFiles(outputDirectory);
+					string[] FilesinOutputDirectory = Directory.GetFiles(this.OutputPath);
 					foreach (var fileName in FilesinOutputDirectory) FileActions.Add(fileName, TemplateFileAction.Unknown);
 
 					var FileListAndContents = new EntityFileDictionary();
@@ -182,7 +204,7 @@ namespace EzDbCodeGen.Core
 						var FileContents = "";
 						string newOutputFileName = filePart.Pluck(CodeGenBase.OP_FILE, CodeGenBase.OP_FILE_END, out FileContents);
 						FileContents = FileContents.Replace(CodeGenBase.OP_FILE, "").Replace(CodeGenBase.OP_FILE_END, "").Trim();
-						if ((newOutputFileName.Length > 0) && (newOutputFileName.StartsWith(outputDirectory, StringComparison.Ordinal)))
+						if ((newOutputFileName.Length > 0) && (newOutputFileName.StartsWith(this.OutputPath, StringComparison.Ordinal)))
 						{
 							EntityKey = "XXX" + Guid.NewGuid().ToString();  /* guaruntee this to be unique */
 																			//var FileContents = filePart.Substring(CodeGenBase.OP_FILE_END.Length + 1);
@@ -283,7 +305,8 @@ namespace EzDbCodeGen.Core
 					/* Process File Actions based on which Template File action*/
 					foreach (string fileName in FileActions.Keys.ToList())
 					{
-						if ((FileActions[fileName] == TemplateFileAction.Delete) ||
+                        CurrentTask = string.Format("Performing file actions on {0} (Action={1})", fileName, FileActions[fileName]);
+                        if ((FileActions[fileName] == TemplateFileAction.Delete) ||
 							(FileActions[fileName] == TemplateFileAction.Unknown))
 						{
 							if (File.Exists(fileName))
@@ -318,7 +341,7 @@ namespace EzDbCodeGen.Core
 				}
 				else
 				{
-					throw new ApplicationException("The Template Engine Produced No results for path [" + FullTemplatePath + "]");
+					throw new ApplicationException("The Template Engine Produced No results for path [" + templateFileName + "]");
 				}
 				CurrentTask = string.Format("All done!");
 				return returnCode;

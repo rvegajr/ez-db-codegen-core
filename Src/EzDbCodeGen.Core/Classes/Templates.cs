@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
-using EzDbSchema.Core;
-using EzDbSchema;
 using EzDbSchema.Core.Interfaces;
 using EzDbCodeGen.Core.Enums;
 using EzDbCodeGen.Core.Extentions.Strings;
@@ -53,16 +51,12 @@ namespace EzDbCodeGen.Core
         /// </summary>
         Update
     }
-    public interface ITemplate
+    public interface ITemplateRenderer
     {
-        string TemplateName { get; set; }
-        string TemplateDescription { get; set; }
-        string TemplateCommand { get; set; }
         TemplatePathOption TemplatePathOption { get; set; }
         bool VerboseMessages { get; set; }
-        ReturnCode ProcessTemplate();
-        ReturnCode ProcessTemplate(ITemplateInput templateInput);
-        ReturnCode ProcessTemplate(ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource);
+        ReturnCode ProcessTemplate(string TemplateFileName, ITemplateInput templateInput, string OutputPath);
+        ReturnCode ProcessTemplate(string TemplateFileName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string OutputPath);
     }
 
     public class TemplateInputDirectObject : ITemplateInput
@@ -287,17 +281,6 @@ namespace EzDbCodeGen.Core
             {
                 throw new Exception(string.Format("Could not load schema with connection string '{0}'.  " + ex.Message, this.AsConnectionString()), ex);
             }
-        }
-    }
-    /// <summary>
-    /// A list of templates with a key of their command (retreved from the classes) 
-    /// with an added Add method that will write the correct key
-    /// </summary>
-    public class TemplateList : Dictionary<string, ITemplate>
-    {
-        public void Add(ITemplate templateToAdd)
-        {
-            if (templateToAdd != null) this.Add(templateToAdd.TemplateCommand, templateToAdd);
         }
     }
 }

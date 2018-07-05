@@ -15,6 +15,7 @@ namespace EzDbCodeGen.Internal
 		public string ConfigurationFileName { get; set; } = "";
 		/// <summary></summary>
 		public bool VerboseMessages { get; set; } = false;
+        public string ConnectionString { get; set; } = "";
         private static AppSettings instance;
         
 		private AppSettings()
