@@ -26,11 +26,11 @@ namespace EzDbCodeGen.Core
         {
             return new FileName(d);
         }
-        public int GetHashCode()
+        public override int GetHashCode()
         {
             return _value.GetStableHashCode();
         }
-        public bool Equals(object obj)
+        public override bool Equals(object obj)
         {
             return Equals(obj as FileName);
         }

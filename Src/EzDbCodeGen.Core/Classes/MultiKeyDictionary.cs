@@ -146,7 +146,19 @@ namespace EzDbCodeGen.Core
 
 			try
 			{
-				return baseDictionary.TryGetValue(primaryKey, out val);
+                return baseDictionary.TryGetValue(primaryKey, out val);
+                /*
+                foreach (var key in baseDictionary.Keys)
+                {
+                    if (((K)key).Equals(primaryKey))
+                    {
+                        val = baseDictionary[key];
+                        return true;
+                    }
+                }
+                val = default(V);
+                return false;
+				//return baseDictionary.TryGetValue(primaryKey, out val);*/
 			}
 			finally
 			{

@@ -7,6 +7,8 @@
 
   <ItemGroup>
     <None Remove="appsettings.json" />
+    <None Remove="Templates\SchemaRender.hbs" />
+    <None Remove="Templates\SchemaRenderAsFiles.hbs" />
   </ItemGroup>
   <ItemGroup>
     <None Update="ezdbcodegen.config.json">
@@ -20,5 +22,17 @@
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="Templates\SchemaRenderAsFiles.hbs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Templates\SchemaRender.hbs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="2.2.5" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\EzDbCodeGen.Core\EzDbCodeGen.Core.csproj" />
   </ItemGroup>
 </Project>
