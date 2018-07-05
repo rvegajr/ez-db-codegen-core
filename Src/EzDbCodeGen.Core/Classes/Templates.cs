@@ -55,8 +55,8 @@ namespace EzDbCodeGen.Core
     {
         TemplatePathOption TemplatePathOption { get; set; }
         bool VerboseMessages { get; set; }
-        ReturnCode ProcessTemplate(string TemplateFileName, ITemplateInput templateInput, string OutputPath);
-        ReturnCode ProcessTemplate(string TemplateFileName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string OutputPath);
+        ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput templateInput, string OutputPath);
+        ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string OutputPath);
     }
 
     public class TemplateInputDirectObject : ITemplateInput
