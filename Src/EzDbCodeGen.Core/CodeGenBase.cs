@@ -20,27 +20,27 @@ using EzDbCodeGen.Core.Extentions.Strings;
 namespace EzDbCodeGen.Core
 {
     public abstract class CodeGenBase
-	{
-		public static string OP_FILE = "<FILE>";
-		public static string OP_ENTITY_KEY = "<ENTITY_KEY>";
+    {
+        public static string OP_FILE = "<FILE>";
+        public static string OP_ENTITY_KEY = "<ENTITY_KEY>";
         public static string OP_OUTPUT_PATH = "<OUTPUT_PATH>";
         public static string OP_FILE_END = "</FILE>";
-		public static string OP_ENTITY_KEY_END = "</ENTITY_KEY>";
+        public static string OP_ENTITY_KEY_END = "</ENTITY_KEY>";
         public static string OP_OUTPUT_PATH_END = "</OUTPUT_PATH>";
         public static string VAR_THIS_PATH = "$THIS_PATH$";
 
         public virtual string TemplatePath { get; set; } = "";
-		public virtual string OutputPath { get; set; } = "";
-		public virtual string ConnectionString { get; set; } = "";
-		public TemplatePathOption TemplatePathOption { get; set; } = TemplatePathOption.Auto;
-		public virtual bool VerboseMessages { get; set; } = true;
-		public virtual string SchemaName { get; set; } = "MyEzSchema";
-		public IDatabase Schema { get; set; }
-		public static Config.Configuration RzDbConfig = Config.Configuration.Instance;
-		public string[] AllowedKeys(IDatabase model)
-		{
-			return model.Keys.Where(k => !k.EndsWith("_Archive", StringComparison.OrdinalIgnoreCase)).ToArray();
-		}
+        public virtual string OutputPath { get; set; } = "";
+        public virtual string ConnectionString { get; set; } = "";
+        public TemplatePathOption TemplatePathOption { get; set; } = TemplatePathOption.Auto;
+        public virtual bool VerboseMessages { get; set; } = true;
+        public virtual string SchemaName { get; set; } = "MyEzSchema";
+        public IDatabase Schema { get; set; }
+        public static Config.Configuration RzDbConfig = Config.Configuration.Instance;
+        public string[] AllowedKeys(IDatabase model)
+        {
+            return model.Keys.Where(k => !k.EndsWith("_Archive", StringComparison.OrdinalIgnoreCase)).ToArray();
+        }
 
         public CodeGenBase()
         {
@@ -48,46 +48,87 @@ namespace EzDbCodeGen.Core
         }
 
         public CodeGenBase(string connectionString, string templatePath, string outputPath)
-		{
-			this.TemplatePath = templatePath;
-			this.OutputPath = outputPath;
-			this.ConnectionString = connectionString;
-		}
+        {
+            this.TemplatePath = templatePath;
+            this.OutputPath = outputPath;
+            this.ConnectionString = connectionString;
+        }
+
+        private void StatusMessage(string message, bool Force)
+        {
+            if (this.VerboseMessages || Force) Console.WriteLine(message);
+        }
+
+        private void StatusMessage(string message)
+        {
+            StatusMessage(message, false);
+        }
+
+        private void ErrorMessage(string errorMessage)
+        {
+            Console.WriteLine(errorMessage);
+        }
 
         /// <summary>
         /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings.
         /// </summary>
-        /// <param name="templateFileName">Name of the template file.</param>
+        /// <param name="TemplateFileNameOrPath">The file name of a handlebars template or a path that contains handlebars templates. If no path is specified,  the app will prepend the assembly path in front of the text and search there</param>
         /// <param name="templateInput">The template input class,  could be an object of type IDatabase or if type schema</param>
-        /// <param name="OutputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  if there is a file specifier,  then it will write to the file resolved between the FILE tags</param>
+        /// <param name="OutputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  
+        /// if there is a file specifier,  then it will write to the file resolved between the FILE tags.  Note that you can specify and OUTPUT_PATH xml tag
+        /// in order to specify and output target (which will override the the path passed through this paramter)</param>
         /// <returns>A return code </returns>
         /// <exception cref="Exception"></exception>
-        public ReturnCode ProcessTemplate(string templateFileName, ITemplateInput templateInput, string outputPath)
-		{
-			try
-			{
-				return ProcessTemplate(templateFileName, templateInput, null, outputPath);
-			}
-			catch (Exception ex)
-			{
-				throw new Exception(string.Format("Failed on ProcessTemplate. {0}", ex.Message), ex);
-			}
-		}
+        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput templateInput, string outputPath)
+        {
+            try
+            {
+                return ProcessTemplate(TemplateFileNameOrPath, templateInput, null, outputPath);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format("Failed on ProcessTemplate. {0}", ex.Message), ex);
+            }
+        }
 
-		private void StatusMessage(string message, bool Force)
-		{
-			if (this.VerboseMessages || Force) Console.WriteLine(message);
-		}
+        /// <summary>
+        /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings.
+        /// </summary>
+        /// <returns><c>true</c>, if template was processed, <c>false</c> otherwise.</returns>
+        /// <param name="TemplateFileNameOrPath">The file name of a handlebars template or a path that contains handlebars templates. If no path is specified,  the app will prepend the assembly path in front of the text and search there</param>
+        /// <param name="templateInput">The template input class,  could be an object of type IDatabase or if type schema</param>
+        /// <param name="OutputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  
+        /// if there is a file specifier,  then it will write to the file resolved between the FILE tags.  Note that you can specify and OUTPUT_PATH xml tag
+        /// in order to specify and output target (which will override the the path passed through this paramter)</param>
+        /// <returns>A return code </returns>
+        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
+        {
+            if (!(
+                (File.Exists(TemplateFileNameOrPath)) || 
+                (Directory.Exists(TemplateFileNameOrPath)
+               ))) TemplateFileNameOrPath = ("{ASSEMBLY_PATH}" + TemplateFileNameOrPath).ResolvePathVars();
+            if (!((File.Exists(TemplateFileNameOrPath)) || (Directory.Exists(TemplateFileNameOrPath))))
+                throw new Exception(string.Format("Template not found in path {0}", TemplateFileNameOrPath));
 
-		private void StatusMessage(string message)
-		{
-			StatusMessage(message, false);
-		}
+            // get the file attributes for file or directory
+            FileAttributes attr = File.GetAttributes(TemplateFileNameOrPath);
 
-		private void ErrorMessage(string errorMessage)
-		{
-			Console.WriteLine(errorMessage);
-		}
+            if (attr.HasFlag(FileAttributes.Directory))
+                return ProcessTemplate((DirectoryName)TemplateFileNameOrPath, originalTemplateInputSource, compareToTemplateInputSource, outputPath);
+            else
+                return ProcessTemplate((FileName)TemplateFileNameOrPath, originalTemplateInputSource, compareToTemplateInputSource, outputPath);
+        }
+
+        protected ReturnCodes ProcessTemplate(DirectoryName pathName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
+        {
+            var filesEndingInHbs = Directory.EnumerateFiles(pathName).Where(f => f.EndsWith("hbs", StringComparison.InvariantCulture));
+            var returnCodeList = new ReturnCodes();
+            foreach (var templateFullFileName in filesEndingInHbs)
+            {
+                returnCodeList.Merge(ProcessTemplate((FileName)templateFullFileName, originalTemplateInputSource, compareToTemplateInputSource, outputPath));
+            }
+            return returnCodeList;
+        }
 
         /// <summary>
         /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings.
@@ -97,7 +138,7 @@ namespace EzDbCodeGen.Core
         /// <param name="originalTemplateInputSource">Original template input source.  Pass the input to here if you want to generate using only 1 schema</param>
         /// <param name="compareToTemplateInputSource">Optional - Compare to template input source.  This will process only the differences. </param>
         /// <param name="outputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  if there is a file specifier,  then it will write to the file resolved between the FILE tags</param>
-        public ReturnCode ProcessTemplate(string templateFileName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
+        protected ReturnCodes ProcessTemplate(FileName templateFileName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
 		{
             this.OutputPath = outputPath;
             if (!File.Exists(templateFileName)) templateFileName = ("{ASSEMBLY_PATH}" + templateFileName).ResolvePathVars();
@@ -344,7 +385,7 @@ namespace EzDbCodeGen.Core
 					throw new ApplicationException("The Template Engine Produced No results for path [" + templateFileName + "]");
 				}
 				CurrentTask = string.Format("All done!");
-				return returnCode;
+				return new ReturnCodes(templateFileName, returnCode);
 			}
 			catch (Exception ex)
 			{

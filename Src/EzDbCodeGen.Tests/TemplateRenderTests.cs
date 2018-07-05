@@ -55,5 +55,25 @@ namespace EzDbCodeGen.Tests
 
         }
 
+        [Fact]
+        public void RenderTemplateDirectoryTest()
+        {
+            try
+            {
+                var codeGenerator = new CodeGenerator();
+                ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
+                var database = template.LoadSchema().Filter();
+                var OutputPath = System.IO.Path.GetTempPath() + "EzDbCodeGenTest" + Path.DirectorySeparatorChar;
+                if (Directory.Exists(OutputPath)) Directory.Delete(OutputPath, true);
+                var rcs = codeGenerator.ProcessTemplate(("{ASSEMBLY_PATH}Templates").ResolvePathVars(), template, OutputPath);
+                Assert.True(Directory.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output files in path {0} was not created", codeGenerator.OutputPath));
+            }
+            catch (Exception ex)
+            {
+                Assert.True(false, ex.Message);
+            }
+
+        }
+
     }
 }
