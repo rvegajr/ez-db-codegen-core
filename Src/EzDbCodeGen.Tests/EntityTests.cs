@@ -63,8 +63,10 @@ namespace EzDbCodeGen.Tests
         [Fact]
         public void PrimaryKeyReasignTests()
         {
-            var c = new Core.Config.Entity();
-            c.Name = "Dimension.City";
+            var c = new Core.Config.Entity
+            {
+                Name = "Dimension.City"
+            };
             c.AddPKOverride("City Key");
             c.AddPKOverride("WWI City ID");
             Configuration.Instance.Entities.Add(c);
