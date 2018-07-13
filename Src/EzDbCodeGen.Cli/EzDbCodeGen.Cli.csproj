@@ -7,13 +7,13 @@
 
   <ItemGroup>
     <None Remove="appsettings.json" />
+    <None Remove="ezdbcodegen.config.json" />
+    <None Remove="GenCode.ps1" />
     <None Remove="Templates\SchemaRender.hbs" />
     <None Remove="Templates\SchemaRenderAsFiles.hbs" />
+    <None Remove="Templates\SchemaRenderAsFilesNoOutput.hbs" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="ezdbcodegen.config.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -21,6 +21,15 @@
   <ItemGroup>
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ezdbcodegen.config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="gencode.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Templates\SchemaRenderAsFilesNoOutput.hbs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Templates\SchemaRenderAsFiles.hbs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
@@ -34,5 +43,8 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EzDbCodeGen.Core\EzDbCodeGen.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
 </Project>

@@ -56,7 +56,12 @@ namespace EzDbCodeGen.Core
 
         private void StatusMessage(string message, bool Force)
         {
-            if (this.VerboseMessages || Force) Console.WriteLine(message);
+            message = (string.IsNullOrEmpty(_currentTemplateName) ? "" : (_currentTemplateName + ": ")) + message;
+
+            if ((this.VerboseMessages) && (OnStatusChangeEventArgs != null))
+                OnStatusChangeEventArgs(this, new StatusChangeEventArgs(message));
+            else
+                Console.WriteLine(message);
         }
 
         private void StatusMessage(string message)
@@ -66,7 +71,12 @@ namespace EzDbCodeGen.Core
 
         private void ErrorMessage(string errorMessage)
         {
-            Console.WriteLine(errorMessage);
+            errorMessage = (string.IsNullOrEmpty(_currentTemplateName) ? "ERROR: " : (_currentTemplateName + " ERROR: ")) + errorMessage;
+
+            if ((this.VerboseMessages) && (OnStatusChangeEventArgs != null))
+                OnStatusChangeEventArgs(this, new StatusChangeEventArgs(errorMessage));
+            else
+                Console.WriteLine(errorMessage);
         }
 
         /// <summary>
@@ -96,7 +106,8 @@ namespace EzDbCodeGen.Core
         /// </summary>
         /// <returns><c>true</c>, if template was processed, <c>false</c> otherwise.</returns>
         /// <param name="TemplateFileNameOrPath">The file name of a handlebars template or a path that contains handlebars templates. If no path is specified,  the app will prepend the assembly path in front of the text and search there</param>
-        /// <param name="templateInput">The template input class,  could be an object of type IDatabase or if type schema</param>
+        /// <param name="originalTemplateInputSource">The template input class,  could be an object of type IDatabase or if type schema</param>
+        /// <param name="compareToTemplateInputSource">The template input class to compare to,  will only change the difference</param>
         /// <param name="OutputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  
         /// if there is a file specifier,  then it will write to the file resolved between the FILE tags.  Note that you can specify and OUTPUT_PATH xml tag
         /// in order to specify and output target (which will override the the path passed through this paramter)</param>
@@ -119,6 +130,32 @@ namespace EzDbCodeGen.Core
                 return ProcessTemplate((FileName)TemplateFileNameOrPath, originalTemplateInputSource, compareToTemplateInputSource, outputPath);
         }
 
+        /// <summary>
+        /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings. There needs to be a  &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  
+        /// </summary>
+        /// <returns><c>true</c>, if template was processed, <c>false</c> otherwise.</returns>
+        /// <param name="TemplateFileNameOrPath">The file name of a handlebars template or a path that contains handlebars templates. If no path is specified,  the app will prepend the assembly path in front of the text and search there</param>
+        /// <param name="originalTemplateInputSource">The template input class,  could be an object of type IDatabase or if type schema</param>
+        /// <param name="compareToTemplateInputSource">The template input class to compare to,  will only change the difference</param>
+        /// <returns>A return code </returns>
+        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource)
+        {
+            return ProcessTemplate(TemplateFileNameOrPath, originalTemplateInputSource, compareToTemplateInputSource, "");
+        }
+
+        /// <summary>
+        /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings. There needs to be a  &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  
+        /// </summary>
+        /// <returns><c>true</c>, if template was processed, <c>false</c> otherwise.</returns>
+        /// <param name="TemplateFileNameOrPath">The file name of a handlebars template or a path that contains handlebars templates. If no path is specified,  the app will prepend the assembly path in front of the text and search there</param>
+        /// <param name="originalTemplateInputSource">The template input class,  could be an object of type IDatabase or if type schema</param>
+        /// <param name="compareToTemplateInputSource">The template input class to compare to,  will only change the difference</param>
+        /// <returns>A return code </returns>
+        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource)
+        {
+            return ProcessTemplate(TemplateFileNameOrPath, originalTemplateInputSource, null, "");
+        }
+
         protected ReturnCodes ProcessTemplate(DirectoryName pathName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
         {
             var filesEndingInHbs = Directory.EnumerateFiles(pathName).Where(f => f.EndsWith("hbs", StringComparison.InvariantCulture));
@@ -129,24 +166,41 @@ namespace EzDbCodeGen.Core
             }
             return returnCodeList;
         }
-
+        public event EventHandler<StatusChangeEventArgs> OnStatusChangeEventArgs;
+        private string _currentTemplateName = "";
+        private string _currentTask = "";
+        public string CurrentTask
+        {
+            get
+            {
+                return _currentTask;
+            }
+            set
+            {
+                _currentTask = (string.IsNullOrEmpty(_currentTemplateName) ? "" : (_currentTemplateName + ": ")) + value;
+                if ((this.VerboseMessages) && (OnStatusChangeEventArgs != null)) OnStatusChangeEventArgs(this, new StatusChangeEventArgs(_currentTask));
+            }
+        }
         /// <summary>
         /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings.
         /// </summary>
         /// <returns><c>true</c>, if template was processed, <c>false</c> otherwise.</returns>
-        /// <param name="templateFileName">File name of an existing handlebards template file name</param>
+        /// <param name="templateFileName">File name of an existing handlebars template file name</param>
         /// <param name="originalTemplateInputSource">Original template input source.  Pass the input to here if you want to generate using only 1 schema</param>
         /// <param name="compareToTemplateInputSource">Optional - Compare to template input source.  This will process only the differences. </param>
         /// <param name="outputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  if there is a file specifier,  then it will write to the file resolved between the FILE tags</param>
-        protected ReturnCodes ProcessTemplate(FileName templateFileName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
+        protected ReturnCodes ProcessTemplate(FileName _templateFileName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
 		{
             this.OutputPath = outputPath;
+            string templateFileName = _templateFileName;
+            _currentTemplateName = Path.GetFileNameWithoutExtension(templateFileName);
+
             if (!File.Exists(templateFileName)) templateFileName = ("{ASSEMBLY_PATH}" + templateFileName).ResolvePathVars();
-            var CurrentTask = "Entering ProcessTemplate";
+            CurrentTask = "Entering ProcessTemplate";
 			var returnCode = ReturnCode.OkNoAddDels;
 			try
 			{
-				CurrentTask = "Peforming Validations";
+				CurrentTask = "Performing Validations";
 				if (originalTemplateInputSource == null) throw new Exception(@"There must be an Template Source passed through originalTemplateInputSource!");
 				CurrentTask = "Loading Source Schema";
 				IDatabase schema = originalTemplateInputSource.LoadSchema();
@@ -187,7 +241,10 @@ namespace EzDbCodeGen.Core
 
                     if (!File.Exists(templateFileName)) throw new FileNotFoundException("Template File " + templateFileName + " is not found");
                     CurrentTask = string.Format("Checking to see if outpath of {0} exists?", this.OutputPath);
-
+                    if (string.IsNullOrEmpty(this.OutputPath))
+                    {
+                        throw new Exception(string.Format("Output Path was not passed through ProcessTemplate nor did <OUTPUT_PATH /> exist in the hbs template {1}.  It must exist in one or the other.", this.OutputPath, templateFileName));
+                    }
                     CurrentTask = string.Format("Registering Handlbar helpers");
 					HandlebarsUtility.RegisterHelpers();
 					HandlebarsCsUtility.RegisterHelpers();
@@ -200,13 +257,12 @@ namespace EzDbCodeGen.Core
 				catch (Exception exTemplateError)
 				{
 					returnCode = ReturnCode.Error;
-					ErrorMessage("Error while " + CurrentTask + ". " + exTemplateError.Message);
+					ErrorMessage(string.Format("{0}: Error while {1}. {2}", Path.GetFileNameWithoutExtension(templateFileName), CurrentTask, exTemplateError.Message));
 					throw;
 					//throw exRazerEngine;
 				}
 				finally
 				{
-					CurrentTask = string.Format("Template Preocess Completed");
 				}
 
                 result = result.Replace("<t>", "")
@@ -215,7 +271,7 @@ namespace EzDbCodeGen.Core
 					.Replace("</t>", "")
 					.Replace("$OUTPUT_PATH$", this.OutputPath).TrimStart();
 
-				CurrentTask = string.Format("Template Preocess Compeleted");
+				CurrentTask = string.Format("Template Rendering Completed.. handling output now");
 				/* If the entity key specifier doesn't exist */
 				var hasEntityKeySpecifier = result.Contains(CodeGenBase.OP_ENTITY_KEY);
 				CurrentTask = string.Format("Does the file contain FILE operator?");
@@ -384,13 +440,14 @@ namespace EzDbCodeGen.Core
 				{
 					throw new ApplicationException("The Template Engine Produced No results for path [" + templateFileName + "]");
 				}
+                StatusMessage(string.Format("Template was rendered to path {0}", this.OutputPath));
 				CurrentTask = string.Format("All done!");
 				return new ReturnCodes(templateFileName, returnCode);
 			}
 			catch (Exception ex)
 			{
 				returnCode = ReturnCode.Error;
-				ErrorMessage("Error while " + CurrentTask + "." + ex.Message);
+                ErrorMessage(string.Format("{0}: Error while {1}. {2}", Path.GetFileNameWithoutExtension(templateFileName), CurrentTask, ex.Message));
 				throw;
 			}
 		}
@@ -408,4 +465,9 @@ namespace EzDbCodeGen.Core
 		}
 		public static bool ShowWarnings { get; set; } = true;
 	}
+    public class StatusChangeEventArgs : EventArgs
+    {
+        public StatusChangeEventArgs(string message) { Message = message; }
+        public string Message { get; set; }
+    }
 }
