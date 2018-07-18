@@ -1,24 +1,34 @@
-<# Create #>
 $ConnectionString = 'Server=localhost;Database=WideWorldImportersDW;user id=sa;password=sa'
-$TemplatePath = 'Templates/'
-<# #>
-
+$path = [System.IO.Path]
 
 $DllName = 'EzDbCodeGen.Cli.dll'
 $StdOut = $NULL
 $StdErr = $NULL
 $ExitCode = $NULL
 
-$DllPath = Join-Path $PSScriptRoot ""
-if(-NOT($DllPath -like '*netcoreapp2.0*')) {
-	$DllPath = Join-Path $PSScriptRoot "bin\Debug\netcoreapp2.0\"
+
+$BinPath = Join-Path $PSScriptRoot "bin"
+$TemplatePath = Join-Path $PSScriptRoot "EzDbTemplates"
+$ConfigFileName = Join-Path $PSScriptRoot "ezdbcodegen.config.json"
+
+$dllLocation = (Get-ChildItem -Path $BinPath -Filter $DllName -Recurse -ErrorAction SilentlyContinue -Force).FullName
+If (-NOT( $dllLocation ) ) {
+    $ErrorMessage = "Cli Application dll [" + $DllName + "] could not be found :(  Have you compiled the application yet?."
+    Write-Error -Message $ErrorMessage -ErrorAction Stop
 }
+foreach ($dll in $dllLocation)
+{
+    $DllPath = Join-Path $path::GetDirectoryName($dll) ""
+    break
+}
+
 $folder = Get-ChildItem $DllPath -Directory -ErrorAction SilentlyContinue
 If (-NOT( $Folder ) ) {
     $ErrorMessage = "Cli Application dll [" + $DllPath + "] does not exist :(  Have you compiled the application yet?."
     Write-Error -Message $ErrorMessage -ErrorAction Stop
 }
-Write-Output 'DllPath=' $DllPath
+Write-Output '       DllPath=' $DllPath
+Write-Output 'ConfigFileName=' $ConfigFileName
 Function Execute-Command ($commandTitle, $commandPath, $commandArguments)
 {
   Try {
@@ -55,6 +65,6 @@ Function Execute-Command ($commandTitle, $commandPath, $commandArguments)
   }
 }
 
-$CliCallArguments = $DllName + ' -t "' + $TemplatePath + '" -sc "' + $ConnectionString + '"'
+$CliCallArguments = $DllName + ' -t "' + $TemplatePath + '" -sc "' + $ConnectionString + '" -cf "' + $ConfigFileName + '" -v'
 Execute-Command 'dotnet' $DllPath $CliCallArguments
 
