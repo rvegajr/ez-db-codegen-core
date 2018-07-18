@@ -108,6 +108,7 @@ namespace EzDbCodeGen.Cli
                     {
                         Console.WriteLine(pfx + "Template Path: " + TemplateFileNameOrPath);
                         Console.WriteLine(pfx + "Path Name: " + pathName.Value());
+                        Console.WriteLine(pfx + "Config File Name: " + AppSettings.Instance.ConfigurationFileName);
                         if (!sourceSchemaFileName.HasValue()) Console.WriteLine(pfx + "Source Connection String: " + AppSettings.Instance.ConnectionString);
                         if (sourceSchemaFileName.HasValue()) Console.WriteLine(pfx + "Source Schema File Name: " + sourceSchemaFileName.Value());
 
@@ -117,6 +118,7 @@ namespace EzDbCodeGen.Cli
                     var CodeGen = new CodeGenerator();
                     CodeGen.OnStatusChangeEventArgs += StatusChangeEventHandler;
                     CodeGen.VerboseMessages = AppSettings.Instance.VerboseMessages;
+                    CodeGen.ConfigurationFileName = AppSettings.Instance.ConfigurationFileName;
 
                     var returnCode = new ReturnCodes();
                     ITemplateInput Source = null;
