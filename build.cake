@@ -1,11 +1,14 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
-var IncrementMinorVersion = false;
+var IncrementMinorVersion = true;
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var binDir = Directory("./bin") ;
 var thisDir = System.IO.Path.GetFullPath(".") + System.IO.Path.DirectorySeparatorChar;
+var projectFile = thisDir + "Src/EzDbCodeGen.Core/EzDbCodeGen.Core.csproj";
+var solutionFile = thisDir + "Src/ez-db-codegen-core.sln";
+
 public int MAJOR = 0; public int MINOR = 1; public int REVISION = 2; public int BUILD = 3; //Version Segments
 var VersionInfoText = System.IO.File.ReadAllText(thisDir + "Src/VersionInfo.cs");
 var AssemblyFileVersionAttribute = Pluck(VersionInfoText, "AssemblyFileVersionAttribute(\"", "\")]");
@@ -61,7 +64,7 @@ Task("Restore-NuGet-Packages")
 		ToolPath = thisDir + "nuget/nuget.exe",
 		Verbosity = NuGetVerbosity.Detailed,
 	};
-	NuGetRestore(thisDir + "Src/ez-db-codegen-core.sln", settings);
+	NuGetRestore(solutionFile, settings);
 });
 
 Task("Build")
@@ -71,13 +74,13 @@ Task("Build")
     if(IsRunningOnWindows())
     {
       // Use MSBuild
-      MSBuild(thisDir + "Src/ez-db-codegen-core.sln", settings =>
+      MSBuild(projectFile, settings =>
         settings.SetConfiguration(configuration));
     }
     else
     {
       // Use XBuild
-      XBuild(thisDir + "Src/ez-db-codegen-core.sln", settings =>
+      XBuild(projectFile, settings =>
         settings.SetConfiguration(configuration));
     }
 });
@@ -121,7 +124,11 @@ Task("NuGet-Pack")
 		Files = new[] {
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net461/EzDbCodeGen.Core.dll", Target = "lib/net461" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.0/EzDbCodeGen.Core.dll", Target = "lib/netcoreapp2.0" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netstandard2.0/EzDbCodeGen.Core.dll", Target = "lib/netstandard2.0" }
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netstandard2.0/EzDbCodeGen.Core.dll", Target = "lib/netstandard2.0" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/init.ps1", Target = "tools" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/ezdbcodegen.ps1", Target = "tools" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/ezdbcodegen.config.json", Target = "content" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/EzDbTemplates/SchemaRender.hbs", Target = "content/EzDbTemplates" }
 		},
 		ArgumentCustomization = args => args.Append("")		
     };
@@ -130,7 +137,7 @@ Task("NuGet-Pack")
 });
 
 //////////////////////////////////////////////////////////////////////
-// TASK TARGETS
+// TASK TARGETS  - 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/ezdbcodegen.ps1", Target = "contentFiles" },
 //////////////////////////////////////////////////////////////////////
 
 Task("Default")
