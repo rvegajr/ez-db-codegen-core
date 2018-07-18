@@ -26,7 +26,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\EzDbCodeGen.Cli\EzDbCodeGen.Cli.csproj" />
-    <ProjectReference Include="..\EzDbCodeGen.Core\EzDbCodeGen.Core.csproj" />
   </ItemGroup>
 
 </Project>

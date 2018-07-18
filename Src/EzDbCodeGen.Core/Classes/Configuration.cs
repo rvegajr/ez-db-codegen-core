@@ -163,11 +163,30 @@ namespace EzDbCodeGen.Core.Config
         public const string OP_PROPER_CASE = "P";
         public const string OP_STRING_REMOVE = "X"; // X'<String to remove>'
         public const string OP_STRING_REPLACE = "R"; // R'Old string'=>'New String'
-        private static string SourceFileName { 
+        public static Configuration ReloadInstance(string FileName)
+        {
+            _sourceFileName = FileName;
+            instance = Configuration.FromFile(_sourceFileName);
+            return instance;
+        }
+        /// <summary>
+        /// Gets or sets the name of the source file.  This will also cause the reload of the config file
+        /// </summary>
+        /// <value>
+        /// The name of the source file.
+        /// </value>
+        public static string SourceFileName { 
             get {
-                return "{ASSEMBLY_PATH}ezdbcodegen.config.json".ResolvePathVars();
+                if (string.IsNullOrEmpty(_sourceFileName)) _sourceFileName = "{ASSEMBLY_PATH}ezdbcodegen.config.json".ResolvePathVars();
+                return _sourceFileName;
+            }
+            set
+            {
+                _sourceFileName = value;
+                Configuration.ReloadInstance(_sourceFileName);
             }
         }
+        private static string _sourceFileName = "";
         private static Configuration instance;
         private Configuration()
         {

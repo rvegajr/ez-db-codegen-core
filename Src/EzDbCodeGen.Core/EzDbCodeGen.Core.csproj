@@ -5,11 +5,33 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="ezdbcodegen.config.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="ezdbcodegen.config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="EzDbSchema" Version="1.0.9" />
     <PackageReference Include="Handlebars.Net" Version="1.9.5" />
     <PackageReference Include="Json.Comparer.Core" Version="0.6.9" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="Pluralize.NET" Version="0.1.84" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="EzDbTemplates\SchemaRender.hbs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="EzDbTemplates\SchemaRenderAsFiles.hbs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="EzDbTemplates\SchemaRenderAsFilesNoOutput.hbs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

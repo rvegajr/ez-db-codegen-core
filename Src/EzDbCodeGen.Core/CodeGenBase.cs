@@ -16,6 +16,7 @@ using EzDbCodeGen.Core.Compare;
 using EzDbCodeGen.Internal;
 using EzDbSchema.Core;
 using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbCodeGen.Core.Config;
 
 namespace EzDbCodeGen.Core
 {
@@ -32,6 +33,8 @@ namespace EzDbCodeGen.Core
         public virtual string TemplatePath { get; set; } = "";
         public virtual string OutputPath { get; set; } = "";
         public virtual string ConnectionString { get; set; } = "";
+        public virtual string ConfigurationFileName { get; set; } = "";
+
         public TemplatePathOption TemplatePathOption { get; set; } = TemplatePathOption.Auto;
         public virtual bool VerboseMessages { get; set; } = true;
         public virtual string SchemaName { get; set; } = "MyEzSchema";
@@ -191,6 +194,7 @@ namespace EzDbCodeGen.Core
         /// <param name="outputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  if there is a file specifier,  then it will write to the file resolved between the FILE tags</param>
         protected ReturnCodes ProcessTemplate(FileName _templateFileName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
 		{
+            Configuration EzDbConfig = null;
             this.OutputPath = outputPath;
             string templateFileName = _templateFileName;
             _currentTemplateName = Path.GetFileNameWithoutExtension(templateFileName);
@@ -200,7 +204,20 @@ namespace EzDbCodeGen.Core
 			var returnCode = ReturnCode.OkNoAddDels;
 			try
 			{
-				CurrentTask = "Performing Validations";
+                CurrentTask = string.Format("Trying to find Config file at {0}", ConfigurationFileName);
+                if (File.Exists(ConfigurationFileName))
+                {
+                    CurrentTask = string.Format("Config file found! lets read it");
+                    EzDbConfig = Config.Configuration.ReloadInstance(ConfigurationFileName);
+                    foreach (var item in EzDbConfig.PluralizerCrossReference)
+                        Pluralizer.Instance.AddWord(item.SingleWord, item.PluralWord);
+                }
+                else
+                {
+                    ErrorMessage(string.Format("WARNING!  Configuration file was not found at {0}", ConfigurationFileName));
+                }
+
+                CurrentTask = "Performing Validations";
 				if (originalTemplateInputSource == null) throw new Exception(@"There must be an Template Source passed through originalTemplateInputSource!");
 				CurrentTask = "Loading Source Schema";
 				IDatabase schema = originalTemplateInputSource.LoadSchema();
@@ -211,16 +228,6 @@ namespace EzDbCodeGen.Core
 				string result = "";
 				try
 				{
-                    
-					CurrentTask = string.Format("Trying to find Config file");
-					string RzDbConfigPath = Internal.AppSettings.Instance.ConfigurationFileName;
-					if (File.Exists(RzDbConfigPath))
-					{
-						CurrentTask = string.Format("Config file found! lets read it");
-						RzDbConfig = Config.Configuration.FromFile(RzDbConfigPath);
-						foreach (var item in RzDbConfig.PluralizerCrossReference)
-							Pluralizer.Instance.AddWord(item.SingleWord, item.PluralWord);
-					}
 
 					CurrentTask = string.Format("Reading Template from '{0}'", templateFileName);
 					var templateAsString = File.ReadAllText(templateFileName);
