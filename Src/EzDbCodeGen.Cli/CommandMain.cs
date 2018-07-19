@@ -97,6 +97,8 @@ namespace EzDbCodeGen.Cli
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
                         pfx = "<List of templates>: ";
+                        //Since we know this is a directory,  force it to end with a system path seperator
+                        TemplateFileNameOrPath = TemplateFileNameOrPath.PathEnds();
                     }
                     else
                     {

@@ -1,17 +1,11 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net461;netcoreapp2.0</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461;netcoreapp2.0;netcoreapp2.1</TargetFrameworks>
   </PropertyGroup>
 
   <ItemGroup>
     <None Remove="ezdbcodegen.config.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Content Include="ezdbcodegen.config.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
 
   <ItemGroup>

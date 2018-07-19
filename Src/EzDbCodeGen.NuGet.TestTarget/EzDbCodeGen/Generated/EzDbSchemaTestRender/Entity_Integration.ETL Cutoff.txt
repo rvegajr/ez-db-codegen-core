@@ -1,0 +1,4 @@
+Entity Name= Integration.ETL Cutoff  Singular=Integration.ETL Cutoff Integration NON_TEMPORAL_TABLE False Integration 
+  Properties: 
+    Table Name Type=nvarchar net=string Identity=False IsKey=True MaxLength=128
+    Cutoff Time Type=datetime2 net=DateTime Identity=False IsKey=False MaxLength=0

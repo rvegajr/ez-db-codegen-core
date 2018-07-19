@@ -6,7 +6,9 @@ var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var binDir = Directory("./bin") ;
 var thisDir = System.IO.Path.GetFullPath(".") + System.IO.Path.DirectorySeparatorChar;
+var publishDir = binDir + System.IO.Path.DirectorySeparatorChar + "publish" + System.IO.Path.DirectorySeparatorChar;
 var projectFile = thisDir + "Src/EzDbCodeGen.Core/EzDbCodeGen.Core.csproj";
+var cliProjectFile = thisDir + "Src/EzDbCodeGen.Cli/EzDbCodeGen.Cli.csproj";
 var solutionFile = thisDir + "Src/ez-db-codegen-core.sln";
 
 public int MAJOR = 0; public int MINOR = 1; public int REVISION = 2; public int BUILD = 3; //Version Segments
@@ -74,13 +76,19 @@ Task("Build")
     if(IsRunningOnWindows())
     {
       // Use MSBuild
-      MSBuild(projectFile, settings =>
+      MSBuild(solutionFile, settings =>
         settings.SetConfiguration(configuration));
+		
+	  MSBuild(cliProjectFile,  settings => settings.SetConfiguration(configuration)
+        .UseToolVersion(MSBuildToolVersion.Default)
+		.WithTarget("publish")
+		.WithProperty("DeployOnBuild", "true")
+	  );
     }
     else
     {
       // Use XBuild
-      XBuild(projectFile, settings =>
+      XBuild(solutionFile, settings =>
         settings.SetConfiguration(configuration));
     }
 });
@@ -98,6 +106,8 @@ Task("NuGet-Pack")
     .IsDependentOn("Run-Unit-Tests")
     .Does(() =>
 {
+
+   var CodeGenFiles = GetFiles(thisDir + "./**/Cake.*"); 
    var nuGetPackSettings   = new NuGetPackSettings {
 		BasePath 				= thisDir,
         Id                      = @"EzDbCodeGen",
@@ -122,18 +132,30 @@ Task("NuGet-Pack")
 			{ @"Configuration", @"Release" }
 		},
 		Files = new[] {
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/readme.txt", Target = "content" },
+
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net461/EzDbCodeGen.Core.dll", Target = "lib/net461" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.0/EzDbCodeGen.Core.dll", Target = "lib/netcoreapp2.0" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net461/EzDbCodeGen.Core.pdb", Target = "lib/net461" },
+
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netstandard2.0/EzDbCodeGen.Core.dll", Target = "lib/netstandard2.0" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/init.ps1", Target = "tools" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/ezdbcodegen.ps1", Target = "tools" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/ezdbcodegen.config.json", Target = "content" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/EzDbTemplates/SchemaRender.hbs", Target = "content/EzDbTemplates" }
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netstandard2.0/EzDbCodeGen.Core.pdb", Target = "lib/netstandard2.0" },
+
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.0/EzDbCodeGen.Core.dll", Target = "lib/netcoreapp2.0" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.0/EzDbCodeGen.Core.pdb", Target = "lib/netcoreapp2.0" },
+			
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.1/EzDbCodeGen.Core.dll", Target = "lib/netcoreapp2.1" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.1/EzDbCodeGen.Core.pdb", Target = "lib/netcoreapp2.1" },
+
+			new NuSpecContent { Source = thisDir + @"nuget/init.ps1", Target = "tools" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.ps1", Target = "tools" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.config.json", Target = "content/EzDbCodeGen" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRender.hbs", Target = "content/EzDbCodeGen/Templates" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRenderAsFiles.hbs", Target = "content/EzDbCodeGen/Templates" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/bin/Release/netcoreapp2.1/publish/**.*", Target = "content/EzDbCodeGen/bin" }
 		},
 		ArgumentCustomization = args => args.Append("")		
     };
-            	
-    NuGetPack(thisDir + "NuGet/EzDbCodeGen.nuspec", nuGetPackSettings);
+    NuGetPack(thisDir + "nuget/EzDbCodeGen.nuspec", nuGetPackSettings);
 });
 
 //////////////////////////////////////////////////////////////////////

@@ -1,0 +1,11 @@
+Entity Name= Dimension.Employee  Singular=Dimension.Employee Dimension NON_TEMPORAL_TABLE False Dimension 
+  Properties: 
+    Employee Key Type=int net=int Identity=False IsKey=True MaxLength=0
+    WWI Employee ID Type=int net=int Identity=False IsKey=False MaxLength=0
+    Employee Type=nvarchar net=string Identity=False IsKey=False MaxLength=50
+    Preferred Name Type=nvarchar net=string Identity=False IsKey=False MaxLength=50
+    Is Salesperson Type=bit net=bool Identity=False IsKey=False MaxLength=0
+    Photo Type=varbinary net=Byte[] Identity=False IsKey=False MaxLength=-1
+    Valid From Type=datetime2 net=DateTime Identity=False IsKey=False MaxLength=0
+    Valid To Type=datetime2 net=DateTime Identity=False IsKey=False MaxLength=0
+    Lineage Key Type=int net=int Identity=False IsKey=False MaxLength=0

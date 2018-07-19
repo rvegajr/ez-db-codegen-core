@@ -231,6 +231,7 @@ namespace EzDbCodeGen.Core
 
 					CurrentTask = string.Format("Reading Template from '{0}'", templateFileName);
 					var templateAsString = File.ReadAllText(templateFileName);
+                    var forceDeleteReloadOfDirectory = false;
                     //Does template have and Output path override? if so, override the local outputDirectory and strip it 
                     if (templateAsString.Contains(CodeGenBase.OP_OUTPUT_PATH))
                     {
@@ -239,10 +240,26 @@ namespace EzDbCodeGen.Core
                         if (this.OutputPath.StartsWith("@"))  //An @ at the beginning forces the app to treat this as a path and delete and attempt to recreate it 
                         {
                             this.OutputPath = this.OutputPath.Substring(1);
-                            if (Directory.Exists(this.OutputPath)) Directory.Delete(this.OutputPath, true);
-                            if (!Directory.Exists(this.OutputPath)) Directory.CreateDirectory(this.OutputPath);
+                            forceDeleteReloadOfDirectory = true;
                         }
-                        if (this.OutputPath.Contains(CodeGenBase.VAR_THIS_PATH)) this.OutputPath = Path.GetFullPath(this.OutputPath.Replace(CodeGenBase.VAR_THIS_PATH, Path.GetDirectoryName(templateFileName)));
+                        if (this.OutputPath.Contains(CodeGenBase.VAR_THIS_PATH)) this.OutputPath = Path.GetFullPath(this.OutputPath.Replace(CodeGenBase.VAR_THIS_PATH, Path.GetDirectoryName(templateFileName).PathEnds()));
+
+                        //If we asked for a force of a reload and if we don't contain a file operator, then the output path must be a single file result.
+                        //  Forcing this to be created will prevent us from writing this file out, so we will ignore that force directory operator in this case
+                        if (forceDeleteReloadOfDirectory)
+                        {
+                            if (templateAsString.Contains(CodeGenBase.OP_FILE))
+                            {
+                                if (Directory.Exists(this.OutputPath)) Directory.Delete(this.OutputPath, true);
+                                if (!Directory.Exists(this.OutputPath)) Directory.CreateDirectory(this.OutputPath);
+                            }
+                            else
+                            { 
+                                var OutputDirectoryContainer = Path.GetDirectoryName(this.OutputPath).PathEnds();
+                                if (File.Exists(this.OutputPath)) File.Delete(this.OutputPath);  
+                                if (!Directory.Exists(OutputDirectoryContainer)) Directory.CreateDirectory(OutputDirectoryContainer);
+                            }
+                        } 
                         templateAsString = templateAsString.Replace(CodeGenBase.OP_OUTPUT_PATH, "").Replace(CodeGenBase.OP_OUTPUT_PATH_END, "").Trim();
                     }
 
@@ -286,7 +303,7 @@ namespace EzDbCodeGen.Core
 				{
                     if (!Directory.Exists(this.OutputPath))  //This does contain a FILE specifier,  so we need to make this a directoy and try to create it if it doesn't exist
                     {
-                        this.OutputPath = Path.GetDirectoryName(this.OutputPath) + Path.DirectorySeparatorChar;
+                        this.OutputPath = Path.GetDirectoryName(this.OutputPath).PathEnds();
                         CurrentTask = string.Format("It doesn't... so lets try to create it");
                         Directory.CreateDirectory(this.OutputPath);
                     }
