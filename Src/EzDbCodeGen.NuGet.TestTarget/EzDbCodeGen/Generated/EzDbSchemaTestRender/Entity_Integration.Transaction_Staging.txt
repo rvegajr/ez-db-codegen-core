@@ -1,0 +1,25 @@
+Entity Name= Integration.Transaction_Staging  Singular=Integration.Transaction_Staging Integration NON_TEMPORAL_TABLE False Integration 
+  Properties: 
+    Transaction Staging Key Type=bigint net=System.Int64 Identity=True IsKey=True MaxLength=0
+    Date Key Type=date net=DateTime? Identity=False IsKey=False MaxLength=0
+    Customer Key Type=int net=int? Identity=False IsKey=False MaxLength=0
+    Bill To Customer Key Type=int net=int? Identity=False IsKey=False MaxLength=0
+    Supplier Key Type=int net=int? Identity=False IsKey=False MaxLength=0
+    Transaction Type Key Type=int net=int? Identity=False IsKey=False MaxLength=0
+    Payment Method Key Type=int net=int? Identity=False IsKey=False MaxLength=0
+    WWI Customer Transaction ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    WWI Supplier Transaction ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    WWI Invoice ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    WWI Purchase Order ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    Supplier Invoice Number Type=nvarchar net=string Identity=False IsKey=False MaxLength=20
+    Total Excluding Tax Type=decimal net=decimal? Identity=False IsKey=False MaxLength=0
+    Tax Amount Type=decimal net=decimal? Identity=False IsKey=False MaxLength=0
+    Total Including Tax Type=decimal net=decimal? Identity=False IsKey=False MaxLength=0
+    Outstanding Balance Type=decimal net=decimal? Identity=False IsKey=False MaxLength=0
+    Is Finalized Type=bit net=bool? Identity=False IsKey=False MaxLength=0
+    WWI Customer ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    WWI Bill To Customer ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    WWI Supplier ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    WWI Transaction Type ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    WWI Payment Method ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    Last Modified When Type=datetime2 net=DateTime? Identity=False IsKey=False MaxLength=0

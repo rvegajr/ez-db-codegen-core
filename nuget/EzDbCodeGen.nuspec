@@ -20,6 +20,13 @@
         <dependency id="Newtonsoft.Json" version="11.0.2" exclude="Build,Analyzers" />
         <dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />
       </group>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="EzDbSchema" version="1.0.9" exclude="Build,Analyzers" />
+        <dependency id="Handlebars.Net" version="1.9.5" exclude="Build,Analyzers" />
+        <dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="11.0.2" exclude="Build,Analyzers" />
+        <dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />
+      </group>
       <group targetFramework=".NETCoreApp2.0">
         <dependency id="EzDbSchema" version="1.0.9" exclude="Build,Analyzers" />
         <dependency id="Handlebars.Net" version="1.9.5" exclude="Build,Analyzers" />
@@ -27,7 +34,7 @@
         <dependency id="Newtonsoft.Json" version="11.0.2" exclude="Build,Analyzers" />
         <dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />
       </group>
-      <group targetFramework=".NETStandard2.0">
+      <group targetFramework=".NETCoreApp2.1">
         <dependency id="EzDbSchema" version="1.0.9" exclude="Build,Analyzers" />
         <dependency id="Handlebars.Net" version="1.9.5" exclude="Build,Analyzers" />
         <dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
@@ -39,11 +46,9 @@
   <files>  
     <file src="../Src/EzDbCodeGen.Core/bin/Release/net461/EzDbCodeGen.Core.dll" target = "lib/net461" />
     <file src="../Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.0/EzDbCodeGen.Core.dll" target = "lib/netcoreapp2.0" />
+    <file src="../Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.1/EzDbCodeGen.Core.dll" target = "lib/netcoreapp2.1" />
     <file src="../Src/EzDbCodeGen.Core/bin/Release/netstandard2.0/EzDbCodeGen.Core.dll" target = "lib/netstandard2.0" />
     <file src="../Src/EzDbCodeGen.Core/init.ps1" target = "tools" />
-    <file src="../Src/EzDbCodeGen.Core/ezdbcodegen.config.json" target = "lib/net461" />
-    <file src="../Src/EzDbCodeGen.Core/ezdbcodegen.config.json" target = "lib/netcoreapp2.0" />
-    <file src="../Src/EzDbCodeGen.Core/ezdbcodegen.config.json" target = "lib/netstandard2.0" />
     <file src="../Src/EzDbCodeGen.Core/EzDbTemplates/SchemaRender.hbs" target = "contentFiles" />
   </files>
 </package>

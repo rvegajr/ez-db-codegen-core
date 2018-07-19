@@ -1,0 +1,16 @@
+Entity Name= Dimension.Date  Singular=Dimension.Date Dimension NON_TEMPORAL_TABLE False Dimension 
+  Properties: 
+    Date Type=date net=DateTime Identity=False IsKey=True MaxLength=0
+    Day Number Type=int net=int Identity=False IsKey=False MaxLength=0
+    Day Type=nvarchar net=string Identity=False IsKey=False MaxLength=10
+    Month Type=nvarchar net=string Identity=False IsKey=False MaxLength=10
+    Short Month Type=nvarchar net=string Identity=False IsKey=False MaxLength=3
+    Calendar Month Number Type=int net=int Identity=False IsKey=False MaxLength=0
+    Calendar Month Label Type=nvarchar net=string Identity=False IsKey=False MaxLength=20
+    Calendar Year Type=int net=int Identity=False IsKey=False MaxLength=0
+    Calendar Year Label Type=nvarchar net=string Identity=False IsKey=False MaxLength=10
+    Fiscal Month Number Type=int net=int Identity=False IsKey=False MaxLength=0
+    Fiscal Month Label Type=nvarchar net=string Identity=False IsKey=False MaxLength=20
+    Fiscal Year Type=int net=int Identity=False IsKey=False MaxLength=0
+    Fiscal Year Label Type=nvarchar net=string Identity=False IsKey=False MaxLength=10
+    ISO Week Number Type=int net=int Identity=False IsKey=False MaxLength=0

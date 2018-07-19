@@ -242,7 +242,16 @@ namespace EzDbCodeGen.Core.Extentions.Strings
             return string.Concat(str.Select((x, i) => i > 0 && char.IsUpper(x) ? "-" + x.ToString() : x.ToString())).ToLower();
         }
 
-
+        /// <summary>
+        /// Will make sure the string passed ends with a proper system directory seperator only if it is an existing directory
+        /// </summary>
+        /// <param name="PathToMakeSureEndsWithSystemDirectorySeperator"></param>
+        /// 
+        /// <returns></returns>
+        public static string PathEnds(this string PathToMakeSureEndsWithSystemDirectorySeperator)
+        {
+            return PathToMakeSureEndsWithSystemDirectorySeperator + ((!PathToMakeSureEndsWithSystemDirectorySeperator.EndsWith(Path.DirectorySeparatorChar.ToString())) ? Path.DirectorySeparatorChar.ToString() : "");
+        }
         /// <summary>
         /// Resolve the path variables
         /// </summary>

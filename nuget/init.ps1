@@ -4,17 +4,29 @@ Write-Output "init.ps1: Executing Post NuGet Install scripts "
 $path = [System.IO.Path]
 $projectPath = Join-Path $path::GetDirectoryName($project.FileName) ""
 $projectFileName = $path::GetFullPath($project.FileName)
-$toolsPath = Join-Path $toolsPath ""
 $contentPath = Join-Path $installPath "content"
-$EzDbTemplatePath = Join-Path $contentPath "EzDbTemplates"
+
+$ReadMeTextFileName = Join-Path $contentPath "readme.txt"
+
+$EzDbCodeGenPathSource = Join-Path $contentPath "EzDbCodeGen"
+$EzDbCodeGenPathTarget = Join-Path $projectPath "EzDbCodeGen"
+
+$EzDbTemplatePathSource = Join-Path $EzDbCodeGenPathSource "Templates"
+$EzDbTemplatePathTarget = Join-Path $EzDbCodeGenPathTarget "Templates"
+
 $EzDbRenderSource = Join-Path $toolsPath "ezdbcodegen.ps1"
-$EzDbRenderTarget = Join-Path $projectPath "ezdbcodegen.ps1"
-$EzDbTemplatePathTarget = Join-Path $projectPath "EzDbTemplates"
-$EzDbTemplatePathTarget = Join-Path $EzDbTemplatePathTarget ""
-$EzDbSampleTemplateSource = Join-Path $EzDbTemplatePath "SchemaRender.hbs"
-$EzDbConfigFileSource = Join-Path $contentPath "ezdbcodegen.config.json"
+$EzDbRenderTarget = Join-Path $EzDbCodeGenPathTarget "ezdbcodegen.ps1"
+
+$EzDbCliPathSource = Join-Path $EzDbCodeGenPathSource "bin"
+$EzDbCliPathTarget = Join-Path $EzDbCodeGenPathTarget "bin"
+
+$EzDbSampleTemplateSource = Join-Path $EzDbTemplatePathSource "SchemaRender.hbs"
 $EzDbSampleTemplateTarget = Join-Path $EzDbTemplatePathTarget "SchemaRender.hbs"
-$EzDbConfigFileTarget = Join-Path $projectPath "ezdbcodegen.config.json"
+$EzDbSampleTemplateFilesSource = Join-Path $EzDbTemplatePathSource "SchemaRenderAsFiles.hbs"
+$EzDbSampleTemplateFilesTarget = Join-Path $EzDbTemplatePathTarget "SchemaRenderAsFiles.hbs"
+
+$EzDbConfigFileSource = Join-Path $EzDbCodeGenPathSource "ezdbcodegen.config.json"
+$EzDbConfigFileTarget = Join-Path $EzDbCodeGenPathTarget "ezdbcodegen.config.json"
 
 Write-Output '$installPath	   ='+$installPath
 Write-Output '$toolsPath	   ='+$toolsPath
@@ -24,20 +36,36 @@ Write-Output '$projectFileName ='+$projectFileName
 Write-Output '$PSScriptRoot    ='+$PSScriptRoot
 Write-Output '$projectPath     ='+$projectPath
 
-Write-Output "init.ps1: Copying '$EzDbRenderSource' to solution root '$EzDbRenderTarget'"
-Copy-Item -Path $EzDbRenderSource -Destination $EzDbRenderTarget
-
-<# $project::AddFromFile($EzDbRenderTarget)  #>
-
 Write-Output "init.ps1: Making sure that '$EzDbTemplatePathTarget' exists"
 if(!(Test-Path -Path $EzDbTemplatePathTarget )){
     New-Item -ItemType directory -Path $EzDbTemplatePathTarget
     Write-Host "New folder created"
 }
-Write-Output "init.ps1: Copying '$EzDbSampleTemplateSource' to solution root '$EzDbRenderTarget'"
+Write-Output "init.ps1: Copying '$EzDbRenderSource' to target path '$EzDbRenderTarget'"
+Copy-Item -Path $EzDbRenderSource -Destination $EzDbRenderTarget
+
+Write-Output "init.ps1: Copying '$EzDbSampleTemplateSource' to solution root '$EzDbSampleTemplateTarget'"
 Copy-Item -Path $EzDbSampleTemplateSource -Destination $EzDbSampleTemplateTarget
+
+Write-Output "init.ps1: Copying '$EzDbSampleTemplateFilesSource' to solution root '$EzDbSampleTemplateFilesTarget'"
+Copy-Item -Path $EzDbSampleTemplateFilesSource -Destination $EzDbSampleTemplateFilesTarget
+
 Write-Output "init.ps1: Copying '$EzDbConfigFileSource' to solution root '$EzDbConfigFileTarget'"
 Copy-Item -Path $EzDbConfigFileSource -Destination $EzDbConfigFileTarget
+
+$DllName = "EzDbCodeGen.Cli.dll"
+$dllLocation = (Get-ChildItem -Path $contentPath -Filter $DllName -Recurse -ErrorAction SilentlyContinue -Force).FullName
+If (-NOT( $dllLocation ) ) {
+    $ErrorMessage = "Cli Application dll [" + $DllName + "] could not be found :(  Have you compiled the application yet?."
+    Write-Error -Message $ErrorMessage -ErrorAction Stop
+}
+foreach ($dll in $dllLocation)
+{
+    $EzDbCliPathSource = Join-Path $path::GetDirectoryName($dll) ""
+    break
+}
+Write-Output "init.ps1: Copying Cli content application '$EzDbCliPathSource' to '$EzDbCliPathTarget'"
+Copy-Item $EzDbCliPathSource -Destination $EzDbCliPathTarget -Recurse
 
 <# Experimental code to update the solution file
 
