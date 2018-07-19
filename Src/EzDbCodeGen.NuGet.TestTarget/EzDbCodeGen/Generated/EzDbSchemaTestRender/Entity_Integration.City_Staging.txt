@@ -1,0 +1,15 @@
+Entity Name= Integration.City_Staging  Singular=Integration.City_Staging Integration NON_TEMPORAL_TABLE False Integration 
+  Properties: 
+    City Staging Key Type=int net=int Identity=True IsKey=True MaxLength=0
+    WWI City ID Type=int net=int Identity=False IsKey=False MaxLength=0
+    City Type=nvarchar net=string Identity=False IsKey=False MaxLength=50
+    State Province Type=nvarchar net=string Identity=False IsKey=False MaxLength=50
+    Country Type=nvarchar net=string Identity=False IsKey=False MaxLength=60
+    Continent Type=nvarchar net=string Identity=False IsKey=False MaxLength=30
+    Sales Territory Type=nvarchar net=string Identity=False IsKey=False MaxLength=50
+    Region Type=nvarchar net=string Identity=False IsKey=False MaxLength=30
+    Subregion Type=nvarchar net=string Identity=False IsKey=False MaxLength=30
+    Location Type=geography net=DbGeography Identity=False IsKey=False MaxLength=-1
+    Latest Recorded Population Type=bigint net=System.Int64 Identity=False IsKey=False MaxLength=0
+    Valid From Type=datetime2 net=DateTime Identity=False IsKey=False MaxLength=0
+    Valid To Type=datetime2 net=DateTime Identity=False IsKey=False MaxLength=0

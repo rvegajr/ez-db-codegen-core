@@ -1,0 +1,27 @@
+Entity Name= Dimension.Stock Item  Singular=Dimension.Stock Item Dimension NON_TEMPORAL_TABLE False Dimension 
+  Properties: 
+    Stock Item Key Type=int net=int Identity=False IsKey=True MaxLength=0
+        Related To 'FK_Fact_Movement_Stock_Item_Key_Dimension_Stock Item' as 'One to Many'
+        Related To 'FK_Fact_Order_Stock_Item_Key_Dimension_Stock Item' as 'One to Many'
+        Related To 'FK_Fact_Purchase_Stock_Item_Key_Dimension_Stock Item' as 'One to Many'
+        Related To 'FK_Fact_Sale_Stock_Item_Key_Dimension_Stock Item' as 'One to Many'
+        Related To 'FK_Fact_Stock_Holding_Stock_Item_Key_Dimension_Stock Item' as 'One to Many'
+    WWI Stock Item ID Type=int net=int Identity=False IsKey=False MaxLength=0
+    Stock Item Type=nvarchar net=string Identity=False IsKey=False MaxLength=100
+    Color Type=nvarchar net=string Identity=False IsKey=False MaxLength=20
+    Selling Package Type=nvarchar net=string Identity=False IsKey=False MaxLength=50
+    Buying Package Type=nvarchar net=string Identity=False IsKey=False MaxLength=50
+    Brand Type=nvarchar net=string Identity=False IsKey=False MaxLength=50
+    Size Type=nvarchar net=string Identity=False IsKey=False MaxLength=20
+    Lead Time Days Type=int net=int Identity=False IsKey=False MaxLength=0
+    Quantity Per Outer Type=int net=int Identity=False IsKey=False MaxLength=0
+    Is Chiller Stock Type=bit net=bool Identity=False IsKey=False MaxLength=0
+    Barcode Type=nvarchar net=string Identity=False IsKey=False MaxLength=50
+    Tax Rate Type=decimal net=decimal Identity=False IsKey=False MaxLength=0
+    Unit Price Type=decimal net=decimal Identity=False IsKey=False MaxLength=0
+    Recommended Retail Price Type=decimal net=decimal? Identity=False IsKey=False MaxLength=0
+    Typical Weight Per Unit Type=decimal net=decimal Identity=False IsKey=False MaxLength=0
+    Photo Type=varbinary net=Byte[] Identity=False IsKey=False MaxLength=-1
+    Valid From Type=datetime2 net=DateTime Identity=False IsKey=False MaxLength=0
+    Valid To Type=datetime2 net=DateTime Identity=False IsKey=False MaxLength=0
+    Lineage Key Type=int net=int Identity=False IsKey=False MaxLength=0

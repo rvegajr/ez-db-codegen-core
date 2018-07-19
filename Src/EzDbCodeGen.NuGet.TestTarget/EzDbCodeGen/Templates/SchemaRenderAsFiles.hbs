@@ -1,0 +1,12 @@
+﻿<OUTPUT_PATH>@$THIS_PATH$../Generated/EzDbSchemaTestRender/</OUTPUT_PATH>
+{{#each Entities}}<FILE>$OUTPUT_PATH$Entity_{{@key}}.txt</FILE>
+<ENTITY_KEY>@key</ENTITY_KEY>
+Entity Name= {{@key}}  Singular={{ToSingular @key}} {{Schema}} {{TemporalType}} {{IsTemporalView}} {{Schema}} 
+  Properties: 
+  {{#each Properties}}
+    {{@key}} Type={{Type}} net={{ToNetType Type IsNullable}} Identity={{IsIdentity}} IsKey={{IsKey}} MaxLength={{MaxLength}}
+    {{#each RelatedTo}}
+        Related To '{{Name}}' as '{{Type}}'
+    {{/each}}
+  {{/each}}
+{{/each}}

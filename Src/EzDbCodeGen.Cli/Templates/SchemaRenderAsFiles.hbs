@@ -1,6 +1,6 @@
-﻿<OUTPUT_PATH>@$THIS_PATH$/../../../artifacts/SchemaRenderDump.txt</OUTPUT_PATH>
-Schema Name: {{Name}}
-{{#each Entities}}
+﻿<OUTPUT_PATH>@$THIS_PATH$../Generated/EzDbSchemaTestRender/</OUTPUT_PATH>
+{{#each Entities}}<FILE>$OUTPUT_PATH$Entity_{{@key}}.txt</FILE>
+<ENTITY_KEY>@key</ENTITY_KEY>
 Entity Name= {{@key}}  Singular={{ToSingular @key}} {{Schema}} {{TemporalType}} {{IsTemporalView}} {{Schema}} 
   Properties: 
   {{#each Properties}}
