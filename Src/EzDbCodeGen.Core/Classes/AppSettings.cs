@@ -51,7 +51,14 @@ namespace EzDbCodeGen.Internal
                     var configFileName = "{ASSEMBLY_PATH}appsettings.json".ResolvePathVars();
                     try
                     {
-                        instance = AppSettings.LoadFrom(configFileName);
+                        if (File.Exists(configFileName))
+                        {
+                            instance = AppSettings.LoadFrom(configFileName);
+                        }
+                        else
+                        {
+                            instance = new AppSettings();
+                        }
                     }
                     catch (System.Exception ex)
                     {

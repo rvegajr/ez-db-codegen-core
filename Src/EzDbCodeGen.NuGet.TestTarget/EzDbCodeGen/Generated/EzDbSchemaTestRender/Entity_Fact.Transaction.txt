@@ -1,0 +1,25 @@
+Entity Name= Fact.Transaction  Singular=Fact.Transaction Fact NON_TEMPORAL_TABLE False Fact 
+  Properties: 
+    Transaction Key Type=bigint net=System.Int64 Identity=True IsKey=True MaxLength=0
+    Date Key Type=date net=DateTime Identity=False IsKey=False MaxLength=0
+    Customer Key Type=int net=int? Identity=False IsKey=False MaxLength=0
+        Related To 'FK_Fact_Transaction_Bill_To_Customer_Key_Dimension_Customer' as 'Many to ZeroOrOne'
+        Related To 'FK_Fact_Transaction_Customer_Key_Dimension_Customer' as 'Many to ZeroOrOne'
+    Bill To Customer Key Type=int net=int? Identity=False IsKey=False MaxLength=0
+    Supplier Key Type=int net=int? Identity=False IsKey=False MaxLength=0
+        Related To 'FK_Fact_Transaction_Supplier_Key_Dimension_Supplier' as 'Many to ZeroOrOne'
+    Transaction Type Key Type=int net=int Identity=False IsKey=False MaxLength=0
+        Related To 'FK_Fact_Transaction_Transaction_Type_Key_Dimension_Transaction Type' as 'Many to One'
+    Payment Method Key Type=int net=int? Identity=False IsKey=False MaxLength=0
+        Related To 'FK_Fact_Transaction_Payment_Method_Key_Dimension_Payment Method' as 'Many to ZeroOrOne'
+    WWI Customer Transaction ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    WWI Supplier Transaction ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    WWI Invoice ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    WWI Purchase Order ID Type=int net=int? Identity=False IsKey=False MaxLength=0
+    Supplier Invoice Number Type=nvarchar net=string Identity=False IsKey=False MaxLength=20
+    Total Excluding Tax Type=decimal net=decimal Identity=False IsKey=False MaxLength=0
+    Tax Amount Type=decimal net=decimal Identity=False IsKey=False MaxLength=0
+    Total Including Tax Type=decimal net=decimal Identity=False IsKey=False MaxLength=0
+    Outstanding Balance Type=decimal net=decimal Identity=False IsKey=False MaxLength=0
+    Is Finalized Type=bit net=bool Identity=False IsKey=False MaxLength=0
+    Lineage Key Type=int net=int Identity=False IsKey=False MaxLength=0
