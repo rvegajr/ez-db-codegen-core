@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using EzDbCodeGen.Core.Config;
 using EzDbSchema.Core.Interfaces;
@@ -69,16 +70,18 @@ namespace EzDbCodeGen.Core
             //Rename the aliases of each to the pattern specified in the AliasNamePattern
             foreach (var entity in database.Entities.Values)
             {
-                entity.Alias = Configuration.ReplaceEx(Configuration.Instance.Database.AliasNamePattern, new SchemaObjectName(entity));
+                entity.Alias = Configuration.ReplaceEx(config.Database.AliasNamePattern, new SchemaObjectName(entity));
             }
 
             //Use config settings to remove those entities we want out filtered out,  the wild card can affect these selections
-            foreach (var entity in database.Entities)
+            var DeleteList = new List<string>();
+            foreach (var entityKey in database.Entities.Keys)
             {
-                if (config.IsIgnoredEntity(entity.Key))
-                {
-                    config.Entities.Remove((Entity)entity.Value);
-                }
+                if (config.IsIgnoredEntity(entityKey)) DeleteList.Add(entityKey);
+            }
+            foreach( var keyToDelete in DeleteList)
+            {
+                database.Entities.Remove(keyToDelete);
             }
 
             // go through each matching entity and delete all keys don't match the override
