@@ -353,3 +353,4 @@ _ReSharper.*
 .DS_Store
 Src/EzDbCodeGen.Cli/Generated
 Src/EzDbCodeGen.NuGet.TestTarget/Generated
+/Src/EzDbCodeGen.NuGet.TestTarget/EzDbCodeGen

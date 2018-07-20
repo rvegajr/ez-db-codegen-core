@@ -1,9 +1,0 @@
-Entity Name= Dimension.Payment Method  Singular=Dimension.Payment Method Dimension NON_TEMPORAL_TABLE False Dimension 
-  Properties: 
-    Payment Method Key Type=int net=int Identity=False IsKey=True MaxLength=0
-        Related To 'FK_Fact_Transaction_Payment_Method_Key_Dimension_Payment Method' as 'One to Many'
-    WWI Payment Method ID Type=int net=int Identity=False IsKey=False MaxLength=0
-    Payment Method Type=nvarchar net=string Identity=False IsKey=False MaxLength=50
-    Valid From Type=datetime2 net=DateTime Identity=False IsKey=False MaxLength=0
-    Valid To Type=datetime2 net=DateTime Identity=False IsKey=False MaxLength=0
-    Lineage Key Type=int net=int Identity=False IsKey=False MaxLength=0

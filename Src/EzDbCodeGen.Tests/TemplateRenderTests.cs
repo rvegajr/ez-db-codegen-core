@@ -40,7 +40,7 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=***REMOVED***;Database=***REMOVED***;user id=***REMOVED***;password=***REMOVED***");
+                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=SIM-SVR05\SIMSQLSTAGE01;Database=MARS;user id=mars_usr;password=mars");
                 Configuration.ReloadInstance(@"C:\Temp\ezdbcodegen.config.json");
                 var database = template.LoadSchema().Filter();
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";

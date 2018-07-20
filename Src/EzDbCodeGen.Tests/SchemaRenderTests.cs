@@ -21,7 +21,7 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton("Server=NSWIN10VM.local;Database=WideWorldImportersDW;user id=sa;password=sa");
+                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=sim-svr05\simsqlstage01;Database=MARS;user id=mars_usr;password=mars");
                 var database = template.LoadSchema().Filter();
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
