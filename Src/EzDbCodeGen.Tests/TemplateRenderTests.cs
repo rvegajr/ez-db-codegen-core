@@ -32,7 +32,6 @@ namespace EzDbCodeGen.Tests
             {
                 Assert.True(false, ex.Message);
             }
-            
         }
 
         [Fact]
@@ -53,8 +52,8 @@ namespace EzDbCodeGen.Tests
             {
                 Assert.True(false, ex.Message);
             }
-
         }
+
         [Fact]
         public void RenderTemplateMultipleFilesTest()
         {
@@ -90,7 +89,5 @@ namespace EzDbCodeGen.Tests
                 Assert.True(false, ex.Message);
             }
         }
-
-
     }
 }
