@@ -22,11 +22,16 @@ namespace EzDbCodeGen.Core
                     var prefix = parameters.AsString(0);
                     var property = (IProperty)context;
                     var entity = property.Parent;
+                    var database = entity.Parent;
                     var entityName = entity.Name;
                     var decimalAttribute = "";
                     var keyAttribute = "";
                     var fkAttributes = "";
                     var identityAttribute = "";
+                    var columnAttribute = "";
+                    if (property.Name.Equals(entityName)) {
+                        columnAttribute = string.Format("[Column(\"{0}\")]", property.Name);
+                    }
                     if (property.Type == "decimal")
                     {
                         decimalAttribute = "[DecimalPrecision(" + property.Precision + ", " + property.Scale + ")]";
@@ -67,6 +72,7 @@ namespace EzDbCodeGen.Core
                     if (fkAttributes.Length > 0) writer.WriteSafeString(prefix + fkAttributes);
                     if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime")) writer.WriteSafeString(prefix + "[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
                     if (decimalAttribute.Length > 0) writer.WriteSafeString(prefix + decimalAttribute);
+                    if (columnAttribute.Length > 0) writer.WriteSafeString(prefix + columnAttribute);
                 }
                 catch (Exception ex)
                 {

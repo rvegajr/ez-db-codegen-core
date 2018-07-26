@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using EzDbCodeGen.Core.Config;
+using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Interfaces;
 using Newtonsoft.Json;
 
@@ -71,6 +72,19 @@ namespace EzDbCodeGen.Core
             foreach (var entity in database.Entities.Values)
             {
                 entity.Alias = Configuration.ReplaceEx(config.Database.AliasNamePattern, new SchemaObjectName(entity));
+            }
+
+            //Now we have to make sure there are no Property.Alias fields that have the same name as their parent Entity Alias field (since these will be the column name)
+            foreach (var entity in database.Entities.Values)
+            {
+                foreach (var property in entity.Properties.Values)
+                {
+                    if (property.Alias.Equals(entity.Alias))
+                    {
+                        property.Alias += config.Database.PropertyNameSuffix;
+                    }
+                    property.Alias = property.Alias.ToCodeFriendly();
+                }
             }
 
             //Use config settings to remove those entities we want out filtered out,  the wild card can affect these selections

@@ -48,6 +48,8 @@ namespace EzDbCodeGen.Core.Config
         public string DefaultSchema { get; set; } = "dbo";
         public string AliasNamePattern { get; set; } = Configuration.OBJECT_NAME;
         public string SchemaName { get; set; } = "";
+        public string PropertyNameSuffix { get; set; } = "Text";
+
     }
 
     public class Configuration
@@ -139,6 +141,18 @@ namespace EzDbCodeGen.Core.Config
                     {
                         returnString = returnString.ToUpper();
                     }
+                    else if (operand.StartsWith(Configuration.OP_SINGULARIZE))
+                    {
+                        returnString = returnString.ToSingular();
+                    }
+                    else if (operand.StartsWith(Configuration.OP_PLURALIZE))
+                    {
+                        returnString = returnString.ToPlural();
+                    }
+                    else if (operand.StartsWith(Configuration.OP_TITLE_CASE))
+                    {
+                        returnString = returnString.ToTitleCase();
+                    }
                     else if (operand.StartsWith(Configuration.OP_STRING_REMOVE))
                     {
                         var StrToReplace = "";
@@ -162,8 +176,11 @@ namespace EzDbCodeGen.Core.Config
         public const string OP_UPPER_CASE = "U";
         public const string OP_LOWER_CASE = "L";
         public const string OP_PROPER_CASE = "P";
+        public const string OP_TITLE_CASE = "T";
         public const string OP_STRING_REMOVE = "X"; // X'<String to remove>'
         public const string OP_STRING_REPLACE = "R"; // R'Old string'=>'New String'
+        public const string OP_SINGULARIZE = "S";
+        public const string OP_PLURALIZE = "M";
         public static Configuration ReloadInstance(string FileName)
         {
             _sourceFileName = FileName;
