@@ -177,6 +177,14 @@ namespace EzDbCodeGen.Core.Extentions.Strings
             return (sQLDataTypeToDotNetDataType.ContainsKey(sqlType) ? sQLDataTypeToDotNetDataType[sqlType] : sqlType);
         }
 
+        public static string ToCodeFriendly(this string stringToConvert)
+        {
+            if (stringToConvert == null)
+                throw new ArgumentNullException("sqlType");
+            return stringToConvert.Replace(" ", "");
+        }
+
+
         public static string ToNetType(this string sqlType, bool isNullable)
         {
             var ret = "";
@@ -597,6 +605,5 @@ namespace EzDbCodeGen.Core.Extentions.Strings
                 throw;
             }
         }
-
     }
 }

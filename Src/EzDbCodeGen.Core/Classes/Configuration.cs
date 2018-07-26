@@ -47,6 +47,7 @@ namespace EzDbCodeGen.Core.Config
     {
         public string DefaultSchema { get; set; } = "dbo";
         public string AliasNamePattern { get; set; } = Configuration.OBJECT_NAME;
+        public string SchemaName { get; set; } = "";
     }
 
     public class Configuration

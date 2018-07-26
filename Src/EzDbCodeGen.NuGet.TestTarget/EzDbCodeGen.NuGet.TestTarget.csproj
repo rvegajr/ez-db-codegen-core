@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EzDbCodeGen" Version="1.0.66" />
+    <PackageReference Include="EzDbCodeGen" Version="1.1.0" />
   </ItemGroup>
 
   
