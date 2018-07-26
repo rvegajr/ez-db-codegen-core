@@ -9,7 +9,7 @@ namespace EzDbCodeGen.Tests
 {
     public class TemplateRenderTests 
     {
-        string SchemaFileName = "";
+        readonly string SchemaFileName = "";
         public TemplateRenderTests()
         {
             this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();

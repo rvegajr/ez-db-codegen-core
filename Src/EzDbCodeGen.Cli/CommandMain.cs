@@ -9,6 +9,7 @@ using System.Text;
 using EzDbCodeGen.Core;
 using EzDbCodeGen.Core.Enums;
 using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbCodeGen.Core.Classes;
 
 namespace EzDbCodeGen.Cli
 {
@@ -30,56 +31,67 @@ namespace EzDbCodeGen.Cli
                 "Will output more detailed message about what is happening during application processing.  This parm is optional and will override the value in appsettings.json.   ",
                 CommandOptionType.NoValue);
 
-            var templateFileNameOrDirectory = app.Option("-t|--template <value>",
+            var templateFileNameOrDirectoryOption = app.Option("-t|--template <value>",
                 "The template file name or path that you wish to render.  If you choose aa path,  ",
                 CommandOptionType.SingleValue);
 
-            var pathName = app.Option("-p|--ouputpath <value>",
+            var pathNameOption = app.Option("-p|--ouputpath <value>",
                 "The template that you wish to render.  This is required uniless you use the <OUTPUT_PATH> specifier in the template file.",
                 CommandOptionType.SingleValue);
 
-            var sourceConnectionString = app.Option("-sc|--connection-string <optionvalue>",
+            var sourceConnectionStringOption = app.Option("-sc|--connection-string <optionvalue>",
                 "Connection String pass via the appline.  This parm is optional and this value will override the value in appsettings.json. ",
                 CommandOptionType.SingleValue);
 
-            var sourceSchemaFileName = app.Option("-sf|--schema-file <optionvalue>",
+            var sourceSchemaFileNameOption = app.Option("-sf|--schema-file <optionvalue>",
                 "Specify a schema json dump to perform the code generation (as opposed to a connection string).  This parm is optional and parm is present, it will override the appsettings and the -sc app line parm",
             CommandOptionType.SingleValue);
 
-            var configFile = app.Option("-cf|--configfile",
+            var configFileOption = app.Option("-cf|--configfile",
                 "The configuration file this template render will use.  This is optional, the default search path will be in the same path as this assembly of this applicaiton. ",
                 CommandOptionType.SingleValue);
 
-            var compareToConnectionString = app.Option("-tc|--compare-connection-string <optionvalue>",
+            var compareToConnectionStringOption = app.Option("-tc|--compare-connection-string <optionvalue>",
                 "Connection String to compare to.  This parm is optional.  If it is present,  This schema will be compared to either the -sc or -sf and the only the changes will be updated.",
                 CommandOptionType.SingleValue);
 
-            var compareToSchemaFileName = app.Option("-tf|--compare-schema-file <optionvalue>",
+            var compareToSchemaFileNameOption = app.Option("-tf|--compare-schema-file <optionvalue>",
             "OPTIONAL: Specify a compare schema json dump to perform the (as opposed to a compare connection string).  This parm is optional and parm is present, it will override the -ts command line parameter and will be used to compare,  affecting only those entities that have changed.",
             CommandOptionType.SingleValue);
+
+            var schemaNameOption = app.Option("-sn|--schemaName",
+                "the Name of the schema,  a decent standard could be <DatabaseName>Entites.",
+                CommandOptionType.SingleValue);
+
+            var projectFileToModifyOption = app.Option("-pf|--project-file <optionvalue>",
+                "Option to pass a project file that will be altered with the ouputpath that the template files will be written to.  This only pertains to older version of a visual studio project file.",
+                CommandOptionType.SingleValue);
+
             app.OnExecute(() =>
             {
                 var pfx = "Unknown: ";
                 if (verboseOption.HasValue()) AppSettings.Instance.VerboseMessages = verboseOption.HasValue();
                 try
                 {
-                    if (sourceConnectionString.HasValue()) AppSettings.Instance.ConnectionString = sourceConnectionString.Value();
-                    if (configFile.HasValue()) AppSettings.Instance.ConfigurationFileName = configFile.Value();
+                    var schemaName = "MySchema";
+                    if (schemaNameOption.HasValue()) schemaName = schemaNameOption.Value();
+                    if (sourceConnectionStringOption.HasValue()) AppSettings.Instance.ConnectionString = sourceConnectionStringOption.Value();
+                    if (configFileOption.HasValue()) AppSettings.Instance.ConfigurationFileName = configFileOption.Value();
 
                     var Errors = new StringBuilder();
                     var OutputPath = string.Empty;
-                    if ((!templateFileNameOrDirectory.HasValue()) || (templateFileNameOrDirectory.Value().Length == 0)) Errors.AppendLine("TemplateName is missing or empty. ");
-                    if ((pathName.HasValue()) && (pathName.Value().Length > 0)) OutputPath = pathName.Value();
-                    if ((!sourceSchemaFileName.HasValue()) && (AppSettings.Instance.ConnectionString.Length == 0))
+                    if ((!templateFileNameOrDirectoryOption.HasValue()) || (templateFileNameOrDirectoryOption.Value().Length == 0)) Errors.AppendLine("TemplateName is missing or empty. ");
+                    if ((pathNameOption.HasValue()) && (pathNameOption.Value().Length > 0)) OutputPath = pathNameOption.Value();
+                    if ((!sourceSchemaFileNameOption.HasValue()) && (AppSettings.Instance.ConnectionString.Length == 0))
                         Errors.AppendLine("ConnectionString and schemaFileName are both missing or empty. ");
-                    if ((sourceSchemaFileName.HasValue()) && (!File.Exists(sourceSchemaFileName.Value())))
-                        Errors.AppendLine(string.Format("Schema file '{0}' was does not exists! ", sourceSchemaFileName.Value()));
+                    if ((sourceSchemaFileNameOption.HasValue()) && (!File.Exists(sourceSchemaFileNameOption.Value())))
+                        Errors.AppendLine(string.Format("Schema file '{0}' was does not exists! ", sourceSchemaFileNameOption.Value()));
                     if (Errors.Length > 0)
                     {
                         throw new Exception(Errors.ToString());
                     }
 
-                    var TemplateFileNameOrPath = templateFileNameOrDirectory.Value();
+                    var TemplateFileNameOrPath = templateFileNameOrDirectoryOption.Value();
                     if (Path.GetPathRoot(TemplateFileNameOrPath).Length==0)
                     {
                         TemplateFileNameOrPath = ("{ASSEMBLY_PATH}" + TemplateFileNameOrPath).ResolvePathVars();
@@ -109,31 +121,38 @@ namespace EzDbCodeGen.Cli
                     if (AppSettings.Instance.VerboseMessages)
                     {
                         Console.WriteLine(pfx + "Template Path: " + TemplateFileNameOrPath);
-                        Console.WriteLine(pfx + "Path Name: " + pathName.Value());
+                        Console.WriteLine(pfx + "Path Name: " + pathNameOption.Value());
                         Console.WriteLine(pfx + "Config File Name: " + AppSettings.Instance.ConfigurationFileName);
-                        if (!sourceSchemaFileName.HasValue()) Console.WriteLine(pfx + "Source Connection String: " + AppSettings.Instance.ConnectionString);
-                        if (sourceSchemaFileName.HasValue()) Console.WriteLine(pfx + "Source Schema File Name: " + sourceSchemaFileName.Value());
+                        if (!sourceSchemaFileNameOption.HasValue()) Console.WriteLine(pfx + "Source Connection String: " + AppSettings.Instance.ConnectionString);
+                        if (sourceSchemaFileNameOption.HasValue()) Console.WriteLine(pfx + "Source Schema File Name: " + sourceSchemaFileNameOption.Value());
 
-                        if (compareToSchemaFileName.HasValue()) Console.WriteLine(pfx + "Compare To Schema File Name: " + compareToSchemaFileName.Value());
-                        if ((!compareToSchemaFileName.HasValue()) && (compareToConnectionString.HasValue())) Console.WriteLine(pfx + "Compare To Connection String: " + compareToConnectionString.Value());
+                        if (compareToSchemaFileNameOption.HasValue()) Console.WriteLine(pfx + "Compare To Schema File Name: " + compareToSchemaFileNameOption.Value());
+                        if ((!compareToSchemaFileNameOption.HasValue()) && (compareToConnectionStringOption.HasValue())) Console.WriteLine(pfx + "Compare To Connection String: " + compareToConnectionStringOption.Value());
                     }
-                    var CodeGen = new CodeGenerator();
+                    var CodeGen = new CodeGenerator
+                    {
+                        SchemaName = schemaName,
+                        VerboseMessages = AppSettings.Instance.VerboseMessages,
+                        ConfigurationFileName = AppSettings.Instance.ConfigurationFileName,
+                        ProjectPath = ((projectFileToModifyOption.HasValue()) ? projectFileToModifyOption.Value() : "")
+                    };
+
+
+
                     CodeGen.OnStatusChangeEventArgs += StatusChangeEventHandler;
-                    CodeGen.VerboseMessages = AppSettings.Instance.VerboseMessages;
-                    CodeGen.ConfigurationFileName = AppSettings.Instance.ConfigurationFileName;
 
                     var returnCode = new ReturnCodes();
                     ITemplateInput Source = null;
-                    if (sourceSchemaFileName.HasValue())
-                        Source = new TemplateInputFileSource(sourceSchemaFileName.Value());
+                    if (sourceSchemaFileNameOption.HasValue())
+                        Source = new TemplateInputFileSource(sourceSchemaFileNameOption.Value());
                     else
                         Source = new TemplateInputDatabaseConnecton(AppSettings.Instance.ConnectionString);
 
                     ITemplateInput CompareTo = null;
-                    if (compareToSchemaFileName.HasValue())
-                        CompareTo = new TemplateInputFileSource(compareToSchemaFileName.Value());
-                    else if (compareToConnectionString.HasValue())
-                        CompareTo = new TemplateInputDatabaseConnecton(compareToConnectionString.Value());
+                    if (compareToSchemaFileNameOption.HasValue())
+                        CompareTo = new TemplateInputFileSource(compareToSchemaFileNameOption.Value());
+                    else if (compareToConnectionStringOption.HasValue())
+                        CompareTo = new TemplateInputDatabaseConnecton(compareToConnectionStringOption.Value());
 
                     if (CompareTo == null)
                     {
@@ -146,7 +165,24 @@ namespace EzDbCodeGen.Cli
                         CompareTo.VerboseMessages = AppSettings.Instance.VerboseMessages;
                         returnCode = CodeGen.ProcessTemplate(TemplateFileNameOrPath, Source, CompareTo, OutputPath);
                     }
-                    Console.WriteLine("Render of template " + templateFileNameOrDirectory.Value() + " Completed!");
+                    /*
+                    if ((projectFileToModifyOption.HasValue()) && (returnCode.Result == ReturnCode.OkAddDels) )
+                    {
+                        var FileActionsOffset = new Dictionary<string, TemplateFileAction>();
+                        foreach( var fileWithFileAction in CodeGen.FileActions)
+                        {
+                            var fileOffset = (new Uri(projectFileToModifyOption.Value()))
+                                .MakeRelativeUri(new Uri(fileWithFileAction.Key))
+                                .ToString()
+                                .Replace('/', Path.DirectorySeparatorChar);
+                            FileActionsOffset.Add(fileOffset, fileWithFileAction.Value);
+                        }
+
+                        //var resolved
+                        var ret = (new ProjectHelpers()).ModifyClassPath(projectFileToModifyOption.Value(), FileActionsOffset);
+                    }
+                    */
+                    Console.WriteLine("Render of template " + templateFileNameOrDirectoryOption.Value() + " Completed!");
                     Environment.ExitCode = (int)returnCode.Result;
                     Environment.Exit(Environment.ExitCode);
                     return Environment.ExitCode;

@@ -39,6 +39,12 @@ namespace EzDbCodeGen.Core
                     writer.WriteSafeString(parameters[0].ToSafeString().ToNetType(isNullable));
                 }
             });
+            Handlebars.RegisterHelper("ToCodeFriendly", (writer, context, parameters) => {
+                if (parameters.Count() > 0)
+                {
+                    writer.WriteSafeString(parameters[0].ToSafeString().ToCodeFriendly());
+                }
+            });
             Handlebars.RegisterHelper("ToJsType", (writer, context, parameters) => {
 				var property = (IProperty)context;
                 var isNullable = ((parameters.Count() >= 2) && (parameters[1].AsBoolean() != false)) || (property.IsNullable);
