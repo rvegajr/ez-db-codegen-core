@@ -19,6 +19,18 @@ namespace EzDbCodeGen.Core
     {
         public static void RegisterHelpers()
         {
+            Handlebars.RegisterHelper("ExtractTableName", (writer, context, parameters) => {
+                if (parameters.Count() > 0)
+                {
+                    writer.WriteSafeString((new SchemaObjectName(parameters[0].ToSafeString())).ObjectName);
+                }
+            });
+            Handlebars.RegisterHelper("ExtractSchemaName", (writer, context, parameters) => {
+                if (parameters.Count() > 0)
+                {
+                    writer.WriteSafeString((new SchemaObjectName(parameters[0].ToSafeString())).SchemaName);
+                }
+            });
             Handlebars.RegisterHelper("ToSingular", (writer, context, parameters) => {
                 if (parameters.Count() > 0)
                 {
@@ -40,6 +52,13 @@ namespace EzDbCodeGen.Core
                 }
             });
             Handlebars.RegisterHelper("ToCodeFriendly", (writer, context, parameters) => {
+                if (parameters.Count() > 0)
+                {
+                    writer.WriteSafeString(parameters[0].ToSafeString().ToCodeFriendly());
+                }
+            });
+            Handlebars.RegisterHelper("PropertyNameSuffix", (writer, context, parameters) => {
+                //Used to append text if the property already exists 
                 if (parameters.Count() > 0)
                 {
                     writer.WriteSafeString(parameters[0].ToSafeString().ToCodeFriendly());
