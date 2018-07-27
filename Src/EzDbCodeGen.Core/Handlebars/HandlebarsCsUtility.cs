@@ -29,7 +29,8 @@ namespace EzDbCodeGen.Core
                     var fkAttributes = "";
                     var identityAttribute = "";
                     var columnAttribute = "";
-                    if (property.Name.Equals(entityName)) {
+
+                    if (property.Name.Equals(entity.Alias)) {
                         columnAttribute = string.Format("[Column(\"{0}\")]", property.Name);
                     }
                     if (property.Type == "decimal")
@@ -68,11 +69,12 @@ namespace EzDbCodeGen.Core
                             if (fkAttributes.Length > 0) { break; };
                         }
                     }
-                    if (keyAttribute.Length > 0) writer.WriteSafeString(prefix + keyAttribute);
-                    if (fkAttributes.Length > 0) writer.WriteSafeString(prefix + fkAttributes);
+                    if (keyAttribute.Length > 0) writer.WriteSafeString(prefix + keyAttribute + "\n");
+                    if (fkAttributes.Length > 0) writer.WriteSafeString(prefix + fkAttributes + "\n");
                     if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime")) writer.WriteSafeString(prefix + "[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
-                    if (decimalAttribute.Length > 0) writer.WriteSafeString(prefix + decimalAttribute);
-                    if (columnAttribute.Length > 0) writer.WriteSafeString(prefix + columnAttribute);
+                    if (decimalAttribute.Length > 0) writer.WriteSafeString(prefix + decimalAttribute + "\n");
+                    if (columnAttribute.Length > 0) writer.WriteSafeString(prefix + columnAttribute + "\n");
+                    writer.WriteSafeString(prefix); //Write the space header to make sure there is always space
                 }
                 catch (Exception ex)
                 {

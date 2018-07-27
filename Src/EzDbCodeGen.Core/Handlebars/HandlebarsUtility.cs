@@ -19,6 +19,13 @@ namespace EzDbCodeGen.Core
     {
         public static void RegisterHelpers()
         {
+            Handlebars.RegisterHelper("Prefix", (writer, context, parameters) => {
+                if (parameters.Count() > 0)
+                {
+                    var prefix = parameters.AsString(0);
+                    writer.WriteSafeString(prefix);
+                }
+            });
             Handlebars.RegisterHelper("ExtractTableName", (writer, context, parameters) => {
                 if (parameters.Count() > 0)
                 {
