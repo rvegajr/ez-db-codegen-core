@@ -6,7 +6,18 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="EzDbCodeGen" Version="1.0.66" />
+    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\Ef6ContextTemplate.hbs" Link="EzDbCodeGen\Templates\Ef6ContextTemplate.hbs" />
+    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\Ef6ModelsTemplate.hbs" Link="EzDbCodeGen\Templates\Ef6ModelsTemplate.hbs" />
+    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\ODataRegistrationsTemplate.hbs" Link="EzDbCodeGen\Templates\ODataRegistrationsTemplate.hbs" />
+    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\UnitTestsTemplate.hbs" Link="EzDbCodeGen\Templates\UnitTestsTemplate.hbs" />
+    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\UnityRegistrationsTemplate.hbs" Link="EzDbCodeGen\Templates\UnityRegistrationsTemplate.hbs" />
+    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\UnityServiceRegistrationsTemplate.hbs" Link="EzDbCodeGen\Templates\UnityServiceRegistrationsTemplate.hbs" />
+    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\URFServiceTemplate.hbs" Link="EzDbCodeGen\Templates\URFServiceTemplate.hbs" />
+    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\WebApiControllersTemplate.hbs" Link="EzDbCodeGen\Templates\WebApiControllersTemplate.hbs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EzDbCodeGen" Version="1.1.0" />
   </ItemGroup>
 
   
