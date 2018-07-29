@@ -10,7 +10,7 @@ namespace EzDbCodeGen.Tests
 {
     public class StringTests
     {
-        string SchemaFileName = "";
+        readonly string SchemaFileName = "";
         public StringTests()
         {
             this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
@@ -70,8 +70,7 @@ namespace EzDbCodeGen.Tests
         public void PluckTest()
         {
             var s = "This is a long string to test";
-            var sRest = "";
-            var newStr = s.Pluck("a ", " string", out sRest);
+            var newStr = s.Pluck("a ", " string", out string sRest);
             Assert.True(newStr.Equals("long"), "newStr should be long");
             Assert.True(sRest.Equals("This is a  string to test"), "sRest should be the rest of the string");
             var s2 = @"<FILE>TestfileName.xml</FILE>
@@ -82,8 +81,7 @@ Rest of the code
 <ENTITY_KEY></ENTITY_KEY>
 Rest of the code
 ";
-            var sRest2 = "";
-            var newStr2 = s2.Pluck("<ENTITY_KEY>", "</ENTITY_KEY>", out sRest2);
+            var newStr2 = s2.Pluck("<ENTITY_KEY>", "</ENTITY_KEY>", out string sRest2);
             Assert.True(newStr2.Equals("FancyKey"), "newStr2 should be FancyKey");
             Assert.True(sRest2.Equals(sRestTest), "sRest2 should be the rest of the string");
         }

@@ -17,6 +17,7 @@ using EzDbCodeGen.Internal;
 using EzDbSchema.Core;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbCodeGen.Core.Config;
+using EzDbCodeGen.Core.Classes;
 
 namespace EzDbCodeGen.Core
 {
@@ -25,13 +26,16 @@ namespace EzDbCodeGen.Core
         public static string OP_FILE = "<FILE>";
         public static string OP_ENTITY_KEY = "<ENTITY_KEY>";
         public static string OP_OUTPUT_PATH = "<OUTPUT_PATH>";
+        public static string OP_PROJECT_PATH = "<PROJECT_PATH>";
         public static string OP_FILE_END = "</FILE>";
         public static string OP_ENTITY_KEY_END = "</ENTITY_KEY>";
         public static string OP_OUTPUT_PATH_END = "</OUTPUT_PATH>";
+        public static string OP_PROJECT_PATH_END = "</PROJECT_PATH>";
         public static string VAR_THIS_PATH = "$THIS_PATH$";
 
         public virtual string TemplatePath { get; set; } = "";
         public virtual string OutputPath { get; set; } = "";
+        public virtual string ProjectPath { get; set; } = "";
         public virtual string ConnectionString { get; set; } = "";
         public virtual string ConfigurationFileName { get; set; } = "";
 
@@ -185,6 +189,14 @@ namespace EzDbCodeGen.Core
             }
         }
         /// <summary>
+        /// Contains the list of files that were affected by the last template execution
+        /// </summary>
+        /// <value>
+        /// The file actions indexed by file name and a File Action
+        /// </value>
+        public Dictionary<string, TemplateFileAction> FileActions { get { return fileActions; } }
+        private Dictionary<string, TemplateFileAction> fileActions = new Dictionary<string, TemplateFileAction>();
+        /// <summary>
         /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings.
         /// </summary>
         /// <returns><c>true</c>, if template was processed, <c>false</c> otherwise.</returns>
@@ -211,6 +223,11 @@ namespace EzDbCodeGen.Core
                     EzDbConfig = Config.Configuration.ReloadInstance(ConfigurationFileName);
                     foreach (var item in EzDbConfig.PluralizerCrossReference)
                         Pluralizer.Instance.AddWord(item.SingleWord, item.PluralWord);
+                    if (!string.IsNullOrEmpty(EzDbConfig.Database.SchemaName))
+                    {
+                        CurrentTask = string.Format("Schema name has been changed from {0} to {1} by configuration file.", this.SchemaName, EzDbConfig.Database.SchemaName);
+                        this.SchemaName = EzDbConfig.Database.SchemaName;
+                    }
                 }
                 else
                 {
@@ -221,17 +238,33 @@ namespace EzDbCodeGen.Core
 				if (originalTemplateInputSource == null) throw new Exception(@"There must be an Template Source passed through originalTemplateInputSource!");
 				CurrentTask = "Loading Source Schema";
 				IDatabase schema = originalTemplateInputSource.LoadSchema();
-				if (schema == null) throw new Exception(@"originalTemplateInputSource is not a valid template");
+                schema.Name = this.SchemaName;
+
+                if (schema == null) throw new Exception(@"originalTemplateInputSource is not a valid template");
 
 				CurrentTask = "Template path is " + templateFileName;
 
 				string result = "";
-				try
-				{
+                try
+                {
 
-					CurrentTask = string.Format("Reading Template from '{0}'", templateFileName);
-					var templateAsString = File.ReadAllText(templateFileName);
+                    CurrentTask = string.Format("Reading Template from '{0}'", templateFileName);
+                    var templateAsString = File.ReadAllText(templateFileName);
                     var forceDeleteReloadOfDirectory = false;
+                    //Does template have a project path override? If so, extract it and stash it
+                    if (templateAsString.Contains(CodeGenBase.OP_PROJECT_PATH))
+                    {
+                        this.ProjectPath = templateAsString.Pluck(CodeGenBase.OP_PROJECT_PATH, CodeGenBase.OP_PROJECT_PATH_END, out templateAsString).Trim();
+                        if (this.ProjectPath.StartsWith("@"))  //An @ at the beginning forces the app to treat this as a path and delete and attempt to recreate it 
+                        {
+                            this.ProjectPath = this.ProjectPath.Substring(1);
+                            CurrentTask = string.Format("'@' was found at the beginning of ProjectPath but doesn't do anything here and will be ignored");
+                        }
+                        if (this.ProjectPath.Contains(CodeGenBase.VAR_THIS_PATH)) this.ProjectPath = Path.GetFullPath(this.ProjectPath.Replace(CodeGenBase.VAR_THIS_PATH, Path.GetDirectoryName(templateFileName).PathEnds()));
+                        CurrentTask = string.Format("Project Path modifier found in template, resolved to: {0}", this.ProjectPath);
+                        templateAsString = templateAsString.Replace(CodeGenBase.OP_PROJECT_PATH, "").Replace(CodeGenBase.OP_PROJECT_PATH_END, "").Trim();
+                    }
+
                     //Does template have and Output path override? if so, override the local outputDirectory and strip it 
                     if (templateAsString.Contains(CodeGenBase.OP_OUTPUT_PATH))
                     {
@@ -240,9 +273,11 @@ namespace EzDbCodeGen.Core
                         if (this.OutputPath.StartsWith("@"))  //An @ at the beginning forces the app to treat this as a path and delete and attempt to recreate it 
                         {
                             this.OutputPath = this.OutputPath.Substring(1);
+                            CurrentTask = string.Format("'@' was found at the beginning... Will forcefully delete: {0}", this.OutputPath);
                             forceDeleteReloadOfDirectory = true;
                         }
                         if (this.OutputPath.Contains(CodeGenBase.VAR_THIS_PATH)) this.OutputPath = Path.GetFullPath(this.OutputPath.Replace(CodeGenBase.VAR_THIS_PATH, Path.GetDirectoryName(templateFileName).PathEnds()));
+                        CurrentTask = string.Format("Output Path modifier found in template, resolved to: {0}", this.OutputPath);
 
                         //If we asked for a force of a reload and if we don't contain a file operator, then the output path must be a single file result.
                         //  Forcing this to be created will prevent us from writing this file out, so we will ignore that force directory operator in this case
@@ -310,10 +345,10 @@ namespace EzDbCodeGen.Core
 
 
                     CurrentTask = string.Format("Parsing files");
-					/* First, lets get all the files currently in the path */
-					var FileActions = new Dictionary<string, TemplateFileAction>();
+                    /* First, lets get all the files currently in the path */
+                    fileActions.Clear();
 					string[] FilesinOutputDirectory = Directory.GetFiles(this.OutputPath);
-					foreach (var fileName in FilesinOutputDirectory) FileActions.Add(fileName, TemplateFileAction.Unknown);
+					foreach (var fileName in FilesinOutputDirectory) fileActions.Add(fileName, TemplateFileAction.Unknown);
 
 					var FileListAndContents = new EntityFileDictionary();
 					string[] parseFiles = result.Split(new[] { CodeGenBase.OP_FILE }, StringSplitOptions.RemoveEmptyEntries);
@@ -322,9 +357,8 @@ namespace EzDbCodeGen.Core
 					foreach (string fileText in parseFiles)
 					{
 						var filePart = CodeGenBase.OP_FILE + fileText;  //need to add the delimiter to make pluck work as expected
-						var FileContents = "";
-						string newOutputFileName = filePart.Pluck(CodeGenBase.OP_FILE, CodeGenBase.OP_FILE_END, out FileContents);
-						FileContents = FileContents.Replace(CodeGenBase.OP_FILE, "").Replace(CodeGenBase.OP_FILE_END, "").Trim();
+                        string newOutputFileName = filePart.Pluck(CodeGenBase.OP_FILE, CodeGenBase.OP_FILE_END, out string FileContents);
+                        FileContents = FileContents.Replace(CodeGenBase.OP_FILE, "").Replace(CodeGenBase.OP_FILE_END, "").Trim();
 						if ((newOutputFileName.Length > 0) && (newOutputFileName.StartsWith(this.OutputPath, StringComparison.Ordinal)))
 						{
 							EntityKey = "XXX" + Guid.NewGuid().ToString();  /* guaruntee this to be unique */
@@ -354,7 +388,7 @@ namespace EzDbCodeGen.Core
 					if (EffectivePathOption.Equals(TemplatePathOption.Clear))
 					{
 						StatusMessage("Path Option is set to 'Clear'");
-						foreach (var fileName in FileActions.Keys.ToList()) FileActions[fileName] = TemplateFileAction.Delete;
+						foreach (var fileName in fileActions.Keys.ToList()) fileActions[fileName] = TemplateFileAction.Delete;
 					}
 					else if (EffectivePathOption.Equals(TemplatePathOption.SyncDiff))
 					{
@@ -369,30 +403,30 @@ namespace EzDbCodeGen.Core
 								FileName fileName = "";
 								if (schemaDiff.FileAction == TemplateFileAction.Add)
 								{
-									if (FileActions.ContainsKey(fileName))
+									if (fileActions.ContainsKey(fileName))
 									{
-										/* this should not happen;  but if it does */
-										FileActions[fileName] = TemplateFileAction.Update;
+                                        /* this should not happen;  but if it does */
+                                        fileActions[fileName] = TemplateFileAction.Update;
 									}
 									else
-										FileActions.Add(fileName, TemplateFileAction.Add);
+                                        fileActions.Add(fileName, TemplateFileAction.Add);
 								}
 								else if (schemaDiff.FileAction == TemplateFileAction.Update)
 								{
-									if (FileActions.ContainsKey(fileName))
-										FileActions[fileName] = TemplateFileAction.Update;
+									if (fileActions.ContainsKey(fileName))
+                                        fileActions[fileName] = TemplateFileAction.Update;
 									else
 									{
-										FileActions.Add(fileName, TemplateFileAction.Add);
+                                        fileActions.Add(fileName, TemplateFileAction.Add);
 									}
 								}
 								else if (schemaDiff.FileAction == TemplateFileAction.Delete)
 								{
-									if (FileActions.ContainsKey(fileName))
-										FileActions[fileName] = TemplateFileAction.Delete;
+									if (fileActions.ContainsKey(fileName))
+                                        fileActions[fileName] = TemplateFileAction.Delete;
 									else
 									{
-										FileActions.Add(fileName, TemplateFileAction.Delete);
+                                        fileActions.Add(fileName, TemplateFileAction.Delete);
 									}
 								}
 							}
@@ -407,28 +441,28 @@ namespace EzDbCodeGen.Core
 					//Lets now make sure all of those files that should be rendered are there
 					foreach (string fileName in FileListAndContents.ClonePrimaryKeys())
 					{
-						if ((FileActions.ContainsKey(fileName)))
+						if ((fileActions.ContainsKey(fileName)))
 						{
 							//if the file exists and it is slated to be deleted and if it was going to be a generated,  then mark it as an update
-							if (FileActions[fileName] == TemplateFileAction.Delete)
-								FileActions[fileName] = TemplateFileAction.Update;
+							if (fileActions[fileName] == TemplateFileAction.Delete)
+                                fileActions[fileName] = TemplateFileAction.Update;
 							else
-								FileActions[fileName] = TemplateFileAction.None;
+                                fileActions[fileName] = TemplateFileAction.None;
 						}
 						else
 						{
-							FileActions.Add(fileName, TemplateFileAction.Add);
+                            fileActions.Add(fileName, TemplateFileAction.Add);
 						}
 					}
 
 					CurrentTask = string.Format("Performing file actions");
 					var Deletes = 0; var Updates = 0; var Adds = 0;
 					/* Process File Actions based on which Template File action*/
-					foreach (string fileName in FileActions.Keys.ToList())
+					foreach (string fileName in fileActions.Keys.ToList())
 					{
-                        CurrentTask = string.Format("Performing file actions on {0} (Action={1})", fileName, FileActions[fileName]);
-                        if ((FileActions[fileName] == TemplateFileAction.Delete) ||
-							(FileActions[fileName] == TemplateFileAction.Unknown))
+                        CurrentTask = string.Format("Performing file actions on {0} (Action={1})", fileName, fileActions[fileName]);
+                        if ((fileActions[fileName] == TemplateFileAction.Delete) ||
+							(fileActions[fileName] == TemplateFileAction.Unknown))
 						{
 							if (File.Exists(fileName))
 							{
@@ -436,7 +470,7 @@ namespace EzDbCodeGen.Core
 								Deletes++;
 							}
 						}
-						else if (FileActions[fileName] == TemplateFileAction.Update)
+						else if (fileActions[fileName] == TemplateFileAction.Update)
 						{
 							//We do not need to update if the file contents are the same
 							if (!FileListAndContents[(FileName)fileName].IsEqualToFileContents(fileName))
@@ -446,7 +480,7 @@ namespace EzDbCodeGen.Core
 								File.WriteAllText(fileName, FileListAndContents[(FileName)fileName]);
 							}
 						}
-						else if (FileActions[fileName] == TemplateFileAction.Add)
+						else if (fileActions[fileName] == TemplateFileAction.Add)
 						{
 							Adds++;
 							File.WriteAllText(fileName, FileListAndContents[(FileName)fileName]);
@@ -465,6 +499,40 @@ namespace EzDbCodeGen.Core
 					throw new ApplicationException("The Template Engine Produced No results for path [" + templateFileName + "]");
 				}
                 StatusMessage(string.Format("Template was rendered to path {0}", this.OutputPath));
+
+                CurrentTask = string.Format("Checking Project File Modification Option: {0}", (this.ProjectPath.Length>0));
+
+                if (this.ProjectPath.Length > 0)
+                {
+                    CurrentTask = string.Format("Looks like Project Mod was set to true, Does path exist? ");
+                    if (!File.Exists(this.ProjectPath))
+                    {
+                        StatusMessage(string.Format("ProjectPath was set to {0} but this file doesn't exist,  I will ignore ProjectPath option", this.ProjectPath));
+
+                    }
+                    else
+                    {
+                        StatusMessage(string.Format("ProjectPath was set to {0},  so we will alter this project with the files affected if necessary", this.ProjectPath));
+                        var FileActionsOffset = new Dictionary<string, TemplateFileAction>();
+                        CurrentTask = string.Format("Figuring out offset of files added compared to Project location");
+                        foreach (var fileWithFileAction in FileActions)
+                        {
+                            var fileOffset = (new Uri(this.ProjectPath))
+                                .MakeRelativeUri(new Uri(fileWithFileAction.Key))
+                                .ToString()
+                                .Replace('/', Path.DirectorySeparatorChar);
+                            CurrentTask = string.Format("Project File Check: {0}", fileOffset);
+                            FileActionsOffset.Add(fileOffset, fileWithFileAction.Value);
+                        }
+
+                        CurrentTask = string.Format("Now we modify the project file {0}", this.ProjectPath);
+                        var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset);
+                        if (ret)
+                            StatusMessage(string.Format("There were changes to {0},  project will probably have to be reloaded", this.ProjectPath));
+                        else
+                            StatusMessage(string.Format("There were no changes to {0}", this.ProjectPath));
+                    }
+                }
 				CurrentTask = string.Format("All done!");
 				return new ReturnCodes(templateFileName, returnCode);
 			}
