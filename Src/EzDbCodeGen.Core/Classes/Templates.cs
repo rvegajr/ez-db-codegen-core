@@ -147,7 +147,7 @@ namespace EzDbCodeGen.Core
         public IDatabase LoadSchema()
         {
             try
-            {
+            { 
                 this.Schema = (IDatabase)JsonConvert.DeserializeObject<Database>(File.ReadAllText(DatabaseSchemaDumpFileName),
                     new JsonSerializerSettings {
                         PreserveReferencesHandling = PreserveReferencesHandling.All,

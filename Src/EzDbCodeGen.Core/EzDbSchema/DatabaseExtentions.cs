@@ -15,10 +15,8 @@ namespace EzDbCodeGen.Core
         public string ObjectName = "";
         public SchemaObjectName(IEntity entity)
         {
-            SchemaName = Configuration.Instance.Database.DefaultSchema;
-            if (entity.Schema.Length!=0) SchemaName = entity.Schema;
-            if (SchemaName.Length == 0) SchemaName = "dbo";
-            ObjectName = entity.Name;
+            SchemaName = entity.Schema ?? Configuration.Instance.Database.DefaultSchema;
+            ObjectName = entity.Name ?? "";
         }
 
         public SchemaObjectName(string schemaObjectName)
@@ -79,7 +77,7 @@ namespace EzDbCodeGen.Core
             {
                 foreach (var property in entity.Properties.Values)
                 {
-                    if (property.Alias.Equals(entity.Alias))
+                    if ((!string.IsNullOrEmpty(property.Alias)) && (property.Alias.Equals(entity.Alias)))
                     {
                         property.Alias += config.Database.PropertyNameSuffix;
                     }
@@ -160,7 +158,8 @@ namespace EzDbCodeGen.Core
             //Use config settings to 
             foreach (var entity in database.Entities.Values)
             {
-                if ((entity.Schema.Equals(schemaObjectName.SchemaName)) && (entity.Name.Equals(schemaObjectName.ObjectName)))
+                if ((entity.Schema == schemaObjectName.SchemaName) 
+                    && (entity.Name == schemaObjectName.ObjectName))
                 {
                     return entity;
                 }
