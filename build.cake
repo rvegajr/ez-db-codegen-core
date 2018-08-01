@@ -121,7 +121,7 @@ Task("NuGet-Pack")
         //IconUrl                 = new Uri(""),
         LicenseUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core/blob/master/LICENSE"),
         Copyright               = @"Noctusoft 2018",
-        ReleaseNotes            = new [] {"Project File Updating", "Template Based Project Tag", "Issue fixes"},
+        ReleaseNotes            = new [] {"Correct Composite FK Key Handling", "Group FK Columns by Name", "Issue fixes"},
         Tags                    = new [] {"Database ", "Schema", "Code Generation", "Code Generator"},
         RequireLicenseAcceptance= false,
         Symbols                 = false,
