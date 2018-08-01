@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EzDbCodeGen" Version="1.1.0" />
+    <PackageReference Include="EzDbCodeGen" Version="1.1.3" />
   </ItemGroup>
 
   
