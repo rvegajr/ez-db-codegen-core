@@ -24,6 +24,10 @@ namespace EzDbCodeGen.Core
                     var entity = property.Parent;
                     var database = entity.Parent;
                     var entityName = entity.Name;
+                    if (entityName.Contains("DocumentLocation"))
+                    {
+                        entityName += "";
+                    }
                     var decimalAttribute = "";
                     var keyAttribute = "";
                     var fkAttributes = "";
@@ -45,7 +49,8 @@ namespace EzDbCodeGen.Core
                     {
                         if (entity.PrimaryKeys.Count > 1)
                         {
-                            keyAttribute = @"[Key, Column(Order=" + property.KeyOrder + ")" + identityAttribute + "]";
+                            keyAttribute = string.Format(@"[Key, Column(""{0}"", Order={1}){2}]", property.Name, property.KeyOrder, identityAttribute);
+                            columnAttribute = "";  //Clear the column attribute since we have already added it here
                         }
                         else
                         {
@@ -90,17 +95,23 @@ namespace EzDbCodeGen.Core
                 {
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context;
-                    var PreviousOneToManyFields = new List<string>();
-                    
-                    foreach (var relationship in entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany))
+                    if (entity.Name.Contains("tbl_Interval"))
                     {
-                        //Need to resolve the to table name to what the alias table name is
-                        string ToTableName = entity.Parent.Entities[relationship.ToTableName].Alias;
-                        string FieldName = ToTableName + "_" + relationship.ToColumnName;
+                        entity.Name += "";
+                    }
+
+                    var PreviousOneToManyFields = new List<string>();
+
+                    var groupedByFKName = entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany).GroupByFKName();
+                    foreach(var FKName in groupedByFKName.Keys)
+                    {
+                        var relationshipList = groupedByFKName[FKName];
+                        var relGroupSummary = relationshipList.AsSummary();
+                        string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
                         writer.WriteSafeString(string.Format(
                             "\n{0}this.{1} = new HashSet<{2}>(); //{3} 0|1->*"
-                            , prefix, FieldName.Replace(" ", ""), ToTableName.ToSingular(), relationship.Name));
-                        PreviousOneToManyFields.Add(relationship.ToTableName);
+                            , prefix, relGroupSummary.ToUniqueColumnName().ToPlural(), ToTableName, relGroupSummary.Name));
+                        PreviousOneToManyFields.Add(relGroupSummary.ToTableName);
                     }
                 }
                 catch (Exception ex)
@@ -118,6 +129,26 @@ namespace EzDbCodeGen.Core
                     var entity = (IEntity)context;
                     List<string> PreviousOneToManyFields = new List<string>();
                     PreviousOneToManyFields.Clear();
+
+
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany);
+                    var groupedByFKName = RelationshipsOneToMany.GroupByFKName();
+                    foreach (var FKName in groupedByFKName.Keys)
+                    {
+                        var relationshipList = groupedByFKName[FKName];
+                        var relGroupSummary = relationshipList.AsSummary();
+                        string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
+                        string InversePropertyName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias.ToPlural();
+                        string InverseProperty = (RelationshipsOneToMany.CountItems(relGroupSummary.ToTableName) > 1 ? "[InverseProperty(\"" + InversePropertyName + "\")]" : "");
+
+                        writer.WriteSafeString(string.Format("\n\n{0}//<summary>{1}</summary>", prefix, relGroupSummary.Name));
+                        writer.WriteSafeString(string.Format("\n{0}[System.Diagnostics.CodeAnalysis.SuppressMessage(\"Microsoft.Usage\", \"CA2227: CollectionPropertiesShouldBeReadOnly\")]", prefix));
+                        if (InverseProperty.Length > 0) writer.WriteSafeString(string.Format("\n{0}{1}", prefix, InverseProperty));
+                        writer.WriteSafeString(string.Format("\n{0}public virtual ICollection<{1}> {2} {{ get; set; }}", prefix, ToTableName, relGroupSummary.ToUniqueColumnName().ToPlural()));
+
+                        PreviousOneToManyFields.Add(relGroupSummary.ToTableName);
+                    }
+                    /*
                     var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany);
 
                     foreach (var relationship in RelationshipsOneToMany)
@@ -136,6 +167,7 @@ namespace EzDbCodeGen.Core
 
                         PreviousOneToManyFields.Add(relationship.ToTableName);
                     }
+                    */
                 }
                 catch (Exception ex)
                 {
@@ -150,16 +182,47 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-					var entity = (IEntity)context;
+                    var objectSuffix = parameters.AsString(1);
+                    var entity = (IEntity)context;
                     var entityName = entity.Name;
 
+
+                    if (entity.Name.Contains("Tax"))
+                    {
+                        entity.Name += "";
+                    }
+
                     List<string> PreviousManyToOneFields = new List<string>();
+
                     var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipType.ManyToZeroOrOne);
+                    var groupedByFKName = RelationshipsManyToOne.GroupByFKName();
+                    foreach (var FKName in groupedByFKName.Keys)
+                    {
+                        var relationshipList = groupedByFKName[FKName];
+                        var relGroupSummary = relationshipList.AsSummary();
+                        string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
+                        
+                        int SameTableCount = RelationshipsManyToOne.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
+                        //Need to resolve the to table name to what the alias table name is
+                        string ToTableNameSingular = ToTableName.ToSingular();
+                        string FieldName = ((PreviousManyToOneFields.Contains(ToTableNameSingular)
+                                             || (entity.Properties.ContainsKey(ToTableNameSingular))
+                                             || (entityName == relGroupSummary.ToTableName)
+                                             || (SameTableCount > 1))
+                                                ? relGroupSummary.ToUniqueColumnName() : ToTableNameSingular);
+                        writer.WriteSafeString(string.Format("\n{0}/// <summary>{1}  *->0|1</summary>", prefix, relGroupSummary.Name));
+                        writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relGroupSummary.ToFieldName)));
+                        writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, FieldName + objectSuffix));
+                        PreviousManyToOneFields.Add(relGroupSummary.ToTableName);
+
+                    }
+                    /*
                     foreach (var relationship in RelationshipsManyToOne)
                     {
-						int SameTableCount = RelationshipsManyToOne.CountItems(RelationSearchField.ToTableName, relationship.ToTableName);
-                        //Need to resolve the to table name to what the alias table name is
                         string ToTableName = entity.Parent.Entities[relationship.ToTableName].Alias;
+
+                        int SameTableCount = RelationshipsManyToOne.CountItems(RelationSearchField.ToTableName, relationship.ToTableName);
+                        //Need to resolve the to table name to what the alias table name is
                         string ToTableNameSingular = ToTableName.ToSingular();
                         string FieldName = ((PreviousManyToOneFields.Contains(ToTableNameSingular) 
                                              || (entity.Properties.ContainsKey(ToTableNameSingular)) 
@@ -168,10 +231,10 @@ namespace EzDbCodeGen.Core
                                                 ? relationship.FromColumnName : ToTableNameSingular);
                         writer.WriteSafeString(string.Format("\n{0}/// <summary>{1}  *->0|1</summary>", prefix, relationship.Name));
                         writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, relationship.FromFieldName.Replace(" ", "")));
-                        writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, FieldName.Replace(" ", "")));
+                        writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, FieldName.Replace(" ", "") + objectSuffix));
                         PreviousManyToOneFields.Add(relationship.ToTableName);
                     }
-
+                    */
 
                 }
                 catch (Exception ex)
@@ -186,13 +249,21 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-					var entity = (IEntity)context;
+                    var objectSuffix = parameters.AsString(1);
+                    var entity = (IEntity)context;
                     var entityName = entity.Name;
-
+                    if (entityName.Contains("DocumentLocation"))
+                    {
+                        entityName += "";
+                    }
                     var PreviousOneToOneFields = new List<string>();
                     var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipType.OneToOne); 
                     foreach (var relationship in RelationshipsOneToOne)
                     {
+                        if (relationship.Name.StartsWith("FK_tbl_DocumentLocationHistory_tbl_DocumentLocation"))
+                        {
+                            relationship.Name += "";
+                        }
                         //Need to resolve the to table name to what the alias table name is
                         string ToTableName = entity.Parent.Entities[relationship.ToTableName].Alias;
                         int SameTableCount = RelationshipsOneToOne.CountItems(RelationSearchField.ToTableName, relationship.ToTableName);
@@ -201,9 +272,9 @@ namespace EzDbCodeGen.Core
                                              || (entity.Properties.ContainsKey(ToTableNameSingular)) 
                                              || (entityName == relationship.ToTableName) 
                                              || (SameTableCount > 1)) 
-                                                ? relationship.FromColumnName : ToTableNameSingular);
+                                                ? relationship.ToUniqueColumnName() : ToTableNameSingular);
                         writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} 1->1</summary>", prefix, relationship.Name));
-                        writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, FieldName.Replace(" ", "")));
+                        writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, (FieldName.Replace(" ", "") + objectSuffix)));
                         PreviousOneToOneFields.Add(FieldName);
                     }
                 }
@@ -213,14 +284,20 @@ namespace EzDbCodeGen.Core
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
-
+            /*
             Handlebars.RegisterHelper("POCOModelFKOneToOne", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('POCOModelFKOneToOne')";
                 try
                 {
                     var prefix = parameters.AsString(0);
-					var entity = (IEntity)context;
+                    var objectSuffix = parameters.AsString(1);
+
+                    var entity = (IEntity)context;
                     var entityName = entity.Name;
+                    if (entityName.Contains("DocumentLocation"))
+                    {
+                        entityName += "";
+                    }
 
                     var PreviousOneToOneFields = new List<string>();
                     var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipType.OneToOne); 
@@ -237,7 +314,7 @@ namespace EzDbCodeGen.Core
                                              || (SameTableCount > 1))
                                                 ? relationship.FromColumnName : ToTableNameSingular);
                         writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} 1->1</summary>", prefix, relationship.Name));
-                        writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, FieldName.Replace(" ", "")));
+                        writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, FieldName.Replace(" ", "") + objectSuffix));
                         PreviousOneToOneFields.Add(FieldName);
                     }
                 }
@@ -247,7 +324,7 @@ namespace EzDbCodeGen.Core
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
-
+            */
             Handlebars.RegisterHelper("UnitTestsRenderExtendedEndpoints", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('UnitTestsRenderExtendedEndpoints')";
                 try

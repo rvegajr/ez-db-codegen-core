@@ -194,7 +194,11 @@ namespace EzDbCodeGen.Core.Extentions.Strings
                 ret = "string";
             else
                 ret = (sQLDataTypeToDotNetDataType.ContainsKey(sqlType) ? sQLDataTypeToDotNetDataType[sqlType] : sqlType);
-            return ret + ((isNullable && !(ret.Equals("string") || ret.Equals("DbGeometry") || ret.Equals("DbGeography") || ret.EndsWith("[]"))) ? "?" : "");
+            return ret + ((isNullable && !(ret.Equals("string") 
+                || ret.Equals("object") 
+                || ret.Equals("DbGeometry") 
+                || ret.Equals("DbGeography") 
+                || ret.EndsWith("[]"))) ? "?" : "");
         }
 
 

@@ -16,7 +16,7 @@ namespace EzDbCodeGen.Core.Extentions.Objects
         /// <param name="index">IIndex to return</param>
         public static string AsString(this object[] objectArray, int index)
         {
-            if (objectArray.Count() >= index)
+            if (objectArray.Count() > index)
             {
                 if (objectArray[index] != null)
                 {
