@@ -95,10 +95,7 @@ namespace EzDbCodeGen.Core
                 {
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context;
-                    if (entity.Name.Contains("tbl_Interval"))
-                    {
-                        entity.Name += "";
-                    }
+  
 
                     var PreviousOneToManyFields = new List<string>();
 
@@ -129,7 +126,10 @@ namespace EzDbCodeGen.Core
                     var entity = (IEntity)context;
                     List<string> PreviousOneToManyFields = new List<string>();
                     PreviousOneToManyFields.Clear();
-
+                    if (entity.Name.Contains("tbl_Noun"))
+                    {
+                        entity.Name += "";
+                    }
 
                     var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany);
                     var groupedByFKName = RelationshipsOneToMany.GroupByFKName();
@@ -138,7 +138,7 @@ namespace EzDbCodeGen.Core
                         var relationshipList = groupedByFKName[FKName];
                         var relGroupSummary = relationshipList.AsSummary();
                         string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
-                        string InversePropertyName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias.ToPlural();
+                        string InversePropertyName = string.Join(",", relGroupSummary.ToColumnName ) + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
                         string InverseProperty = (RelationshipsOneToMany.CountItems(relGroupSummary.ToTableName) > 1 ? "[InverseProperty(\"" + InversePropertyName + "\")]" : "");
 
                         writer.WriteSafeString(string.Format("\n\n{0}//<summary>{1}</summary>", prefix, relGroupSummary.Name));
@@ -249,7 +249,6 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var objectSuffix = parameters.AsString(1);
                     var entity = (IEntity)context;
                     var entityName = entity.Name;
                     if (entityName.Contains("DocumentLocation"))
@@ -274,7 +273,7 @@ namespace EzDbCodeGen.Core
                                              || (SameTableCount > 1)) 
                                                 ? relationship.ToUniqueColumnName() : ToTableNameSingular);
                         writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} 1->1</summary>", prefix, relationship.Name));
-                        writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, (FieldName.Replace(" ", "") + objectSuffix)));
+                        writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, (FieldName.Replace(" ", "") + Config.Configuration.Instance.Database.PropertyObjectNameCollisionSuffix)));
                         PreviousOneToOneFields.Add(FieldName);
                     }
                 }
