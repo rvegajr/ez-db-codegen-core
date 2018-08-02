@@ -184,13 +184,7 @@ namespace EzDbCodeGen.Core.Extentions.Strings
             return stringToConvert.Replace(" ", "");
         }
 
-        /// <summary>
-        /// Returns the .net data type from the SQL datatype
-        /// </summary>
-        /// <param name="sqlType">SQL DataType .</param>
-        /// <param name="isNullable">if set to <c>true</c> if you wish to return in the string that this is a nullable datatype</param>
-        /// <returns></returns>
-        /// <exception cref="System.ArgumentNullException">sqlType</exception>
+
         public static string ToNetType(this string sqlType, bool isNullable)
         {
             var ret = "";

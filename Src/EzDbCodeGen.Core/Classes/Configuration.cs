@@ -48,7 +48,8 @@ namespace EzDbCodeGen.Core.Config
         public string DefaultSchema { get; set; } = "dbo";
         public string AliasNamePattern { get; set; } = Configuration.OBJECT_NAME;
         public string SchemaName { get; set; } = "";
-        public string PropertyNameSuffix { get; set; } = "Text";
+        public string PropertyObjectNameCollisionSuffix { get; set; } = "Value";
+        public string InverseFKTargetNameCollisionSuffix { get; set; } = "Item";
 
     }
 

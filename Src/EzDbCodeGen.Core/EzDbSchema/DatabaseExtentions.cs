@@ -79,7 +79,7 @@ namespace EzDbCodeGen.Core
                 {
                     if ((!string.IsNullOrEmpty(property.Alias)) && (property.Alias.Equals(entity.Alias)))
                     {
-                        property.Alias += config.Database.PropertyNameSuffix;
+                        property.Alias += config.Database.PropertyObjectNameCollisionSuffix;
                     }
                     property.Alias = property.Alias.ToCodeFriendly();
                 }

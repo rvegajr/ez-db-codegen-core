@@ -246,7 +246,7 @@ namespace EzDbCodeGen.Core
 			for (int i = 0; i < This.Count; i++)
             {
 				var property = This[i];
-                ret += (i > 0 ? @" && " : @"") + property.Alias + " " + op.Trim() + " " + varPrefix + "." + property.Alias;
+                ret += (i > 0 ? @" && " : @"") + property.Alias + " " + op.Trim() + " " + varPrefix + "." + property.Name;
             }
             return ret;
         }
