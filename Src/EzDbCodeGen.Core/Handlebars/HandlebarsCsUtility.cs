@@ -24,7 +24,7 @@ namespace EzDbCodeGen.Core
                     var entity = property.Parent;
                     var database = entity.Parent;
                     var entityName = entity.Name;
-                    if (entityName.Contains("DocumentLocation"))
+                    if (entityName.Contains("tbl_Interval"))
                     {
                         entityName += "";
                     }
