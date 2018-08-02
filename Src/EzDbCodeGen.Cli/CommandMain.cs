@@ -137,7 +137,8 @@ namespace EzDbCodeGen.Cli
                         ProjectPath = ((projectFileToModifyOption.HasValue()) ? projectFileToModifyOption.Value() : "")
                     };
 
-
+                    var version = Assembly.GetAssembly(typeof(CodeGenerator)).GetName().Version;
+                    Console.WriteLine(pfx + "Using CodeGenerator Version " + version);
 
                     CodeGen.OnStatusChangeEventArgs += StatusChangeEventHandler;
 

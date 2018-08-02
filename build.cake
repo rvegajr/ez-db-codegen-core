@@ -1,13 +1,13 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
-var IncrementMinorVersion = true;
+var IncrementMinorVersion = false;
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var binDir = Directory("./bin") ;
 var thisDir = System.IO.Path.GetFullPath(".") + System.IO.Path.DirectorySeparatorChar;
 var publishDir = binDir + System.IO.Path.DirectorySeparatorChar + "publish" + System.IO.Path.DirectorySeparatorChar;
-var projectFile = thisDir + "Src/EzDbCodeGen.Core/EzDbCodeGen.Core.csproj";
+var coreProjectFile = thisDir + "Src/EzDbCodeGen.Core/EzDbCodeGen.Core.csproj";
 var cliProjectFile = thisDir + "Src/EzDbCodeGen.Cli/EzDbCodeGen.Cli.csproj";
 var solutionFile = thisDir + "Src/ez-db-codegen-core.sln";
 
@@ -15,6 +15,7 @@ public int MAJOR = 0; public int MINOR = 1; public int REVISION = 2; public int 
 var VersionInfoText = System.IO.File.ReadAllText(thisDir + "Src/VersionInfo.cs");
 var AssemblyFileVersionAttribute = Pluck(VersionInfoText, "AssemblyFileVersionAttribute(\"", "\")]");
 var CurrentAssemblyVersionAttribute = Pluck(VersionInfoText, "System.Reflection.AssemblyVersionAttribute(\"", "\")]");
+
 var AssemblyVersionAttribute = CurrentAssemblyVersionAttribute;
 var CurrentNugetVersion = VersionStringParts(AssemblyVersionAttribute, MAJOR, MINOR, REVISION);
 var NugetVersion = CurrentNugetVersion;
@@ -25,6 +26,8 @@ if (IncrementMinorVersion) {
 }
 
 Information("	  AssemblyVersionAttribute: {0}... Next: {1}", CurrentAssemblyVersionAttribute, AssemblyVersionAttribute);
+Information("	       CliVersionAttribute: {0}... Next: {1}", GetVersionInProjectFile(cliProjectFile), AssemblyVersionAttribute);
+Information("	      CoreVersionAttribute: {0}... Next: {1}", GetVersionInProjectFile(coreProjectFile), AssemblyVersionAttribute);
 Information("        		 Nuget version: {0}... Next: {1}", CurrentNugetVersion, NugetVersion);
 Information("AssemblyFileVersionAttribute : {0}", AssemblyFileVersionAttribute);
 
@@ -52,7 +55,11 @@ Task("SetVersion")
 [assembly: System.Reflection.AssemblyFileVersionAttribute(""{0}"")]
 [assembly: System.Reflection.AssemblyVersionAttribute(""{1}"")]
 ", AssemblyFileVersionAttribute, AssemblyVersionAttribute);
-		System.IO.File.WriteAllText(thisDir + "Src/VersionInfo.cs", VersionData);   
+		System.IO.File.WriteAllText(thisDir + "Src/VersionInfo.cs", VersionData);
+		UpdateVersionInProjectFile(cliProjectFile, AssemblyVersionAttribute);
+		UpdateVersionInProjectFile(coreProjectFile, AssemblyVersionAttribute);
+		    throw new Exception("DIE");        
+
 });
 
 Task("Restore-NuGet-Packages")
@@ -213,3 +220,24 @@ public string Pluck(string str, string leftString, string rightString)
 	}
 	return "";
 }
+
+
+public string GetVersionInProjectFile(string projectFileName) {
+	var _VersionInfoText = System.IO.File.ReadAllText(projectFileName);
+	var _AssemblyFileVersionAttribute = Pluck(_VersionInfoText, "<Version>", "</Version>");
+	return _AssemblyFileVersionAttribute;
+}
+
+public bool UpdateVersionInProjectFile(string projectFileName, string NewVersion)
+{
+	var _VersionInfoText = System.IO.File.ReadAllText(projectFileName);
+	var _AssemblyFileVersionAttribute = Pluck(_VersionInfoText, "<Version>", "</Version>");
+	var VersionPattern = "<Version>{0}</Version>";
+	var _AssemblyFileVersionAttributeTextOld = string.Format(VersionPattern, _AssemblyFileVersionAttribute);
+	var _AssemblyFileVersionAttributeTextNew = string.Format(VersionPattern, NewVersion);
+	var newText = _VersionInfoText.Replace(_AssemblyFileVersionAttributeTextOld, _AssemblyFileVersionAttributeTextNew);
+
+	System.IO.File.WriteAllText(projectFileName, newText);	
+	return true;
+}
+
