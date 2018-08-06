@@ -7,6 +7,8 @@ using HandlebarsDotNet;
 using EzDbSchema.Core.Interfaces;
 using EzDbCodeGen.Core.Extentions.Objects;
 using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbCodeGen.Core.Classes;
+using EzDbSchema.Core.Objects;
 
 namespace EzDbCodeGen.Core
 {
@@ -204,6 +206,33 @@ namespace EzDbCodeGen.Core
                     
             });
 
+            Handlebars.RegisterHelper("isRelationshipTypeOf", (writer, options, context, arguments) =>
+            {
+                var PROC_NAME = "Handlebars.RegisterHelper('isRelationshipTypeOf')";
+                var ErrorList = new List<string>();
+                if (arguments.Length != 1) ErrorList.Add("Wrong number of arguments. ");
+                if (arguments[0] == null || arguments[0].GetType().Name == "UndefinedBindingResult")
+                    ErrorList.Add("args[0] is undefined and should be one of OneToMany, ZeroOrOneToMany, ManyToOne, ManyToZeroOrOne, OneToOne");
+
+                var relationshipType = arguments.AsString(1);
+                var relationship = (IRelationship)context;
+
+                var isType = false;
+                if (relationshipType.ToLower().Equals("onetoone")) isType = (relationship.MultiplicityType == RelationshipMultiplicityType.OneToOne);
+                if (relationshipType.ToLower().Equals("onetomany")) isType = (relationship.MultiplicityType == RelationshipMultiplicityType.OneToMany);
+                if (relationshipType.ToLower().Equals("zerooronetomany")) isType = ((relationship.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany) ||
+                                                                                    (relationship.MultiplicityType == RelationshipMultiplicityType.OneToMany));
+                if (relationshipType.ToLower().Equals("manytoone")) isType = (relationship.MultiplicityType == RelationshipMultiplicityType.ManyToOne);
+                if (relationshipType.ToLower().Equals("manytozeroorone")) isType = ((relationship.MultiplicityType == RelationshipMultiplicityType.ManyToZeroOrOne) ||
+                                                                                    (relationship.MultiplicityType == RelationshipMultiplicityType.ManyToOne));
+
+                if (isType)
+                    options.Template(writer, (object)context);
+                else
+                    options.Inverse(writer, (object)context);
+
+                if (ErrorList.Count > 0) writer.Write(string.Format("{0} Errors: {1}", PROC_NAME, string.Join("", ErrorList.ToList())));
+            });
             Handlebars.RegisterHelper("ifPropertyCustomAttributeCond", (writer, options, context, arguments) =>
             {
                 var PROC_NAME = "Handlebars.RegisterHelper('ifPropertyCustomAttributeCond')";

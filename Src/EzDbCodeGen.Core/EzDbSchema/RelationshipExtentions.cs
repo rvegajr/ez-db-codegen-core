@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbSchema.Core.Enums;
 using EzDbSchema.Core.Interfaces;
 using EzDbSchema.Core.Objects;
 
@@ -9,6 +10,27 @@ namespace EzDbCodeGen.Core
     public class RelationshipGroup :  Dictionary<string, IRelationshipList>
     {
         public IDatabase Database { get; set; }
+        public int CountItems(string searchFor)
+        {
+            return CountItems(RelationSearchField.ToTableName, searchFor);
+        }
+
+        public int CountItems(RelationSearchField searchField, string searchFor)
+        {
+            var count = 0;
+            foreach (IRelationshipList list in this.Values) {
+                var relGroupSummary = list.AsSummary();
+                if ((searchField == RelationSearchField.ToTableName) && (relGroupSummary.ToTableName == searchFor)) count++;
+                else if (searchField == RelationSearchField.ToColumnName) foreach (var s in relGroupSummary.ToColumnName) { if (s == searchFor) count++; }
+                else if (searchField == RelationSearchField.ToFieldName) foreach (var s in relGroupSummary.ToFieldName) { if (s == searchFor) count++; }
+                else if ((searchField == RelationSearchField.FromTableName) && (relGroupSummary.FromTableName == searchFor)) count++;
+                else if (searchField == RelationSearchField.FromFieldName) foreach (var s in relGroupSummary.FromFieldName) { if (s == searchFor) count++; }
+                else if (searchField == RelationSearchField.FromColumnName) foreach (var s in relGroupSummary.FromColumnName) { if (s == searchFor) count++; }
+            }
+            return count;
+        }
+
+
     }
 
     public class RelationshipSummary 
@@ -87,6 +109,21 @@ namespace EzDbCodeGen.Core
                 nameList += (nameList.Length > 0 ? ", " : "") + rel.Name;
             }
             return nameList;
+        }
+
+        public static IRelationshipList FindItems(this IRelationshipList This, RelationSearchField searchField, string searchFor)
+        {
+            var list = new RelationshipList();
+            foreach (var item in This)
+            {
+                if ((searchField == RelationSearchField.ToTableName) && (item.ToTableName == searchFor)) list.Add(item);
+                else if ((searchField == RelationSearchField.ToColumnName) && (item.ToColumnName == searchFor)) list.Add(item);
+                else if ((searchField == RelationSearchField.ToFieldName) && (item.ToFieldName == searchFor)) list.Add(item);
+                else if ((searchField == RelationSearchField.FromTableName) && (item.FromTableName == searchFor)) list.Add(item);
+                else if ((searchField == RelationSearchField.FromFieldName) && (item.FromFieldName == searchFor)) list.Add(item);
+                else if ((searchField == RelationSearchField.FromColumnName) && (item.FromColumnName == searchFor)) list.Add(item);
+            }
+            return list;
         }
 
         /// <summary>

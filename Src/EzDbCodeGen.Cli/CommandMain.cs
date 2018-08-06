@@ -166,23 +166,7 @@ namespace EzDbCodeGen.Cli
                         CompareTo.VerboseMessages = AppSettings.Instance.VerboseMessages;
                         returnCode = CodeGen.ProcessTemplate(TemplateFileNameOrPath, Source, CompareTo, OutputPath);
                     }
-                    /*
-                    if ((projectFileToModifyOption.HasValue()) && (returnCode.Result == ReturnCode.OkAddDels) )
-                    {
-                        var FileActionsOffset = new Dictionary<string, TemplateFileAction>();
-                        foreach( var fileWithFileAction in CodeGen.FileActions)
-                        {
-                            var fileOffset = (new Uri(projectFileToModifyOption.Value()))
-                                .MakeRelativeUri(new Uri(fileWithFileAction.Key))
-                                .ToString()
-                                .Replace('/', Path.DirectorySeparatorChar);
-                            FileActionsOffset.Add(fileOffset, fileWithFileAction.Value);
-                        }
 
-                        //var resolved
-                        var ret = (new ProjectHelpers()).ModifyClassPath(projectFileToModifyOption.Value(), FileActionsOffset);
-                    }
-                    */
                     Console.WriteLine("Render of template " + templateFileNameOrDirectoryOption.Value() + " Completed!");
                     Environment.ExitCode = (int)returnCode.Result;
                     Environment.Exit(Environment.ExitCode);
