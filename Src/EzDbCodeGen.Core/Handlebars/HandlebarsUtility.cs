@@ -60,6 +60,7 @@ namespace EzDbCodeGen.Core
                     writer.WriteSafeString(parameters[0].ToSafeString().ToNetType(isNullable));
                 }
             });
+
             Handlebars.RegisterHelper("ToCodeFriendly", (writer, context, parameters) => {
                 if (parameters.Count() > 0)
                 {
@@ -214,17 +215,22 @@ namespace EzDbCodeGen.Core
                 if (arguments[0] == null || arguments[0].GetType().Name == "UndefinedBindingResult")
                     ErrorList.Add("args[0] is undefined and should be one of OneToMany, ZeroOrOneToMany, ManyToOne, ManyToZeroOrOne, OneToOne");
 
-                var relationshipType = arguments.AsString(1);
-                var relationship = (IRelationship)context;
+                var relationshipType = arguments.AsString(0);
+                var multiplicityType = RelationshipMultiplicityType.Unknown;
+                var contextObject = (Object)context;
+                if (contextObject.GetType().Name=="Relationship")
+                    multiplicityType = ((IRelationship)context).MultiplicityType;
+                else if (contextObject.GetType().Name == "RelationshipList")
+                    multiplicityType = ((IRelationshipList)context).AsSummary().MultiplicityType;
 
                 var isType = false;
-                if (relationshipType.ToLower().Equals("onetoone")) isType = (relationship.MultiplicityType == RelationshipMultiplicityType.OneToOne);
-                if (relationshipType.ToLower().Equals("onetomany")) isType = (relationship.MultiplicityType == RelationshipMultiplicityType.OneToMany);
-                if (relationshipType.ToLower().Equals("zerooronetomany")) isType = ((relationship.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany) ||
-                                                                                    (relationship.MultiplicityType == RelationshipMultiplicityType.OneToMany));
-                if (relationshipType.ToLower().Equals("manytoone")) isType = (relationship.MultiplicityType == RelationshipMultiplicityType.ManyToOne);
-                if (relationshipType.ToLower().Equals("manytozeroorone")) isType = ((relationship.MultiplicityType == RelationshipMultiplicityType.ManyToZeroOrOne) ||
-                                                                                    (relationship.MultiplicityType == RelationshipMultiplicityType.ManyToOne));
+                if (relationshipType.ToLower().Equals("onetoone")) isType = (multiplicityType == RelationshipMultiplicityType.OneToOne);
+                if (relationshipType.ToLower().Equals("onetomany")) isType = (multiplicityType == RelationshipMultiplicityType.OneToMany);
+                if (relationshipType.ToLower().Equals("zerooronetomany")) isType = ((multiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany) ||
+                                                                                    (multiplicityType == RelationshipMultiplicityType.OneToMany));
+                if (relationshipType.ToLower().Equals("manytoone")) isType = (multiplicityType == RelationshipMultiplicityType.ManyToOne);
+                if (relationshipType.ToLower().Equals("manytozeroorone")) isType = ((multiplicityType == RelationshipMultiplicityType.ManyToZeroOrOne) ||
+                                                                                    (multiplicityType == RelationshipMultiplicityType.ManyToOne));
 
                 if (isType)
                     options.Template(writer, (object)context);
@@ -233,6 +239,63 @@ namespace EzDbCodeGen.Core
 
                 if (ErrorList.Count > 0) writer.Write(string.Format("{0} Errors: {1}", PROC_NAME, string.Join("", ErrorList.ToList())));
             });
+
+
+            //entity.Parent.Entities[relGroupSummary.ToTableName].Alias
+            Handlebars.RegisterHelper("ToTargetEntityAlias", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('ToTargetEntityAlias')";
+                var ErrorList = new List<string>();
+                var contextObject = (Object)context;
+                var TargetTableName = "";
+
+                if (contextObject.GetType().Name == "Relationship")
+                {
+                    var relationship = ((IRelationship)context);
+                    writer.WriteSafeString(relationship.Parent.Parent.Entities[relationship.ToTableName].Alias);
+
+                }
+                else if (contextObject.GetType().Name == "RelationshipList")
+                {
+                    var relationshipListSummary = ((IRelationshipList)context).AsSummary();
+                    writer.WriteSafeString(relationshipListSummary.Entity.Parent.Entities[relationshipListSummary.ToTableName].Alias);
+                }
+                else
+                {
+                    ErrorList.Add(string.Format("Cannot handle class of type", contextObject.GetType().Name));
+                }
+                if (ErrorList.Count > 0) writer.Write(string.Format("{0} Errors: {1}", PROC_NAME, string.Join("", ErrorList.ToList())));
+            });
+
+            Handlebars.RegisterHelper("ToUniqueColumnName", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('ToUniqueColumnName')";
+                var ErrorList = new List<string>();
+                var isPlural = ((parameters.Count() >= 1) && (parameters[0].ToString().ToLower().Equals("plural")));
+                if (parameters.Count() >= 1)
+                {
+                    var contextObject = (Object)context;
+                    if (contextObject.GetType().Name == "Relationship")
+                    {
+                        var relationship = ((IRelationship)context);
+                        if (isPlural)
+                            writer.WriteSafeString(relationship.ToUniqueColumnName().ToPlural());
+                        else
+                            writer.WriteSafeString(relationship.ToUniqueColumnName());
+                    }
+                    else if (contextObject.GetType().Name == "RelationshipList")
+                    {
+                        var relationshipListSummary = ((IRelationshipList)context).AsSummary();
+                        if (isPlural)
+                            writer.WriteSafeString(relationshipListSummary.ToUniqueColumnName().ToPlural());
+                        else
+                            writer.WriteSafeString(relationshipListSummary.ToUniqueColumnName());
+                    } else
+                    {
+                        ErrorList.Add(string.Format("Cannot handle class of type", contextObject.GetType().Name));
+                    }
+                }
+                if (ErrorList.Count > 0) writer.Write(string.Format("{0} Errors: {1}", PROC_NAME, string.Join("", ErrorList.ToList())));
+            });
+
             Handlebars.RegisterHelper("ifPropertyCustomAttributeCond", (writer, options, context, arguments) =>
             {
                 var PROC_NAME = "Handlebars.RegisterHelper('ifPropertyCustomAttributeCond')";

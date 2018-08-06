@@ -141,15 +141,16 @@ namespace EzDbCodeGen.Core
             });
 
             Handlebars.RegisterHelper("POCOModelFKProperties", (writer, context, parameters) => {
-                var PROC_NAME = "Handlebars.RegisterHelper('POCOModelFKProperties')";
+                var entity = (IEntity)context;
+                var PROC_NAME = string.Format("Handlebars.RegisterHelper('POCOModelFKProperties', Entity='{0}')", entity.Name);
+               
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
                     List<string> PreviousOneToManyFields = new List<string>();
                     PreviousOneToManyFields.Clear();
 
-                    if (entity.Name.Contains("Collateral"))
+                    if (entity.Name.Contains("tbl_Parcel"))
                     {
                         entity.Name += "";
                     }
