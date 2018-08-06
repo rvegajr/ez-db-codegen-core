@@ -194,8 +194,8 @@ namespace EzDbCodeGen.Core
         /// <value>
         /// The file actions indexed by file name and a File Action
         /// </value>
-        public Dictionary<string, TemplateFileAction> FileActions { get { return fileActions; } }
-        private Dictionary<string, TemplateFileAction> fileActions = new Dictionary<string, TemplateFileAction>();
+        public Dictionary<string, TemplateFileAction> FileActions { get; } = new Dictionary<string, TemplateFileAction>();
+
         /// <summary>
         /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings.
         /// </summary>
@@ -206,6 +206,7 @@ namespace EzDbCodeGen.Core
         /// <param name="outputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  if there is a file specifier,  then it will write to the file resolved between the FILE tags</param>
         protected ReturnCodes ProcessTemplate(FileName _templateFileName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
 		{
+            FileActions.Clear();
             Configuration EzDbConfig = null;
             this.OutputPath = outputPath;
             string templateFileName = _templateFileName;
@@ -346,9 +347,9 @@ namespace EzDbCodeGen.Core
 
                     CurrentTask = string.Format("Parsing files");
                     /* First, lets get all the files currently in the path */
-                    fileActions.Clear();
+                    FileActions.Clear();
 					string[] FilesinOutputDirectory = Directory.GetFiles(this.OutputPath);
-					foreach (var fileName in FilesinOutputDirectory) fileActions.Add(fileName, TemplateFileAction.Unknown);
+					foreach (var fileName in FilesinOutputDirectory) FileActions.Add(fileName, TemplateFileAction.Unknown);
 
 					var FileListAndContents = new EntityFileDictionary();
 					string[] parseFiles = result.Split(new[] { CodeGenBase.OP_FILE }, StringSplitOptions.RemoveEmptyEntries);
@@ -388,7 +389,7 @@ namespace EzDbCodeGen.Core
 					if (EffectivePathOption.Equals(TemplatePathOption.Clear))
 					{
 						StatusMessage("Path Option is set to 'Clear'");
-						foreach (var fileName in fileActions.Keys.ToList()) fileActions[fileName] = TemplateFileAction.Delete;
+						foreach (var fileName in FileActions.Keys.ToList()) FileActions[fileName] = TemplateFileAction.Delete;
 					}
 					else if (EffectivePathOption.Equals(TemplatePathOption.SyncDiff))
 					{
@@ -403,30 +404,30 @@ namespace EzDbCodeGen.Core
 								FileName fileName = "";
 								if (schemaDiff.FileAction == TemplateFileAction.Add)
 								{
-									if (fileActions.ContainsKey(fileName))
+									if (FileActions.ContainsKey(fileName))
 									{
                                         /* this should not happen;  but if it does */
-                                        fileActions[fileName] = TemplateFileAction.Update;
+                                        FileActions[fileName] = TemplateFileAction.Update;
 									}
 									else
-                                        fileActions.Add(fileName, TemplateFileAction.Add);
+                                        FileActions.Add(fileName, TemplateFileAction.Add);
 								}
 								else if (schemaDiff.FileAction == TemplateFileAction.Update)
 								{
-									if (fileActions.ContainsKey(fileName))
-                                        fileActions[fileName] = TemplateFileAction.Update;
+									if (FileActions.ContainsKey(fileName))
+                                        FileActions[fileName] = TemplateFileAction.Update;
 									else
 									{
-                                        fileActions.Add(fileName, TemplateFileAction.Add);
+                                        FileActions.Add(fileName, TemplateFileAction.Add);
 									}
 								}
 								else if (schemaDiff.FileAction == TemplateFileAction.Delete)
 								{
-									if (fileActions.ContainsKey(fileName))
-                                        fileActions[fileName] = TemplateFileAction.Delete;
+									if (FileActions.ContainsKey(fileName))
+                                        FileActions[fileName] = TemplateFileAction.Delete;
 									else
 									{
-                                        fileActions.Add(fileName, TemplateFileAction.Delete);
+                                        FileActions.Add(fileName, TemplateFileAction.Delete);
 									}
 								}
 							}
@@ -441,28 +442,28 @@ namespace EzDbCodeGen.Core
 					//Lets now make sure all of those files that should be rendered are there
 					foreach (string fileName in FileListAndContents.ClonePrimaryKeys())
 					{
-						if ((fileActions.ContainsKey(fileName)))
+						if ((FileActions.ContainsKey(fileName)))
 						{
 							//if the file exists and it is slated to be deleted and if it was going to be a generated,  then mark it as an update
-							if (fileActions[fileName] == TemplateFileAction.Delete)
-                                fileActions[fileName] = TemplateFileAction.Update;
+							if (FileActions[fileName] == TemplateFileAction.Delete)
+                                FileActions[fileName] = TemplateFileAction.Update;
 							else
-                                fileActions[fileName] = TemplateFileAction.None;
+                                FileActions[fileName] = TemplateFileAction.None;
 						}
 						else
 						{
-                            fileActions.Add(fileName, TemplateFileAction.Add);
+                            FileActions.Add(fileName, TemplateFileAction.Add);
 						}
 					}
 
 					CurrentTask = string.Format("Performing file actions");
 					var Deletes = 0; var Updates = 0; var Adds = 0;
 					/* Process File Actions based on which Template File action*/
-					foreach (string fileName in fileActions.Keys.ToList())
+					foreach (string fileName in FileActions.Keys.ToList())
 					{
-                        CurrentTask = string.Format("Performing file actions on {0} (Action={1})", fileName, fileActions[fileName]);
-                        if ((fileActions[fileName] == TemplateFileAction.Delete) ||
-							(fileActions[fileName] == TemplateFileAction.Unknown))
+                        CurrentTask = string.Format("Performing file actions on {0} (Action={1})", fileName, FileActions[fileName]);
+                        if ((FileActions[fileName] == TemplateFileAction.Delete) ||
+							(FileActions[fileName] == TemplateFileAction.Unknown))
 						{
 							if (File.Exists(fileName))
 							{
@@ -470,7 +471,7 @@ namespace EzDbCodeGen.Core
 								Deletes++;
 							}
 						}
-						else if (fileActions[fileName] == TemplateFileAction.Update)
+						else if (FileActions[fileName] == TemplateFileAction.Update)
 						{
 							//We do not need to update if the file contents are the same
 							if (!FileListAndContents[(FileName)fileName].IsEqualToFileContents(fileName))
@@ -480,7 +481,7 @@ namespace EzDbCodeGen.Core
 								File.WriteAllText(fileName, FileListAndContents[(FileName)fileName]);
 							}
 						}
-						else if (fileActions[fileName] == TemplateFileAction.Add)
+						else if (FileActions[fileName] == TemplateFileAction.Add)
 						{
 							Adds++;
 							File.WriteAllText(fileName, FileListAndContents[(FileName)fileName]);
