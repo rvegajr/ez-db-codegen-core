@@ -19,13 +19,20 @@ namespace EzDbCodeGen.Core
         {
             var count = 0;
             foreach (IRelationshipList list in this.Values) {
-                var relGroupSummary = list.AsSummary();
-                if ((searchField == RelationSearchField.ToTableName) && (relGroupSummary.ToTableName == searchFor)) count++;
-                else if (searchField == RelationSearchField.ToColumnName) foreach (var s in relGroupSummary.ToColumnName) { if (s == searchFor) count++; }
-                else if (searchField == RelationSearchField.ToFieldName) foreach (var s in relGroupSummary.ToFieldName) { if (s == searchFor) count++; }
-                else if ((searchField == RelationSearchField.FromTableName) && (relGroupSummary.FromTableName == searchFor)) count++;
-                else if (searchField == RelationSearchField.FromFieldName) foreach (var s in relGroupSummary.FromFieldName) { if (s == searchFor) count++; }
-                else if (searchField == RelationSearchField.FromColumnName) foreach (var s in relGroupSummary.FromColumnName) { if (s == searchFor) count++; }
+                try
+                {
+                    var relGroupSummary = list.AsSummary();
+                    if ((searchField == RelationSearchField.ToTableName) && (relGroupSummary.ToTableName == searchFor)) count++;
+                    else if (searchField == RelationSearchField.ToColumnName) foreach (var s in relGroupSummary.ToColumnName) { if (s == searchFor) count++; }
+                    else if (searchField == RelationSearchField.ToFieldName) foreach (var s in relGroupSummary.ToFieldName) { if (s == searchFor) count++; }
+                    else if ((searchField == RelationSearchField.FromTableName) && (relGroupSummary.FromTableName == searchFor)) count++;
+                    else if (searchField == RelationSearchField.FromFieldName) foreach (var s in relGroupSummary.FromFieldName) { if (s == searchFor) count++; }
+                    else if (searchField == RelationSearchField.FromColumnName) foreach (var s in relGroupSummary.FromColumnName) { if (s == searchFor) count++; }
+                }
+                catch (Exception)
+                {
+                    throw new Exception(string.Format("Cannot work with relationship {0}", list.AsNameAsCSV()));
+                }
             }
             return count;
         }
@@ -44,6 +51,7 @@ namespace EzDbCodeGen.Core
         public string Name { get; set; } = "";
         public string ToTableName { get; set; } = "";
         public string PrimaryTableName { get; set; } = "";
+        public RelationshipMultiplicityType MultiplicityType { get; set; } = RelationshipMultiplicityType.Unknown;
 
     }
     public static class EzDbSchemaRelationshipExtentions
@@ -161,28 +169,57 @@ namespace EzDbCodeGen.Core
             {
                 foreach (var relationship in relationshipList)
                 {
-                    i++;
-                    if (i == 1)
+                    try
                     {
-                        ret.Entity = relationship.Parent;
-                        ret.FromTableName = relationship.FromTableName;
-                        ret.Name = relationship.Name;
-                        ret.ToTableName = relationship.ToTableName;
-                        ret.PrimaryTableName = relationship.PrimaryTableName;
+                        i++;
+                        if (i == 1)
+                        {
+                            ret.Entity = relationship.Parent;
+                            ret.FromTableName = relationship.FromTableName;
+                            ret.Name = relationship.Name;
+                            ret.ToTableName = relationship.ToTableName;
+                            ret.PrimaryTableName = relationship.PrimaryTableName;
+                            ret.MultiplicityType = relationship.MultiplicityType;
+                        }
+                        else
+                        {
+                            var isValidMultiplicty = (
+                                (
+                                    ((ret.MultiplicityType == RelationshipMultiplicityType.ManyToZeroOrOne) || (ret.MultiplicityType == RelationshipMultiplicityType.ManyToOne)) &&
+                                    ((relationship.MultiplicityType == RelationshipMultiplicityType.ManyToOne) || (relationship.MultiplicityType == RelationshipMultiplicityType.ManyToZeroOrOne))
+                                )
+                                || 
+                                (
+                                    ((ret.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany) || (ret.MultiplicityType == RelationshipMultiplicityType.OneToMany)) &&
+                                    ((relationship.MultiplicityType == RelationshipMultiplicityType.OneToMany) || (relationship.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany))
+                                )
+                            );
+                            if (ret.MultiplicityType != relationship.MultiplicityType)
+                            {
+                                Console.WriteLine("Multiplicity mismatch but valid warning");
+                            }
+                            if (!(
+                            (ret.FromTableName == relationship.FromTableName) &&
+                            (ret.Name == relationship.Name) &&
+                            (ret.ToTableName == relationship.ToTableName) &&
+                            (isValidMultiplicty) &&
+                            (ret.PrimaryTableName == relationship.PrimaryTableName)))
+                                throw new Exception(string.Format(@"Relationship List is not grouped! 
+ FromTableName:{0}={1},  Name:{2}={3},  
+ ToTableName:{4}={5}, MultiplicityType{6}={7},
+ PrimaryTableName:{8}={9}", ret.FromTableName, relationship.FromTableName, ret.Name, relationship.Name,
+                                            ret.ToTableName, relationship.ToTableName, ret.MultiplicityType.ToString(), relationship.MultiplicityType.ToString(), ret.PrimaryTableName, relationship.PrimaryTableName));
+                        }
+                        ret.ToColumnName.Add(relationship.ToColumnName);
+                        ret.ToFieldName.Add(relationship.ToFieldName);
+                        ret.FromColumnName.Add(relationship.FromColumnName);
+                        ret.FromFieldName.Add(relationship.FromFieldName);
                     }
-                    else
+                    catch (Exception ex)
                     {
-                        if (!(
-                        (ret.FromTableName == relationship.FromTableName) &&
-                        (ret.Name == relationship.Name) &&
-                        (ret.ToTableName == relationship.ToTableName) &&
-                        (ret.PrimaryTableName == relationship.PrimaryTableName)))
-                            throw new Exception("Relationship List is not grouped!");
+                        throw new Exception(string.Format("Relationship {0} error!", relationship.Name), ex);
                     }
-                    ret.ToColumnName.Add(relationship.ToColumnName);
-                    ret.ToFieldName.Add(relationship.ToFieldName);
-                    ret.FromColumnName.Add(relationship.FromColumnName);
-                    ret.FromFieldName.Add(relationship.FromFieldName);
+
                 }
             }
             return ret;
