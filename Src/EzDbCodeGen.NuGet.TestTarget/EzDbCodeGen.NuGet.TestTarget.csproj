@@ -6,8 +6,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\Ef6ContextTemplate.hbs" Link="EzDbCodeGen\Templates\Ef6ContextTemplate.hbs" />
-    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\Ef6ModelsTemplate.hbs" Link="EzDbCodeGen\Templates\Ef6ModelsTemplate.hbs" />
+    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\Ef6ContextTemplateAnnotations.hbs" Link="EzDbCodeGen\Templates\Ef6ContextTemplateAnnotations.hbs" />
+    <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\Ef6ModelsTemplateAnnotations.hbs" Link="EzDbCodeGen\Templates\Ef6ModelsTemplateAnnotations.hbs" />
     <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\ODataRegistrationsTemplate.hbs" Link="EzDbCodeGen\Templates\ODataRegistrationsTemplate.hbs" />
     <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\UnitTestsTemplate.hbs" Link="EzDbCodeGen\Templates\UnitTestsTemplate.hbs" />
     <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\UnityRegistrationsTemplate.hbs" Link="EzDbCodeGen\Templates\UnityRegistrationsTemplate.hbs" />

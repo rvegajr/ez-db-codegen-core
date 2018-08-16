@@ -39,7 +39,7 @@ namespace EzDbCodeGen.Core
                     var entityName = entity.Name;
 
                     List<string> PreviousManyToOneFields = new List<string>();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipType.ManyToZeroOrOne);
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne);
                     foreach (Relationship relationship in RelationshipsManyToOne)
                     {
                         if (!PreviousManyToOneFields.Contains(relationship.ToTableName))
@@ -48,7 +48,7 @@ namespace EzDbCodeGen.Core
                             PreviousManyToOneFields.Add(relationship.ToTableName);
                         }
                     }
-                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany);
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
                     foreach (Relationship relationship in RelationshipsOneToMany)
                     {
                         if (!PreviousManyToOneFields.Contains(relationship.ToTableName))
@@ -57,7 +57,7 @@ namespace EzDbCodeGen.Core
                             PreviousManyToOneFields.Add(relationship.ToTableName);
                         }
                     }
-                    var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipType.OneToOne);
+                    var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.OneToOne);
                     foreach (Relationship relationship in RelationshipsOneToOne)
                     {
                         if (!PreviousManyToOneFields.Contains(relationship.ToTableName))
@@ -84,14 +84,14 @@ namespace EzDbCodeGen.Core
                     var entityName = entity.Name;
 
                     List<string> PreviousManyToOneFields = new List<string>();
-                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany);
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
                     foreach (Relationship relationship in RelationshipsOneToMany.ToList())
                     {
                         writer.WriteSafeString(string.Format("\n{0}{1}?: Array<{2}> | null;", prefix, (relationship.ToTableName + "_" + relationship.ToColumnName), relationship.ToTableName.ToSingular()));
                     }
 
                     PreviousManyToOneFields.Clear();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipType.ManyToZeroOrOne);
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne);
 					foreach (Relationship relationship in RelationshipsManyToOne.ToList())
                     {
 
@@ -103,7 +103,7 @@ namespace EzDbCodeGen.Core
                     }
 
                     PreviousManyToOneFields.Clear();
-                    var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipType.OneToOne );
+                    var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.OneToOne );
 					foreach (Relationship relationship in RelationshipsOneToOne.ToList())
                     {
 
@@ -130,7 +130,7 @@ namespace EzDbCodeGen.Core
                     var entityName = entity.Name;
 
                     List<string> PreviousFieldCheck = new List<string>();
-                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany);
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
 					foreach (Relationship relationship in RelationshipsOneToMany.ToList())
                     {
                         writer.WriteSafeString(string.Format("\n{0}this.{1} = Helpers.createClassArray({2}, item.{3});",
@@ -143,7 +143,7 @@ namespace EzDbCodeGen.Core
                     }
 
                     PreviousFieldCheck.Clear();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipType.ManyToZeroOrOne);
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne);
 					foreach (Relationship relationship in RelationshipsManyToOne.ToList())
                     {
 
@@ -155,7 +155,7 @@ namespace EzDbCodeGen.Core
                     }
 
                     PreviousFieldCheck.Clear();
-                    var RelationshipsOneToOne2 = entity.Relationships.Fetch(RelationshipType.OneToOne);
+                    var RelationshipsOneToOne2 = entity.Relationships.Fetch(RelationshipMultiplicityType.OneToOne);
 					foreach (Relationship relationship in RelationshipsOneToOne2.ToList())
                     {
 
@@ -183,7 +183,7 @@ namespace EzDbCodeGen.Core
                     var entityName = entity.Name;
 
                     List<string> PreviousManyToOneFields = new List<string>();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipType.ManyToZeroOrOne);
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne);
 
                     writer.WriteSafeString(string.Format("\n{0}// MANY TO ZERO OR ONE", prefix));
                     foreach (Relationship relationship in RelationshipsManyToOne)
@@ -196,7 +196,7 @@ namespace EzDbCodeGen.Core
                     }
 
                     writer.WriteSafeString(string.Format("\n{0}// ZERO OR ONE TO MANY", prefix));
-                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany);
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
                     foreach (Relationship relationship in RelationshipsOneToMany)
                     {
                         if (!PreviousManyToOneFields.Contains(relationship.ToTableName))
@@ -207,7 +207,7 @@ namespace EzDbCodeGen.Core
                     }
                     writer.WriteSafeString(string.Format("\n{0}// ONE TO ZERO OR ONE", prefix));
 
-                    var RelationshipsOneOne = entity.Relationships.Fetch(RelationshipType.OneToOne);
+                    var RelationshipsOneOne = entity.Relationships.Fetch(RelationshipMultiplicityType.OneToOne);
                     foreach (Relationship relationship in RelationshipsOneOne)
                     {
                         if (!PreviousManyToOneFields.Contains(relationship.ToTableName))
@@ -233,7 +233,7 @@ namespace EzDbCodeGen.Core
                     var entity = (IEntity)context;
                     var entityName = entity.Name;
 
-                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany);
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
                     List<string> PreviousFieldCheck = new List<string>();
                     PreviousFieldCheck.Clear();
                     foreach (Relationship relationship in RelationshipsOneToMany)
@@ -244,7 +244,7 @@ namespace EzDbCodeGen.Core
 
 
                     PreviousFieldCheck.Clear();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipType.ManyToZeroOrOne);
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne);
                     foreach (Relationship relationship in RelationshipsManyToOne )
                     {
 
@@ -256,7 +256,7 @@ namespace EzDbCodeGen.Core
                     }
 
                     List<string> PreviousOneToOneFields2 = new List<string>();
-                    var RelationshipsOneToOne2 = entity.Relationships.Fetch(RelationshipType.OneToOne);
+                    var RelationshipsOneToOne2 = entity.Relationships.Fetch(RelationshipMultiplicityType.OneToOne);
                     foreach (Relationship relationship in RelationshipsOneToOne2 )
                     {
 

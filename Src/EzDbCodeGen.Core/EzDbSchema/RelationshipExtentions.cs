@@ -7,6 +7,7 @@ using EzDbSchema.Core.Objects;
 
 namespace EzDbCodeGen.Core
 {
+
     public class RelationshipGroup :  Dictionary<string, IRelationshipList>
     {
         public IDatabase Database { get; set; }
@@ -47,11 +48,25 @@ namespace EzDbCodeGen.Core
         public List<string> FromColumnName { get; set; } = new List<string>();
         public List<string> ToFieldName { get; set; } = new List<string>();
         public List<string> ToColumnName { get; set; } = new List<string>();
+        public List<string> Types { get; set; } = new List<string>();
+        public List<RelationshipMultiplicityType> MultiplicityTypes { get; set; } = new List<RelationshipMultiplicityType>();
         public string FromTableName { get; set; } = "";
         public string Name { get; set; } = "";
         public string ToTableName { get; set; } = "";
         public string PrimaryTableName { get; set; } = "";
         public RelationshipMultiplicityType MultiplicityType { get; set; } = RelationshipMultiplicityType.Unknown;
+        public string Type { get; set; } = "";
+        /// <summary>
+        /// Gets or sets a value indicating there is a multiplicity type warning.  This means that of the relationships that particpate, they have the following patter:
+        ///     ((ret.MultiplicityType == RelationshipMultiplicityType.ManyToZeroOrOne) || (ret.MultiplicityType == RelationshipMultiplicityType.ManyToOne)) &&
+        ///      ((relationship.MultiplicityType == RelationshipMultiplicityType.ManyToOne) || (relationship.MultiplicityType == RelationshipMultiplicityType.ManyToZeroOrOne))
+        ///   OR ((ret.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany) || (ret.MultiplicityType == RelationshipMultiplicityType.OneToMany)) &&
+        ///      ((relationship.MultiplicityType == RelationshipMultiplicityType.OneToMany) || (relationship.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany))
+        /// </summary>
+        /// <value>
+        ///   <c>true</c> if [multiplicity type warning]; otherwise, <c>false</c>.
+        /// </value>
+        public bool MultiplicityTypeWarning { get; set; } = false;
 
     }
     public static class EzDbSchemaRelationshipExtentions
@@ -156,6 +171,106 @@ namespace EzDbCodeGen.Core
             return ret;
         }
 
+        public static string AsString( this RelationshipMultiplicityType multiplicityType)
+        {
+            switch (multiplicityType)
+            {
+                case RelationshipMultiplicityType.ManyToOne: return "*->1";
+                case RelationshipMultiplicityType.ManyToZeroOrOne: return "*->0|1";
+                case RelationshipMultiplicityType.OneToMany: return "1->*";
+                case RelationshipMultiplicityType.OneToOne: return "1->1";
+                case RelationshipMultiplicityType.OneToZeroOrOne: return "1->0|1";
+                case RelationshipMultiplicityType.Unknown: return "??";
+                case RelationshipMultiplicityType.ZeroOrOneToMany: return "0|1->*";
+                case RelationshipMultiplicityType.ZeroOrOneToOne: return "0|1->1";
+            }
+            return "??!";
+        }
+
+
+        public static bool EndsAsMany(this RelationshipMultiplicityType multiplicityType)
+        {
+            switch (multiplicityType)
+            {
+                case RelationshipMultiplicityType.OneToMany:
+                case RelationshipMultiplicityType.ZeroOrOneToMany:
+                    return true;
+               /*
+                case RelationshipMultiplicityType.ManyToOne
+                case RelationshipMultiplicityType.ManyToZeroOrOne
+                case RelationshipMultiplicityType.OneToOne
+                case RelationshipMultiplicityType.OneToZeroOrOne
+                case RelationshipMultiplicityType.ZeroOrOneToOne
+                */
+            }
+            return false;
+        }
+
+        public static bool BeginsAsMany(this RelationshipMultiplicityType multiplicityType)
+        {
+            switch (multiplicityType)
+            {
+                case RelationshipMultiplicityType.ManyToOne: return true;
+                case RelationshipMultiplicityType.ManyToZeroOrOne: return true;
+            }
+            return false;
+        }
+
+        public static bool BeginsAsOne(this RelationshipMultiplicityType multiplicityType)
+        {
+            switch (multiplicityType)
+            {
+                case RelationshipMultiplicityType.OneToMany: return true;
+                case RelationshipMultiplicityType.OneToOne: return true;
+                case RelationshipMultiplicityType.OneToZeroOrOne: return true;
+            }
+            return false;
+        }
+        public static bool BeginsAsZeroOrOne(this RelationshipMultiplicityType multiplicityType)
+        {
+            switch (multiplicityType)
+            {
+                case RelationshipMultiplicityType.OneToMany: return true;
+                case RelationshipMultiplicityType.OneToOne: return true;
+                case RelationshipMultiplicityType.OneToZeroOrOne: return true;
+                case RelationshipMultiplicityType.ZeroOrOneToMany: return false;
+                case RelationshipMultiplicityType.ZeroOrOneToOne: return true;
+            }
+            return false;
+        }
+
+        public static bool EndsAsOne(this RelationshipMultiplicityType multiplicityType)
+        {
+            switch (multiplicityType)
+            {
+                case RelationshipMultiplicityType.OneToMany: return false;
+                case RelationshipMultiplicityType.ZeroOrOneToMany: return false;
+                case RelationshipMultiplicityType.ManyToOne: return true;
+                case RelationshipMultiplicityType.ManyToZeroOrOne: return false;
+                case RelationshipMultiplicityType.OneToOne: return true;
+                case RelationshipMultiplicityType.OneToZeroOrOne: return false;
+                case RelationshipMultiplicityType.Unknown: return false;
+                case RelationshipMultiplicityType.ZeroOrOneToOne: return true;
+            }
+            return false;
+        }
+
+        public static bool EndsAsZeroOrOne(this RelationshipMultiplicityType multiplicityType)
+        {
+            switch (multiplicityType)
+            {
+                case RelationshipMultiplicityType.OneToMany: return false;
+                case RelationshipMultiplicityType.ZeroOrOneToMany: return false;
+                case RelationshipMultiplicityType.ManyToOne: return true;
+                case RelationshipMultiplicityType.ManyToZeroOrOne: return true;
+                case RelationshipMultiplicityType.OneToOne: return true;
+                case RelationshipMultiplicityType.OneToZeroOrOne: return true;
+                case RelationshipMultiplicityType.Unknown: return false;
+                case RelationshipMultiplicityType.ZeroOrOneToOne: return true;
+            }
+            return false;
+        }
+
         /// <summary>
         /// Groups a list of relationships by Name 
         /// </summary>
@@ -180,6 +295,7 @@ namespace EzDbCodeGen.Core
                             ret.ToTableName = relationship.ToTableName;
                             ret.PrimaryTableName = relationship.PrimaryTableName;
                             ret.MultiplicityType = relationship.MultiplicityType;
+                            ret.Type = relationship.Type;
                         }
                         else
                         {
@@ -196,7 +312,11 @@ namespace EzDbCodeGen.Core
                             );
                             if (ret.MultiplicityType != relationship.MultiplicityType)
                             {
-                                Console.WriteLine("Multiplicity mismatch but valid warning");
+                                Console.WriteLine(string.Format(@"Multiplicity for FK {0} mismatched but are valid warning ({1} vs {2}): 
+ FromTableName:{3}, ToTableName:{4}, PrimaryTableName:{5}",
+                                relationship.Name, ret.MultiplicityType.ToString(), relationship.MultiplicityType.ToString(), relationship.FromTableName,
+                                            relationship.ToTableName, relationship.PrimaryTableName));
+                                ret.MultiplicityTypeWarning = true;
                             }
                             if (!(
                             (ret.FromTableName == relationship.FromTableName) &&
@@ -214,6 +334,8 @@ namespace EzDbCodeGen.Core
                         ret.ToFieldName.Add(relationship.ToFieldName);
                         ret.FromColumnName.Add(relationship.FromColumnName);
                         ret.FromFieldName.Add(relationship.FromFieldName);
+                        ret.MultiplicityTypes.Add(relationship.MultiplicityType);
+                        ret.Types.Add(relationship.Type);
                     }
                     catch (Exception ex)
                     {
