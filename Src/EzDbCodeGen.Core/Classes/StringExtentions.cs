@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using Newtonsoft.Json;
 using Pluralize.NET;
 
 //Thanks https://www.codeproject.com/tips/1081932/tosingular-toplural-string-extensions
@@ -184,7 +185,13 @@ namespace EzDbCodeGen.Core.Extentions.Strings
             return stringToConvert.Replace(" ", "");
         }
 
-
+        /// <summary>
+        /// Returns the .net data type from the SQL datatype
+        /// </summary>
+        /// <param name="sqlType">SQL DataType .</param>
+        /// <param name="isNullable">if set to <c>true</c> if you wish to return in the string that this is a nullable datatype</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentNullException">sqlType</exception>
         public static string ToNetType(this string sqlType, bool isNullable)
         {
             var ret = "";
@@ -608,6 +615,48 @@ namespace EzDbCodeGen.Core.Extentions.Strings
             {
                 throw;
             }
+        }
+
+        public static string StringMod(this string str, string CommaDelimitedInstructionList)
+        {
+            var instList = CommaDelimitedInstructionList.Split(',');
+            foreach(var inst in instList)
+            {
+                switch (inst.ToLower())
+                {
+                    case "singular":
+                    case "single":
+                        str = str.ToSingular();
+                        break;
+                    case "plural":
+                        str = str.ToPlural();
+                        break;
+                    case "lower":
+                        str = str.ToLower();
+                        break;
+                    case "upper":
+                        str = str.ToUpper();
+                        break;
+                }
+            }
+            return str;
+        }
+
+        /// <summary>
+        /// As formatted JSON
+        /// </summary>
+        /// <param name="jsonString"></param>
+        /// <returns></returns>
+        public static string AsJson( this string jsonString)
+        {
+            return JsonConvert.SerializeObject(
+                jsonString
+                , Newtonsoft.Json.Formatting.Indented
+                , new JsonSerializerSettings
+                {
+                    PreserveReferencesHandling = PreserveReferencesHandling.All,
+                    TypeNameHandling = TypeNameHandling.All
+                });
         }
     }
 }

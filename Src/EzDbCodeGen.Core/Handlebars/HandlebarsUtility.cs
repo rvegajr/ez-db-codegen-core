@@ -9,6 +9,10 @@ using EzDbCodeGen.Core.Extentions.Objects;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbCodeGen.Core.Classes;
 using EzDbSchema.Core.Objects;
+using Newtonsoft;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using EzDbSchema.Core.Enums;
 
 namespace EzDbCodeGen.Core
 {
@@ -21,6 +25,57 @@ namespace EzDbCodeGen.Core
     {
         public static void RegisterHelpers()
         {
+            Handlebars.RegisterHelper("ContextAsJson", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('ContextAsJson')";
+                IRelationship relationship;
+                IRelationshipList relationshipList;
+                RelationshipSummary relationshipListSummary;
+                var json = "";
+                try
+                {
+                    if (parameters.Count() > 0)
+                    {
+                        var entityStringContains = parameters.AsString(0);
+                        IEntity entity = null;
+                        var ErrorList = new List<string>();
+                        var contextObject = (Object)context;
+                        var TargetTableName = "";
+
+                        if (contextObject.GetType().Name == "Relationship")
+                        {
+                            relationship = ((IRelationship)context);
+                            entity = relationship.Parent;
+                            json = JsonConvert.SerializeObject((IRelationship)context, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
+                                    {PreserveReferencesHandling = PreserveReferencesHandling.All});
+                        }
+                        else if (contextObject.GetType().Name == "RelationshipList")
+                        {
+                            relationshipList = ((IRelationshipList)context);
+                            relationshipListSummary = relationshipList.AsSummary();
+                            entity = relationshipListSummary.Entity;
+                            json = JsonConvert.SerializeObject((IRelationshipList)context, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
+                                    { PreserveReferencesHandling = PreserveReferencesHandling.All});
+                        }
+                        else
+                        {
+                            entity = new Entity();
+                            entity.Name += "";
+                        }
+                        if (entity.Name.Contains(entityStringContains))
+                        {
+                            entity.Name += "";
+                        } else
+                        {
+                            json = ""; //clear it out so we do not write it
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
+                }
+            });
             Handlebars.RegisterHelper("Prefix", (writer, context, parameters) => {
                 if (parameters.Count() > 0)
                 {
@@ -46,6 +101,16 @@ namespace EzDbCodeGen.Core
                     writer.WriteSafeString(parameters[0].ToSafeString().ToSingular());
                 }
             });
+            Handlebars.RegisterHelper("Comma", (writer, context, parameters) => {
+                if (parameters.Count() > 0)
+                {
+                    if (parameters[0].AsInt(0) > 0)
+                    {
+                        writer.WriteSafeString(",");
+                    }
+                }
+            });
+
             Handlebars.RegisterHelper("ToPlural", (writer, context, parameters) => {
                 if (parameters.Count() > 0)
                 {
@@ -213,7 +278,7 @@ namespace EzDbCodeGen.Core
                 var ErrorList = new List<string>();
                 if (arguments.Length != 1) ErrorList.Add("Wrong number of arguments. ");
                 if (arguments[0] == null || arguments[0].GetType().Name == "UndefinedBindingResult")
-                    ErrorList.Add("args[0] is undefined and should be one of OneToMany, ZeroOrOneToMany, ManyToOne, ManyToZeroOrOne, OneToOne");
+                    ErrorList.Add("args[0] is undefined and should be one of OneToMany, ZeroOrOneToMany, ZeroOrOneToManyOnly, ManyToOne, ManyToZeroOrOne, ManyToZeroOrOneOnly, OneToOne, OneToZeroOrOne, OneToZeroOrOneOnly, ZeroOrOneToOne, ZeroOrOneToOneOnly");
 
                 var relationshipType = arguments.AsString(0);
                 var multiplicityType = RelationshipMultiplicityType.Unknown;
@@ -228,9 +293,17 @@ namespace EzDbCodeGen.Core
                 if (relationshipType.ToLower().Equals("onetomany")) isType = (multiplicityType == RelationshipMultiplicityType.OneToMany);
                 if (relationshipType.ToLower().Equals("zerooronetomany")) isType = ((multiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany) ||
                                                                                     (multiplicityType == RelationshipMultiplicityType.OneToMany));
+                if (relationshipType.ToLower().Equals("zerooronetomanyonly")) isType = ((multiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany));
                 if (relationshipType.ToLower().Equals("manytoone")) isType = (multiplicityType == RelationshipMultiplicityType.ManyToOne);
                 if (relationshipType.ToLower().Equals("manytozeroorone")) isType = ((multiplicityType == RelationshipMultiplicityType.ManyToZeroOrOne) ||
                                                                                     (multiplicityType == RelationshipMultiplicityType.ManyToOne));
+                if (relationshipType.ToLower().Equals("manytozerooroneonly")) isType = (multiplicityType == RelationshipMultiplicityType.ManyToZeroOrOne);
+                if (relationshipType.ToLower().Equals("zerooronetoone")) isType = ((multiplicityType == RelationshipMultiplicityType.ZeroOrOneToOne) ||
+                                                                                       (multiplicityType == RelationshipMultiplicityType.OneToOne));
+                if (relationshipType.ToLower().Equals("zerooronetooneonly")) isType = (multiplicityType == RelationshipMultiplicityType.ZeroOrOneToOne);
+                if (relationshipType.ToLower().Equals("onetozeroorone")) isType = ((multiplicityType == RelationshipMultiplicityType.OneToZeroOrOne) ||
+                                                                                   (multiplicityType == RelationshipMultiplicityType.OneToOne));
+                if (relationshipType.ToLower().Equals("onetozerooroneonly")) isType = (multiplicityType == RelationshipMultiplicityType.OneToZeroOrOne);
 
                 if (isType)
                     options.Template(writer, (object)context);
@@ -382,131 +455,162 @@ namespace EzDbCodeGen.Core
                 if (ErrorList.Count > 0) writer.Write(string.Format("{0} Errors: {1}", PROC_NAME, string.Join("", ErrorList.ToList())));
 
             });
+            Handlebars.RegisterHelper("ifNot", (TextWriter writer, HelperOptions options, dynamic context, object[] arguments) =>
+            {
+                if (arguments[0] == null || arguments[0].GetType().Name == "UndefinedBindingResult")
+                {
+                    writer.Write("ifNot:arguments[0] undefined");
+                    return;
+                }
+                if (!arguments[0].AsBoolean())
+                {
+                    options.Template(writer, (object)context);
+                }
+                else
+                {
+                    options.Inverse(writer, (object)context);
+                }
+
+            });
 
             Handlebars.RegisterHelper("ifCond", (TextWriter writer, HelperOptions options, dynamic context, object[] arguments) =>
             {
-                if (arguments.Length != 3)
-                {
-                    writer.Write("ifCond:Wrong number of arguments");
-                    return;
-                }
                 if (arguments[0] == null || arguments[0].GetType().Name == "UndefinedBindingResult")
                 {
                     writer.Write("ifCond:arguments[0] undefined");
                     return;
                 }
-                if (arguments[1] == null || arguments[1].GetType().Name == "UndefinedBindingResult")
-                {
-                    writer.Write("ifCond:arguments[1] undefined");
-                    return;
-                }
-                if (arguments[2] == null || arguments[2].GetType().Name == "UndefinedBindingResult")
-                {
-                    writer.Write("ifCond:arguments[2] undefined");
-                    return;
-                }
-                if (arguments[0].GetType().Name == "String")
-                {
-                    var val1 = arguments[0].ToString();
-                    var val2 = arguments[2].ToString();
 
-                    switch (arguments[1].ToString())
-                    {  // '>', '=', '==', '<', '!=', '<>'
-                        case ">":
-                            if (val1.Length > val2.Length)
-                            {
-                                options.Template(writer, (object)context);
-                            }
-                            else
-                            {
-                                options.Inverse(writer, (object)context);
-                            }
-                            break;
-                        case "=":
-                        case "==":
-                            if (val1 == val2)
-                            {
-                                options.Template(writer, (object)context);
-                            }
-                            else
-                            {
-                                options.Inverse(writer, (object)context);
-                            }
-                            break;
-                        case "<":
-                            if (val1.Length < val2.Length)
-                            {
-                                options.Template(writer, (object)context);
-                            }
-                            else
-                            {
-                                options.Inverse(writer, (object)context);
-                            }
-                            break;
-                        case "!=":
-                        case "<>":
-                            if (val1 != val2)
-                            {
-                                options.Template(writer, (object)context);
-                            }
-                            else
-                            {
-                                options.Inverse(writer, (object)context);
-                            }
-                            break;
+                if (arguments.Length == 3)
+                {
+                    if (arguments[1] == null || arguments[1].GetType().Name == "UndefinedBindingResult")
+                    {
+                        writer.Write("ifCond:arguments[1] undefined");
+                        return;
+                    }
+                    if (arguments[2] == null || arguments[2].GetType().Name == "UndefinedBindingResult")
+                    {
+                        writer.Write("ifCond:arguments[2] undefined");
+                        return;
+                    }
+                    if (arguments[0].GetType().Name == "String")
+                    {
+                        var val1 = arguments[0].ToString();
+                        var val2 = arguments[2].ToString();
+
+                        switch (arguments[1].ToString())
+                        {  // '>', '=', '==', '<', '!=', '<>'
+                            case ">":
+                                if (val1.Length > val2.Length)
+                                {
+                                    options.Template(writer, (object)context);
+                                }
+                                else
+                                {
+                                    options.Inverse(writer, (object)context);
+                                }
+                                break;
+                            case "=":
+                            case "==":
+                                if (val1 == val2)
+                                {
+                                    options.Template(writer, (object)context);
+                                }
+                                else
+                                {
+                                    options.Inverse(writer, (object)context);
+                                }
+                                break;
+                            case "<":
+                                if (val1.Length < val2.Length)
+                                {
+                                    options.Template(writer, (object)context);
+                                }
+                                else
+                                {
+                                    options.Inverse(writer, (object)context);
+                                }
+                                break;
+                            case "!=":
+                            case "<>":
+                                if (val1 != val2)
+                                {
+                                    options.Template(writer, (object)context);
+                                }
+                                else
+                                {
+                                    options.Inverse(writer, (object)context);
+                                }
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        var val1 = float.Parse(arguments[0].ToString());
+                        var val2 = float.Parse(arguments[2].ToString());
+
+                        switch (arguments[1].ToString())
+                        {
+                            case ">":
+                                if (val1 > val2)
+                                {
+                                    options.Template(writer, (object)context);
+                                }
+                                else
+                                {
+                                    options.Inverse(writer, (object)context);
+                                }
+                                break;
+                            case "=":
+                            case "==":
+                                if (val1.Equals(val2))
+                                {
+                                    options.Template(writer, (object)context);
+                                }
+                                else
+                                {
+                                    options.Inverse(writer, (object)context);
+                                }
+                                break;
+                            case "<":
+                                if (val1 < val2)
+                                {
+                                    options.Template(writer, (object)context);
+                                }
+                                else
+                                {
+                                    options.Inverse(writer, (object)context);
+                                }
+                                break;
+                            case "!=":
+                            case "<>":
+                                if (!val1.Equals(val2))
+                                {
+                                    options.Template(writer, (object)context);
+                                }
+                                else
+                                {
+                                    options.Inverse(writer, (object)context);
+                                }
+                                break;
+                        }
+                    }
+                }
+                else if (arguments.Length == 1)
+                {
+                    if (arguments[0].AsBoolean())
+                    {
+                        options.Template(writer, (object)context);
+                    }
+                    else
+                    {
+                        options.Inverse(writer, (object)context);
                     }
                 }
                 else
                 {
-                    var val1 = float.Parse(arguments[0].ToString());
-                    var val2 = float.Parse(arguments[2].ToString());
-
-                    switch (arguments[1].ToString())
-                    {
-                        case ">":
-                            if (val1 > val2)
-                            {
-                                options.Template(writer, (object)context);
-                            }
-                            else
-                            {
-                                options.Inverse(writer, (object)context);
-                            }
-                            break;
-                        case "=":
-                        case "==":
-                            if (val1.Equals(val2))
-                            {
-                                options.Template(writer, (object)context);
-                            }
-                            else
-                            {
-                                options.Inverse(writer, (object)context);
-                            }
-                            break;
-                        case "<":
-                            if (val1 < val2)
-                            {
-                                options.Template(writer, (object)context);
-                            }
-                            else
-                            {
-                                options.Inverse(writer, (object)context);
-                            }
-                            break;
-                        case "!=":
-                        case "<>":
-                            if (!val1.Equals(val2))
-                            {
-                                options.Template(writer, (object)context);
-                            }
-                            else
-                            {
-                                options.Inverse(writer, (object)context);
-                            }
-                            break;
-                    }
-                }            
+                    writer.Write("ifCond: Wrong number of arguments :(");
+                }
             });
 
             Handlebars.RegisterHelper("ifIsAuditableProperty", (writer, options, context, arguments) =>

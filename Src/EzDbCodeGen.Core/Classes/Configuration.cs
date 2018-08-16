@@ -50,7 +50,6 @@ namespace EzDbCodeGen.Core.Config
         public string SchemaName { get; set; } = "";
         public string PropertyObjectNameCollisionSuffix { get; set; } = "Value";
         public string InverseFKTargetNameCollisionSuffix { get; set; } = "Item";
-
     }
 
     public class Configuration

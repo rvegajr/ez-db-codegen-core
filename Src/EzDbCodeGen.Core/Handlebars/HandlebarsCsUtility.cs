@@ -34,7 +34,9 @@ namespace EzDbCodeGen.Core
                     var identityAttribute = "";
                     var columnAttribute = "";
 
-                    if (property.Name.Equals(entity.Alias)) {
+
+                    if ((property.Name.Equals(entity.Alias)) || 
+                        (property.Parent.Relationships.FindItems(RelationSearchField.ToColumnName, property.Name).Count >= 1) ) {
                         columnAttribute = string.Format("[Column(\"{0}\")]", property.Name);
                     }
                     if (property.Type == "decimal")
@@ -58,7 +60,7 @@ namespace EzDbCodeGen.Core
                         }
 
                         List<string> PreviousOneToOneFields = new List<string>();
-                        var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipType.OneToOne).FindItems(RelationSearchField.FromFieldName, property.Name);
+                        var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToOne).FindItems(RelationSearchField.FromFieldName, property.Name);
                         var groupedByFKName = RelationshipsOneToOne.GroupByFKName();
                         foreach (var FKName in groupedByFKName.Keys)
                         {
@@ -88,7 +90,9 @@ namespace EzDbCodeGen.Core
                                         || (entityName == relGroupSummary.ToTableName) 
                                         || (SameTableCount > 1) || (CountOfThisEntityInTargetRelationships > 1)) ? string.Join(",", relGroupSummary.FromColumnName) : ToTableNameSingular);
 
-                            fkAttributes += "[ForeignKey(\"" + FieldName.Replace(" ", "") + "\")]";
+                            //One to one relationships will always point to a virtual item of that class it is related to,  so it needs to have the InverseFKTargetNameCollisionSuffix as the 
+                            // virtual target item will
+                            fkAttributes += "[ForeignKey(\"" + FieldName.Replace(" ", "") + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix + "\")]";
 
                             PreviousOneToOneFields.Add(relGroupSummary.ToTableName);
                             if (fkAttributes.Length > 0) { break; };
@@ -96,12 +100,43 @@ namespace EzDbCodeGen.Core
                         }
 
                     }
+
                     if (keyAttribute.Length > 0) writer.WriteSafeString(prefix + keyAttribute + "\n");
                     if (fkAttributes.Length > 0) writer.WriteSafeString(prefix + fkAttributes + "\n");
                     if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime")) writer.WriteSafeString(prefix + "[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
                     if (decimalAttribute.Length > 0) writer.WriteSafeString(prefix + decimalAttribute + "\n");
                     if (columnAttribute.Length > 0) writer.WriteSafeString(prefix + columnAttribute + "\n");
                     writer.WriteSafeString(prefix); //Write the space header to make sure there is always space
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
+                }
+
+            });
+
+            Handlebars.RegisterHelper("PropertyAliasSuffix", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('PropertyAliasSuffix')";
+                try
+                {
+                    var prefix = parameters.AsString(0);
+                    var property = (IProperty)context;
+                    var entity = property.Parent;
+                    var database = entity.Parent;
+                    var entityName = entity.Name;
+                    if ((entityName.Contains("CompanyFinancialReport")) && (property.Name.Contains("PreparedBy")))
+                    {
+                        entityName += "";
+                    }
+                    var output = "";
+                    //if this property Alias already exists in a ToColumnName of a relationship,  there is a good chance that it should be an Id field to this column name,  
+                    // lets write out the PropertyNameCollisionSuffix suffix to make sure the name doesn't collide
+                    if (property.Parent.Relationships.FindItems(RelationSearchField.ToColumnName, property.Alias).Count >= 1)
+                    {
+                        output = Config.Configuration.Instance.Database.PropertyObjectNameCollisionSuffix;
+                    }
+                    if (output.Length > 0) writer.WriteSafeString(output);
                 }
                 catch (Exception ex)
                 {
@@ -121,7 +156,7 @@ namespace EzDbCodeGen.Core
 
                     var PreviousOneToManyFields = new List<string>();
 
-                    var groupedByFKName = entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany).GroupByFKName();
+                    var groupedByFKName = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany).GroupByFKName();
                     foreach(var FKName in groupedByFKName.Keys)
                     {
                         var relationshipList = groupedByFKName[FKName];
@@ -150,15 +185,19 @@ namespace EzDbCodeGen.Core
                     List<string> PreviousOneToManyFields = new List<string>();
                     PreviousOneToManyFields.Clear();
 
-                    if (entity.Name.Contains("tbl_Parcel"))
+                    if (entity.Name.Contains("Noun"))
                     {
                         entity.Name += "";
                     }
 
-                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipType.ZeroOrOneToMany);
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
                     var groupedByFKName = RelationshipsOneToMany.GroupByFKName();
                     foreach (var FKName in groupedByFKName.Keys)
                     {
+                        if (FKName.Contains("FK_tbl_FinancialReport_tbl_Noun") || (FKName.Contains("FK_tbl_Tax_tbl_Parcel")))
+                        {
+                            entity.Name += "";
+                        }
                         var relationshipList = groupedByFKName[FKName];
                         var relGroupSummary = relationshipList.AsSummary();
                         string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
@@ -169,19 +208,28 @@ namespace EzDbCodeGen.Core
                         if (RelationshipsOneToMany.CountItems(relGroupSummary.ToTableName) > 1) {
                             var InversePropertyName = "";
                             var toGroupRelationshipList = entity.Parent[relGroupSummary.ToTableName].Relationships.GroupByFKName();
+                            if (!toGroupRelationshipList.ContainsKey(FKName)) throw new Exception(string.Format("The inverse of FK {0} ({1}->{2})", FKName, relGroupSummary.FromTableName, relGroupSummary.ToTableName));
+                            var inverseOfThisFK = toGroupRelationshipList[FKName];
+                            var relGroupSummaryInverse = inverseOfThisFK.AsSummary();
+
                             var CountOfThisEntityInTargetRelationships = toGroupRelationshipList.CountItems(RelationSearchField.ToTableName, relGroupSummary.FromTableName);
                             if (CountOfThisEntityInTargetRelationships == 1)
                             {
-                                InversePropertyName = entity.Parent[relGroupSummary.FromTableName].Alias + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
+                                InversePropertyName = entity.Parent[relGroupSummary.FromTableName].Alias;
                             }
                             else if (CountOfThisEntityInTargetRelationships > 1)
                             {
-                                InversePropertyName = string.Join(",", relGroupSummary.ToColumnName) + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
+                                InversePropertyName = string.Join(",", relGroupSummary.ToColumnName);
                             }
                             if (InversePropertyName.Length > 0)
                             {
-                                inversePropertyAttribute = string.Format("[InverseProperty(\"{0}\")]", InversePropertyName);
+                                inversePropertyAttribute = string.Format("[InverseProperty(\"{0}\")]",
+                                    (relGroupSummaryInverse.MultiplicityType.EndsAsMany() ?
+                                        relGroupSummaryInverse.ToUniqueColumnName().ToPlural() :
+                                        InversePropertyName + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
+                                    );
                             }
+                            
                         }
                         writer.WriteSafeString(string.Format("\n\n{0}//<summary>{1}</summary>", prefix, relGroupSummary.Name));
                         writer.WriteSafeString(string.Format("\n{0}[System.Diagnostics.CodeAnalysis.SuppressMessage(\"Microsoft.Usage\", \"CA2227: CollectionPropertiesShouldBeReadOnly\")]", prefix));
@@ -197,17 +245,96 @@ namespace EzDbCodeGen.Core
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
+            Handlebars.RegisterHelper("RelationshipGroupAsSummaryField", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('RelationshipGroupAsSummaryField')";
+                try
+                {
+                    var fieldName = parameters.AsString(0);
+
+                    var stringModInstructions = parameters.AsString(1);
+                    var contextObject = (Object)context;
+                    IRelationshipList relationshipList = null;
+                    IDatabase database = null;
+                    if (contextObject.GetType().Name == "RelationshipList") {
+                        relationshipList = ((IRelationshipList)context);
+                        database = relationshipList.FirstOrDefault().Parent.Parent;
+                    } else
+                        throw new Exception(string.Format("Helper cannot process context type of '{0}'", contextObject.GetType().Name));
+                    var summary = relationshipList.AsSummary();
+                    var output = "";
+                    if (fieldName == "Name") output = summary.Name;
+                    if (fieldName == "FromColumnName") output = string.Join("", summary.FromColumnName);
+                    if (fieldName == "FromFieldName") output = string.Join("", summary.FromFieldName);
+                    if (fieldName == "FromTableName") output = summary.FromTableName;
+                    if (fieldName == "FromTableAlias")
+                    {
+                        if (database.ContainsKey(summary.FromTableName)) output = database[summary.FromTableName].Alias;
+                    }
+                    if (fieldName == "ToColumnName") output = string.Join("", summary.ToColumnName);
+                    if (fieldName == "ToFieldName") output = string.Join("", summary.ToFieldName);
+                    if (fieldName == "ToTableName") output = summary.ToTableName;
+                    if (fieldName == "ToUniqueColumnName")output = summary.ToUniqueColumnName();
+                    if (fieldName == "MultiplicityType") output = summary.MultiplicityType.ToString();
+                    if (fieldName == "Type") output = summary.Type;
+                    if (fieldName == "Types") output = string.Join(", ", summary.FromFieldName); ;
+                    if (fieldName == "MultiplicityTypeWarning") output = (summary.MultiplicityTypeWarning ? "true" : "false");
+                    if (fieldName == "ToTableAlias")
+                    {
+                        if (database.ContainsKey(summary.ToTableName)) output = database[summary.ToTableName].Alias;
+                    }
+                    if (output.Length==0)
+                    {
+                        throw new Exception(string.Format("Helper cannot process field name of '{0}'", fieldName));
+                    }
+                    writer.WriteSafeString(output.StringMod(stringModInstructions));
+
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
+                }
+            });
 
 
             Handlebars.RegisterHelper("POCOModelFKManyToZeroToOne", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('POCOModelFKManyToZeroToOne')";
                 try
                 {
-                    var prefix = parameters.AsString(0);
-                    var objectSuffix = parameters.AsString(1);
-                    var entity = (IEntity)context;
+                    var contextObject = (Object)context;
+                    IEntity entity = null;
+                    if (contextObject.GetType().Name == "Relationship")
+                        entity = ((IRelationship)context).Parent;
+                    else if (contextObject.GetType().Name == "RelationshipList")
+                        entity = ((IRelationshipList)context).FirstOrDefault().Parent;
+                    else if (contextObject.GetType().Name == "Entity")
+                        entity = ((IEntity)context);
+
                     var entityName = entity.Name;
 
+                    var prefix = "";
+                    var objectSuffix = "";
+                    var fkNametoSelect = "";
+                    if (parameters.Count()==1)
+                    {
+                        if (string.IsNullOrWhiteSpace(parameters.AsString(0))) prefix = parameters.AsString(0);
+                        if (entity.RelationshipGroups.ContainsKey(parameters.AsString(0))) fkNametoSelect = parameters.AsString(0);
+                    }
+                    else if (parameters.Count() == 2)
+                    {
+                        if (string.IsNullOrWhiteSpace(parameters.AsString(0))) prefix = parameters.AsString(0);
+                        if (entity.RelationshipGroups.ContainsKey(parameters.AsString(0))) fkNametoSelect = parameters.AsString(0);
+                        if (string.IsNullOrWhiteSpace(parameters.AsString(1))) prefix = parameters.AsString(1);
+                        if (entity.RelationshipGroups.ContainsKey(parameters.AsString(1))) fkNametoSelect = parameters.AsString(1);
+                    }
+                    else if (parameters.Count() == 3)
+                    {
+                        if (string.IsNullOrWhiteSpace(parameters.AsString(0))) prefix = parameters.AsString(0);
+                        if (entity.RelationshipGroups.ContainsKey(parameters.AsString(0))) fkNametoSelect = parameters.AsString(0);
+                        if (string.IsNullOrWhiteSpace(parameters.AsString(1))) prefix = parameters.AsString(1);
+                        if (entity.RelationshipGroups.ContainsKey(parameters.AsString(1))) fkNametoSelect = parameters.AsString(1);
+                        objectSuffix = parameters.AsString(2);
+                    }
 
                     if (entity.Name.Contains("Noun"))
                     {
@@ -216,7 +343,7 @@ namespace EzDbCodeGen.Core
 
                     List<string> PreviousManyToOneFields = new List<string>();
 
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipType.ManyToZeroOrOne);
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne);
                     var groupedByFKName = RelationshipsManyToOne.GroupByFKName();
                     foreach (var FKName in groupedByFKName.Keys)
                     {
@@ -232,15 +359,24 @@ namespace EzDbCodeGen.Core
                                              || (entityName == relGroupSummary.ToTableName)
                                              || (SameTableCount > 1))
                                                 ? relGroupSummary.ToUniqueColumnName() : ToTableNameSingular);
-                        writer.WriteSafeString(string.Format("\n{0}/// <summary>{1}  *->0|1</summary>", prefix, relGroupSummary.Name));
                         var ForeignKeyName = "";
                         //Pick the key that exists in this entities properties
                         if (entity.Properties.ContainsKey(string.Join(", ", relGroupSummary.ToFieldName))) ForeignKeyName = string.Join(", ", relGroupSummary.ToFieldName);
                         if (entity.Properties.ContainsKey(string.Join(", ", relGroupSummary.FromFieldName))) ForeignKeyName = string.Join(", ", relGroupSummary.FromFieldName);
-                        if (ForeignKeyName.Length>0) writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, ForeignKeyName));
-                        writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, FieldName + objectSuffix));
                         PreviousManyToOneFields.Add(relGroupSummary.ToTableName);
 
+                        if (fkNametoSelect.Length == 0)
+                        {
+                            writer.WriteSafeString(string.Format("\n{0}/// <summary>{1}  *->0|1</summary>", prefix, relGroupSummary.Name));
+                            if (ForeignKeyName.Length > 0) writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, ForeignKeyName));
+                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, FieldName + objectSuffix));
+                        } else
+                        {
+                            if (fkNametoSelect== FKName)
+                            {
+                                writer.WriteSafeString(FieldName);
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -250,19 +386,48 @@ namespace EzDbCodeGen.Core
                 }
             });
 
-            Handlebars.RegisterHelper("POCOModelFKOneToOne", (writer, context, parameters) => {
-                var PROC_NAME = "Handlebars.RegisterHelper('POCOModelFKOneToOne')";
+            Handlebars.RegisterHelper("POCOModelFKZeroOrOneToOne", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('POCOModelFKZeroOrOneToOne')";
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var contextObject = (Object)context;
+                    IEntity entity = null;
+                    if (contextObject.GetType().Name == "Relationship")
+                        entity = ((IRelationship)context).Parent;
+                    else if (contextObject.GetType().Name == "RelationshipList")
+                        entity = ((IRelationshipList)context).FirstOrDefault().Parent;
+                    else if (contextObject.GetType().Name == "Entity")
+                        entity = ((IEntity)context);
+
                     var entityName = entity.Name;
-                    if (entityName.Contains("Collateral"))
+                    var objectSuffix = "";
+                    var fkNametoSelect = "";
+                    if (parameters.Count() == 1)
+                    {
+                        if (string.IsNullOrWhiteSpace(parameters.AsString(0))) prefix = parameters.AsString(0);
+                        if (entity.RelationshipGroups.ContainsKey(parameters.AsString(0))) fkNametoSelect = parameters.AsString(0);
+                    }
+                    else if (parameters.Count() == 2)
+                    {
+                        if (string.IsNullOrWhiteSpace(parameters.AsString(0))) prefix = parameters.AsString(0);
+                        if (entity.RelationshipGroups.ContainsKey(parameters.AsString(0))) fkNametoSelect = parameters.AsString(0);
+                        if (string.IsNullOrWhiteSpace(parameters.AsString(1))) prefix = parameters.AsString(1);
+                        if (entity.RelationshipGroups.ContainsKey(parameters.AsString(1))) fkNametoSelect = parameters.AsString(1);
+                    }
+                    else if (parameters.Count() == 3)
+                    {
+                        if (string.IsNullOrWhiteSpace(parameters.AsString(0))) prefix = parameters.AsString(0);
+                        if (entity.RelationshipGroups.ContainsKey(parameters.AsString(0))) fkNametoSelect = parameters.AsString(0);
+                        if (string.IsNullOrWhiteSpace(parameters.AsString(1))) prefix = parameters.AsString(1);
+                        if (entity.RelationshipGroups.ContainsKey(parameters.AsString(1))) fkNametoSelect = parameters.AsString(1);
+                    }
+                    if (entityName.Contains("DocumentLocationHistory"))
                     {
                         entityName += "";
                     }
                     var PreviousOneToOneFields = new List<string>();
-                    var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipType.OneToOne); 
+                    var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToOne); 
                     foreach (var relationship in RelationshipsOneToOne)
                     {
                         if (relationship.Name.StartsWith("FK_tbl_DocumentLocationHistory_tbl_DocumentLocation"))
@@ -278,10 +443,22 @@ namespace EzDbCodeGen.Core
                                              || (entityName == relationship.ToTableName) 
                                              || (SameTableCount > 1)) 
                                                 ? relationship.ToUniqueColumnName() : ToTableNameSingular);
-                        writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} 1->1</summary>", prefix, relationship.Name));
-                        writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, (FieldName.Replace(" ", ""))));
-                        //writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, (FieldName.Replace(" ", "") + Config.Configuration.Instance.Database.PropertyObjectNameCollisionSuffix)));
                         PreviousOneToOneFields.Add(FieldName);
+                        objectSuffix = Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
+
+                        if (fkNametoSelect.Length == 0)
+                        {
+                            writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} {2}</summary>", prefix, relationship.Name, relationship.MultiplicityType.AsString() ));
+                            //writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, (FieldName.Replace(" ", ""))));
+                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, (FieldName.Replace(" ", "") + objectSuffix)));
+                        }
+                        else
+                        {
+                            if (fkNametoSelect == relationship.Name)
+                            {
+                                writer.WriteSafeString(FieldName);
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -301,7 +478,7 @@ namespace EzDbCodeGen.Core
                     var entityName = entity.Name;
 
                     var PreviousManyToOneFields = new List<string>();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipType.ManyToZeroOrOne); 
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne); 
                     foreach (var relationship in RelationshipsManyToOne)
                     {
                         //Need to resolve the to table name to what the alias table name is
