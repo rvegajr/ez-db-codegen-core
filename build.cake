@@ -1,6 +1,7 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
-var IncrementMinorVersion = true;
+var IncrementMinorVersion = false;
+var NuGetReleaseNotes = new [] {"Deep Refs to Property and Entity on Relationships", "Config Filter Fixes", "Inverse and FK Name resolution Fixes"};
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
@@ -126,7 +127,7 @@ Task("NuGet-Pack")
         //IconUrl                 = new Uri(""),
         LicenseUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core/blob/master/LICENSE"),
         Copyright               = @"Noctusoft 2018",
-        ReleaseNotes            = new [] {"Fluent API Development", "Fixed Inverse Relationships", "Issue fixes"},
+        ReleaseNotes            = NuGetReleaseNotes,
         Tags                    = new [] {"Database ", "Schema", "Code Generation", "Code Generator"},
         RequireLicenseAcceptance= false,
         Symbols                 = false,
