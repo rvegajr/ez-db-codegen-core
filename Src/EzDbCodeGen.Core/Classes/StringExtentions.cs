@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Pluralize.NET;
 
@@ -181,8 +182,9 @@ namespace EzDbCodeGen.Core.Extentions.Strings
         public static string ToCodeFriendly(this string stringToConvert)
         {
             if (stringToConvert == null)
-                throw new ArgumentNullException("sqlType");
-            return stringToConvert.Replace(" ", "");
+                throw new ArgumentNullException("stringToConvert");
+            Regex rgx = new Regex("[^a-zA-Z0-9_]");
+            return rgx.Replace(stringToConvert.Replace("-", "_"), "");
         }
 
         /// <summary>

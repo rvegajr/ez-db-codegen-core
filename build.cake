@@ -1,6 +1,6 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
-var IncrementMinorVersion = false;
+var IncrementMinorVersion = true;
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
@@ -58,8 +58,6 @@ Task("SetVersion")
 		System.IO.File.WriteAllText(thisDir + "Src/VersionInfo.cs", VersionData);
 		UpdateVersionInProjectFile(cliProjectFile, AssemblyVersionAttribute);
 		UpdateVersionInProjectFile(coreProjectFile, AssemblyVersionAttribute);
-		    throw new Exception("DIE");        
-
 });
 
 Task("Restore-NuGet-Packages")
@@ -128,7 +126,7 @@ Task("NuGet-Pack")
         //IconUrl                 = new Uri(""),
         LicenseUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core/blob/master/LICENSE"),
         Copyright               = @"Noctusoft 2018",
-        ReleaseNotes            = new [] {"Correct Composite FK Key Handling", "Group FK Columns by Name", "Issue fixes"},
+        ReleaseNotes            = new [] {"Fluent API Development", "Fixed Inverse Relationships", "Issue fixes"},
         Tags                    = new [] {"Database ", "Schema", "Code Generation", "Code Generator"},
         RequireLicenseAcceptance= false,
         Symbols                 = false,

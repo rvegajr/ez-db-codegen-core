@@ -99,31 +99,40 @@ namespace EzDbCodeGen.Core
             // go through each matching entity and delete all keys don't match the override
             foreach (var configEntity in config.Entities)
             {
-                IEntity entity = null;
-                if (database.EntityExists(configEntity.Name, ref entity))
+                var entitiesMatched = database.FindEntities(configEntity.Name);
+                if (entitiesMatched.Count>0)
                 {
-                    //if we have some primary 
-                    if (configEntity.Overrides.PrimaryKey.Count>0)
+                    foreach (var entity in entitiesMatched)
                     {
-                        foreach (var pkCol in entity.PrimaryKeys)
+                        if (entity.Name.ToLower().Contains("tempload"))
                         {
-                            pkCol.IsKey = false;
-                            pkCol.KeyOrder = 0;
+                            Console.Write("");
                         }
-                        entity.PrimaryKeys.Clear();
-                        var iOrder = 0;
-                        foreach (var pkOverride in configEntity.Overrides.PrimaryKey)
+
+                        //if we have some primary 
+                        if (configEntity.Overrides.PrimaryKey.Count > 0)
                         {
-                            iOrder++;
-                            if (entity.Properties.ContainsKey(pkOverride.FieldName))
+                            foreach (var pkCol in entity.PrimaryKeys)
                             {
-                                IProperty p = entity.Properties[pkOverride.FieldName];
-                                p.IsKey = true;
-                                p.KeyOrder = iOrder;
-                                entity.PrimaryKeys.Add(p);
-                            } else
+                                pkCol.IsKey = false;
+                                pkCol.KeyOrder = 0;
+                            }
+                            entity.PrimaryKeys.Clear();
+                            var iOrder = 0;
+                            foreach (var pkOverride in configEntity.Overrides.PrimaryKey)
                             {
-                                throw new Exception(string.Format("Could not find a column with the name {0} in {1}", pkOverride.FieldName, configEntity.Name));
+                                iOrder++;
+                                if (entity.Properties.ContainsKey(pkOverride.FieldName))
+                                {
+                                    IProperty p = entity.Properties[pkOverride.FieldName];
+                                    p.IsKey = true;
+                                    p.KeyOrder = iOrder;
+                                    entity.PrimaryKeys.Add(p);
+                                }
+                                else
+                                {
+                                    throw new Exception(string.Format("Could not find a column with the name {0} in {1}", pkOverride.FieldName, configEntity.Name));
+                                }
                             }
                         }
                     }
@@ -158,8 +167,8 @@ namespace EzDbCodeGen.Core
             //Use config settings to 
             foreach (var entity in database.Entities.Values)
             {
-                if ((entity.Schema == schemaObjectName.SchemaName) 
-                    && (entity.Name == schemaObjectName.ObjectName))
+                if ((entity.Schema.ToLower() == schemaObjectName.SchemaName.ToLower()) 
+                    && (entity.Name.ToLower() == schemaObjectName.ObjectName.ToLower()))
                 {
                     return entity;
                 }
@@ -180,12 +189,16 @@ namespace EzDbCodeGen.Core
             //Use config settings to 
             foreach (var entity in database.Entities.Values)
             {
+                if (entity.Name.ToLower().Contains("tempload"))
+                {
+                    entity.Name += "";
+                }
                 var entitySchemaObjectName = new SchemaObjectName(entity);
                 if (schemaObjectNameSearchParm.Contains(@"*")) //contains wildcard?
                 {
-                    isMatch = Regex.IsMatch(entitySchemaObjectName.AsFullName(), "^" + Regex.Escape(schemaObjectNameSearchParm).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                    isMatch = Regex.IsMatch(entitySchemaObjectName.AsFullName().ToLower(), "^" + Regex.Escape(schemaObjectNameSearchParm.ToLower()).Replace("\\?", ".").Replace("\\*", ".*") + "$");
                 } else {
-                    isMatch = (entitySchemaObjectName.AsFullName().Equals(schemaObjectNameSearchParm));
+                    isMatch = (entitySchemaObjectName.AsFullName().ToLower().Equals(schemaObjectNameSearchParm.ToLower()));
                 }
                 if (isMatch) listOfMatchedEntites.Add(entity);
             }
