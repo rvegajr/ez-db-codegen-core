@@ -35,7 +35,7 @@ namespace EzDbCodeGen.Core
                     var columnAttribute = "";
 
 
-                    if ((property.Name.Equals(entity.Alias)) || 
+                    if ((!property.Name.Equals(entity.Alias)) || 
                         (property.Parent.Relationships.FindItems(RelationSearchField.ToColumnName, property.Name).Count >= 1) ) {
                         columnAttribute = string.Format("[Column(\"{0}\")]", property.Name);
                     }
@@ -116,32 +116,20 @@ namespace EzDbCodeGen.Core
 
             });
 
-            Handlebars.RegisterHelper("PropertyAliasSuffix", (writer, context, parameters) => {
-                var PROC_NAME = "Handlebars.RegisterHelper('PropertyAliasSuffix')";
+            Handlebars.RegisterHelper("PropertyAsObjectName", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('PropertyAsObjectName')";
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var property = (IProperty)context;
-                    var entity = property.Parent;
-                    var database = entity.Parent;
-                    var entityName = entity.Name;
-                    if ((entityName.Contains("CompanyFinancialReport")) && (property.Name.Contains("PreparedBy")))
-                    {
-                        entityName += "";
-                    }
-                    var output = "";
-                    //if this property Alias already exists in a ToColumnName of a relationship,  there is a good chance that it should be an Id field to this column name,  
-                    // lets write out the PropertyNameCollisionSuffix suffix to make sure the name doesn't collide
-                    if (property.Parent.Relationships.FindItems(RelationSearchField.ToColumnName, property.Alias).Count >= 1)
-                    {
-                        output = Config.Configuration.Instance.Database.PropertyObjectNameCollisionSuffix;
-                    }
-                    if (output.Length > 0) writer.WriteSafeString(output);
+                    if (((Object)context).GetType().Name == "Property")
+                        writer.WriteSafeString(((IProperty)context).AsObjectPropertyName());
+                    else
+                        throw new Exception(string.Format("Context cannot be of type {0}.", ((Object)context).GetType().Name));
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
-                    writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
+                    writer.WriteSafeString(string.Format("{0}: **** ERROR RENDERING **** {1}", PROC_NAME, ex.Message));
                 }
 
             });
@@ -336,7 +324,7 @@ namespace EzDbCodeGen.Core
                         objectSuffix = parameters.AsString(2);
                     }
 
-                    if (entity.Name.Contains("Noun"))
+                    if (entity.Name.Contains("Loan"))
                     {
                         entity.Name += "";
                     }
@@ -359,6 +347,7 @@ namespace EzDbCodeGen.Core
                                              || (entityName == relGroupSummary.ToTableName)
                                              || (SameTableCount > 1))
                                                 ? relGroupSummary.ToUniqueColumnName() : ToTableNameSingular);
+
                         var ForeignKeyName = "";
                         //Pick the key that exists in this entities properties
                         if (entity.Properties.ContainsKey(string.Join(", ", relGroupSummary.ToFieldName))) ForeignKeyName = string.Join(", ", relGroupSummary.ToFieldName);
@@ -422,41 +411,36 @@ namespace EzDbCodeGen.Core
                         if (string.IsNullOrWhiteSpace(parameters.AsString(1))) prefix = parameters.AsString(1);
                         if (entity.RelationshipGroups.ContainsKey(parameters.AsString(1))) fkNametoSelect = parameters.AsString(1);
                     }
-                    if (entityName.Contains("DocumentLocationHistory"))
+                    if (entityName.Contains("Noun"))
                     {
                         entityName += "";
                     }
                     var PreviousOneToOneFields = new List<string>();
                     var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToOne); 
-                    foreach (var relationship in RelationshipsOneToOne)
+                    foreach (var relationshipGroupKV in RelationshipsOneToOne.GroupByFKName())
                     {
-                        if (relationship.Name.StartsWith("FK_tbl_DocumentLocationHistory_tbl_DocumentLocation"))
-                        {
+                        var relationship = relationshipGroupKV.Value.AsSummary();
+
+                        var toGroupRelationshipList = entity.Parent[relationship.ToTableName].Relationships.GroupByFKName();
+                        if (!toGroupRelationshipList.ContainsKey(relationshipGroupKV.Key)) throw new Exception(string.Format("The inverse of FK {0} ({1}->{2})", relationshipGroupKV.Key, relationship.FromTableName, relationship.ToTableName));
+                        var relationshipInverse = toGroupRelationshipList[relationshipGroupKV.Key].AsSummary();
+
+                        if (relationship.Name.StartsWith("FK_tbl_Collateral_tbl_OccupancyStatus")) 
                             relationship.Name += "";
-                        }
-                        //Need to resolve the to table name to what the alias table name is
-                        string ToTableName = entity.Parent.Entities[relationship.ToTableName].Alias;
-                        int SameTableCount = RelationshipsOneToOne.CountItems(RelationSearchField.ToTableName, relationship.ToTableName);
-                        string ToTableNameSingular = ToTableName.ToSingular();
-                        string FieldName = ((PreviousOneToOneFields.Contains(ToTableNameSingular) 
-                                             || (entity.Properties.ContainsKey(ToTableNameSingular)) 
-                                             || (entityName == relationship.ToTableName) 
-                                             || (SameTableCount > 1)) 
-                                                ? relationship.ToUniqueColumnName() : ToTableNameSingular);
-                        PreviousOneToOneFields.Add(FieldName);
-                        objectSuffix = Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
 
                         if (fkNametoSelect.Length == 0)
                         {
                             writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} {2}</summary>", prefix, relationship.Name, relationship.MultiplicityType.AsString() ));
-                            //writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, (FieldName.Replace(" ", ""))));
-                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, (FieldName.Replace(" ", "") + objectSuffix)));
+                            //writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableName.ToSingular(), (FieldName.Replace(" ", ""))));
+                            writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relationship.FromObjectPropertyName)));
+                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", 
+                                prefix, entity.Parent.Entities[relationship.ToTableName].Alias.ToSingular(), relationship.EndAsObjectPropertyName()));
                         }
                         else
                         {
                             if (fkNametoSelect == relationship.Name)
                             {
-                                writer.WriteSafeString(FieldName);
+                                writer.WriteSafeString(relationship.EndAsObjectPropertyName());
                             }
                         }
                     }
@@ -475,23 +459,17 @@ namespace EzDbCodeGen.Core
                 {
                     var prefix = parameters.AsString(0);
 					var entity = (IEntity)context;
-                    var entityName = entity.Name;
 
-                    var PreviousManyToOneFields = new List<string>();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne); 
-                    foreach (var relationship in RelationshipsManyToOne)
+                    foreach (var relationshipGroupKV in entity.RelationshipGroups)
                     {
-                        //Need to resolve the to table name to what the alias table name is
-                        string ToTableName = entity.Parent.Entities[relationship.ToTableName].Alias;
-                        int SameTableCount = RelationshipsManyToOne.CountItems(RelationSearchField.ToTableName, relationship.ToTableName);
-                        string ToTableNameSingular = ToTableName.ToSingular();
-                        string ExpandColumnName = ((PreviousManyToOneFields.Contains(ToTableNameSingular) || (entity.Properties.ContainsKey(ToTableNameSingular)) || (entityName == relationship.ToTableName) || (SameTableCount > 1)) ? relationship.FromColumnName : ToTableNameSingular);
-                        writer.WriteSafeString(string.Format("\n{0}using (var response = await HttpClient.GetAsync(\"http://testserver/api/{1}?%24expand={2}<t/>&%24top=10\")) ", prefix, entityName, ExpandColumnName.Replace(" ", "")));
+                        var relationshipGroup = relationshipGroupKV.Value;
+                        var relationship = relationshipGroup.AsSummary();
+                        string ExpandColumnName = relationship.EndAsObjectPropertyName();
+                        writer.WriteSafeString(string.Format("\n{0}using (var response = await HttpClient.GetAsync(\"http://testserver/api/{1}?%24expand={2}<t/>&%24top=10\")) ", prefix, entity.Alias, ExpandColumnName));
                         writer.WriteSafeString(string.Format("\n{0}{{ ", prefix));
                         writer.WriteSafeString(string.Format("\n{0}    var result = await response.Content.ReadAsStringAsync(); ", prefix));
-                        writer.WriteSafeString(string.Format("\n{0}    Assert.IsTrue(response.StatusCode == HttpStatusCode.OK, \"Return Get 10 or less {1} with Expand of {2}. \" + result); ", prefix, entityName, ExpandColumnName.Replace(" ", "")));
+                        writer.WriteSafeString(string.Format("\n{0}    Assert.IsTrue(response.StatusCode == HttpStatusCode.OK, \"Return Get 10 or less {1} with Expand of {2}. \" + result); ", prefix, entity.Name, ExpandColumnName));
                         writer.WriteSafeString(string.Format("\n{0}}} ", prefix));
-                        PreviousManyToOneFields.Add(ExpandColumnName);
                     }
                 }
                 catch (Exception ex)

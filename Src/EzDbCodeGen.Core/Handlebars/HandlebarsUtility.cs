@@ -29,45 +29,47 @@ namespace EzDbCodeGen.Core
                 var PROC_NAME = "Handlebars.RegisterHelper('ContextAsJson')";
                 IRelationship relationship;
                 IRelationshipList relationshipList;
+                IEntity entity;
                 RelationshipSummary relationshipListSummary;
                 var json = "";
+                var entityStringContains = parameters.AsString(0);
                 try
                 {
-                    if (parameters.Count() > 0)
-                    {
-                        var entityStringContains = parameters.AsString(0);
-                        IEntity entity = null;
-                        var ErrorList = new List<string>();
-                        var contextObject = (Object)context;
-                        var TargetTableName = "";
+                    var ErrorList = new List<string>();
+                    var contextObject = (Object)context;
 
-                        if (contextObject.GetType().Name == "Relationship")
-                        {
-                            relationship = ((IRelationship)context);
-                            entity = relationship.Parent;
-                            json = JsonConvert.SerializeObject((IRelationship)context, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
-                                    {PreserveReferencesHandling = PreserveReferencesHandling.All});
-                        }
-                        else if (contextObject.GetType().Name == "RelationshipList")
-                        {
-                            relationshipList = ((IRelationshipList)context);
-                            relationshipListSummary = relationshipList.AsSummary();
-                            entity = relationshipListSummary.Entity;
-                            json = JsonConvert.SerializeObject((IRelationshipList)context, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
-                                    { PreserveReferencesHandling = PreserveReferencesHandling.All});
-                        }
-                        else
-                        {
-                            entity = new Entity();
-                            entity.Name += "";
-                        }
-                        if (entity.Name.Contains(entityStringContains))
-                        {
-                            entity.Name += "";
-                        } else
-                        {
-                            json = ""; //clear it out so we do not write it
-                        }
+                    if (contextObject.GetType().Name == "Relationship")
+                    {
+                        relationship = ((IRelationship)context);
+                        entity = relationship.Parent;
+                        json = JsonConvert.SerializeObject((IRelationship)context, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
+                                {PreserveReferencesHandling = PreserveReferencesHandling.All});
+                    }
+                    else if (contextObject.GetType().Name == "Entity")
+                    {
+                        entity = ((IEntity)context);
+                        json = JsonConvert.SerializeObject(entity, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
+                        { PreserveReferencesHandling = PreserveReferencesHandling.All });
+                    }
+                    else if (contextObject.GetType().Name == "RelationshipList")
+                    {
+                        relationshipList = ((IRelationshipList)context);
+                        relationshipListSummary = relationshipList.AsSummary();
+                        entity = relationshipListSummary.Entity;
+                        json = JsonConvert.SerializeObject((IRelationshipList)context, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
+                                { PreserveReferencesHandling = PreserveReferencesHandling.All});
+                    }
+                    else
+                    {
+                        entity = new Entity();
+                        entity.Name += "";
+                    }
+                    if (entity.Name.Contains(entityStringContains))
+                    {
+                        entity.Name += "";
+                    } else
+                    {
+                        json = ""; //clear it out so we do not write it
                     }
                 }
                 catch (Exception ex)
@@ -319,7 +321,6 @@ namespace EzDbCodeGen.Core
                 var PROC_NAME = "Handlebars.RegisterHelper('ToTargetEntityAlias')";
                 var ErrorList = new List<string>();
                 var contextObject = (Object)context;
-                var TargetTableName = "";
 
                 if (contextObject.GetType().Name == "Relationship")
                 {

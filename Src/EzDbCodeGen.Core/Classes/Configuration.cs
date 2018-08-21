@@ -253,7 +253,8 @@ namespace EzDbCodeGen.Core.Config
                 {
                     if (entity.Name.Contains(@"*")) //contains wildcard?
                     {
-                        ignoreEntity = Regex.IsMatch(schemaObjectName.AsFullName(), "^" + Regex.Escape(entity.Name).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                        var isMatched = Regex.IsMatch(schemaObjectName.AsFullName(), "^" + Regex.Escape(entity.Name).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                        if (isMatched) ignoreEntity = entity.Ignore;
                         if (ignoreEntity) break;
                     }
                 }

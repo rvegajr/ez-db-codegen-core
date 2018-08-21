@@ -1,5 +1,6 @@
 ﻿using System;
 using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbSchema.Core.Enums;
 using EzDbSchema.Core.Interfaces;
 
 namespace EzDbCodeGen.Core
@@ -264,5 +265,49 @@ namespace EzDbCodeGen.Core
 			return This.AsParmBooleanCheck(varPrefix, "==");
         }
 
+
+        /// <summary>
+        /// This extention will create a code friendly object name. Since object names cannot be duplicated  
+        /// </summary>
+        /// <param name="property">The property.</param>
+        /// <returns></returns>
+        public static string AsObjectPropertyName(this IProperty property)
+        {
+            return property.AsObjectPropertyName(Config.Configuration.Instance.Database.PropertyObjectNameCollisionSuffix);
+        }
+
+        /// <summary>
+        /// This extention will create a code friendly object name. Since object names cannot be duplicated  
+        /// </summary>
+        /// <param name="property">The property.</param>
+        /// <param name="nameCollisionSuffix">Suffix to add if there is another property or collection that will be generated with the same name.</param>
+        /// <returns></returns>
+        public static string AsObjectPropertyName(this IProperty property, string nameCollisionSuffix)
+        {
+            var PROC_NAME = "AsObjectPropertyName('PropertyAliasSuffix')";
+            var propertyName = property.Alias;
+            try
+            {
+                var entity = property.Parent;
+                var database = entity.Parent;
+                var entityName = entity.Name;
+                //debugging line
+                if ((entityName.Contains("CompanyFinancialReport")) && (property.Name.Contains("PreparedBy")))
+                    entityName += "";
+                //if this property Alias already exists in a ToColumnName of a relationship,  there is a good chance that it should be an Id field to this column name,  
+                // lets write out the PropertyNameCollisionSuffix suffix to make sure the name doesn't collide
+                if (property.Parent.Relationships.FindItems(RelationSearchField.ToColumnName, property.Alias).Count >= 1)
+                {
+                    propertyName += nameCollisionSuffix;
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format("{0}: Error while figuring out property name for {1}.{2}", PROC_NAME, property.Parent.Name, property.Name), ex);
+            }
+            return propertyName;
+        }
     }
 }
+
+

@@ -41,6 +41,8 @@ namespace EzDbCodeGen.Core
 
     }
 
+
+
     public class RelationshipSummary 
     {
         public IEntity Entity { get; set; }
@@ -48,13 +50,18 @@ namespace EzDbCodeGen.Core
         public List<string> FromColumnName { get; set; } = new List<string>();
         public List<string> ToFieldName { get; set; } = new List<string>();
         public List<string> ToColumnName { get; set; } = new List<string>();
+        public List<IProperty> ToColumnProperties { get; set; } = new List<IProperty>();
+        public List<string> ToObjectPropertyName { get; set; } = new List<string>();
+
         public List<string> Types { get; set; } = new List<string>();
         public List<RelationshipMultiplicityType> MultiplicityTypes { get; set; } = new List<RelationshipMultiplicityType>();
         public string FromTableName { get; set; } = "";
         public string Name { get; set; } = "";
         public string ToTableName { get; set; } = "";
         public string PrimaryTableName { get; set; } = "";
+        public List<IProperty> FromColumnProperties { get; set; } = new List<IProperty>();
         public RelationshipMultiplicityType MultiplicityType { get; set; } = RelationshipMultiplicityType.Unknown;
+        public List<string> FromObjectPropertyName { get; set; } = new List<string>();
         public string Type { get; set; } = "";
         /// <summary>
         /// Gets or sets a value indicating there is a multiplicity type warning.  This means that of the relationships that particpate, they have the following patter:
@@ -117,6 +124,74 @@ namespace EzDbCodeGen.Core
             if (fromColumnNameCount == 0) return FromTableAlias;
 
             throw new Exception(string.Format("EzDbSchemaRelationshipExtentions.ToUniqueColumnName: Could not find any unique column names to write to :( {0} or {1} for {2}", This.ToColumnName, This.FromColumnName, This.Name));
+        }
+
+        private static string EndAsObjectPropertyName(string fkNametoSelect, IEntity entity)
+        {
+            var PROC_NAME = string.Format("RelationshipExtentions.ToObjectPropertyName('{0}')", fkNametoSelect);
+            var entityName = entity.Name;
+            var FieldName = "";
+            try
+            {
+
+                var objectSuffix = "";
+                var PreviousFields = new List<string>();
+                //var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToOne);
+                foreach (var relationshipGroup in entity.RelationshipGroups)
+                {
+                    var relationship = relationshipGroup.Value.AsSummary();
+                    if (relationship.Name.StartsWith("FK_tbl_DocumentLocationHistory_tbl_DocumentLocation"))
+                    {
+                        relationship.Name += "";
+                    }
+                    //Need to resolve the to table name to what the alias table name is
+                    string ToTableName = entity.Parent.Entities[relationship.ToTableName].Alias;
+                    int SameTableCount = entity.Relationships.CountItems(RelationSearchField.ToTableName, relationship.ToTableName);
+                    string ToTableNameSingular = ToTableName.ToSingular();
+                    FieldName = ((PreviousFields.Contains(ToTableNameSingular)
+                                         || (entity.Properties.ContainsKey(ToTableNameSingular))
+                                         || (entityName == relationship.ToTableName)
+                                         || (SameTableCount > 1))
+                                            ? relationship.ToUniqueColumnName() : ToTableNameSingular);
+                    PreviousFields.Add(FieldName);
+                    objectSuffix = Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
+
+                    if (fkNametoSelect == relationship.Name)
+                    {
+                        return FieldName + objectSuffix;
+                    }
+                }
+                return string.Format("/* {0} */", fkNametoSelect);
+            }
+            catch (Exception ex)
+            {
+                FieldName += "";
+                //throw new Exception(string.Format("{0}: Error while figuring out the correct class name for this foriegn Key", PROC_NAME), ex);
+            }
+            return FieldName;
+        }
+        /// <summary>
+        /// Used to figure out what the target object name for the end of this particular relationship
+        /// </summary>
+        /// <param name="thisRelationship">The this relationship.</param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static string EndAsObjectPropertyName(this IRelationship thisRelationship)
+        {
+            var PROC_NAME = string.Format("RelationshipExtentions.ToObjectPropertyName('{0}')", thisRelationship.Name);
+            return EndAsObjectPropertyName(thisRelationship.Name, thisRelationship.Parent);
+        }
+
+        /// <summary>
+        /// Used to figure out what the target object name for the end of this particular relationship
+        /// </summary>
+        /// <param name="thisRelationship">The this relationship.</param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        public static string EndAsObjectPropertyName(this RelationshipSummary thisRelationship)
+        {
+            var PROC_NAME = string.Format("RelationshipExtentions.ToObjectPropertyName('{0}')", thisRelationship.Name);
+            return EndAsObjectPropertyName(thisRelationship.Name, thisRelationship.Entity);
         }
 
         /// <summary>
@@ -332,8 +407,15 @@ namespace EzDbCodeGen.Core
                         }
                         ret.ToColumnName.Add(relationship.ToColumnName);
                         ret.ToFieldName.Add(relationship.ToFieldName);
+                        var ToProperty = relationship.Parent.Parent[relationship.ToTableName].Properties[relationship.ToFieldName];
+                        ret.ToColumnProperties.Add(ToProperty);
+                        ret.ToObjectPropertyName.Add(ToProperty.AsObjectPropertyName());
                         ret.FromColumnName.Add(relationship.FromColumnName);
                         ret.FromFieldName.Add(relationship.FromFieldName);
+                        var FromProperty = relationship.Parent.Parent[relationship.FromTableName].Properties[relationship.FromFieldName];
+                        ret.FromColumnProperties.Add(FromProperty);
+                        ret.FromObjectPropertyName.Add(FromProperty.AsObjectPropertyName());
+
                         ret.MultiplicityTypes.Add(relationship.MultiplicityType);
                         ret.Types.Add(relationship.Type);
                     }
