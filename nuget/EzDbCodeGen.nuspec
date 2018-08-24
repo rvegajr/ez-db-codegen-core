@@ -8,10 +8,10 @@
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <licenseUrl>https://github.com/rvegajr/ez-db-codegen-core/blob/master/LICENSE</licenseUrl>
     <projectUrl>https://github.com/rvegajr/ez-db-codegen-core</projectUrl>
-    <description>A class library that uses EzDbSchema and Handlebars to add code generation based off a database easily to any project.</description>
-    <releaseNotes>Application now is multitarget for .net</releaseNotes>
+    <description></description>
+    <releaseNotes></releaseNotes>
     <copyright>2018</copyright>
-    <tags>database schema codegeneration</tags>
+    <tags></tags>
     <dependencies>
       <group targetFramework=".NETFramework4.6.1">
         <dependency id="EzDbSchema" version="1.0.9" exclude="Build,Analyzers" />
