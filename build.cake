@@ -1,7 +1,7 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = false;
-var NuGetReleaseNotes = new [] {"Deep Refs to Property and Entity on Relationships", "Config Filter Fixes", "Inverse and FK Name resolution Fixes"};
+var NuGetReleaseNotes = new [] {"Upgraded EzDbSchema Version.", "Deep Refs to Property and Entity on Relationships.", "Config Filter Fixes.", "Inverse and FK Name resolution Fixes."};
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
@@ -121,14 +121,14 @@ Task("NuGet-Pack")
         Title                   = @"EzDbCodeGen - Easy Database Code Generator",
         Authors                 = new[] {"Ricardo Vega Jr."},
         Owners                  = new[] {"Ricardo Vega Jr."},
-        Description             = @"A class library that allows you to point to a database and obtain a schema dump complete with columns, relationships (including fk names and multiplicity).  Some use cases require a schema of a database without the bulk of Entity power tools or Entity Framework.",
-        Summary                 = @"A class library that allows you to point to a database and obtain a schema dump in xml format.",
+        Description             = @"This complete and self contained code generation utility will install in a sub directory EzDbCodeGen of a target project.  From this path, you can run a powershell script that will generate code based on the connection string.  Each template is a handlebars template that has tags that specify where you would like to output the generated code and if there is a vs project that you wish to update with the file list (old VS project formats only).",
+        Summary                 = @"A class library that will generate code based on a schema representation in a simple object hierarchy (given by EzDbSchema) and handlebars template(s).",
         ProjectUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core"),
         //IconUrl                 = new Uri(""),
         LicenseUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core/blob/master/LICENSE"),
         Copyright               = @"Noctusoft 2018",
         ReleaseNotes            = NuGetReleaseNotes,
-        Tags                    = new [] {"Database ", "Schema", "Code Generation", "Code Generator"},
+        Tags                    = new [] {"Code Generation", "Code Generator", "Database", "Schema" },
         RequireLicenseAcceptance= false,
         Symbols                 = false,
         NoPackageAnalysis       = false,
