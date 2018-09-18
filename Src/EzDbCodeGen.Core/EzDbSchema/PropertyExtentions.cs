@@ -285,7 +285,7 @@ namespace EzDbCodeGen.Core
         public static string AsObjectPropertyName(this IProperty property, string nameCollisionSuffix)
         {
             var PROC_NAME = "AsObjectPropertyName('PropertyAliasSuffix')";
-            var propertyName = property.Alias;
+            var propertyName = property.Alias.ToCsObjectName();
             try
             {
                 var entity = property.Parent;

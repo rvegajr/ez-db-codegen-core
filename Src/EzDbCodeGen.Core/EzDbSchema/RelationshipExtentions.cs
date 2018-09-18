@@ -126,9 +126,43 @@ namespace EzDbCodeGen.Core
             throw new Exception(string.Format("EzDbSchemaRelationshipExtentions.ToUniqueColumnName: Could not find any unique column names to write to :( {0} or {1} for {2}", This.ToColumnName, This.FromColumnName, This.Name));
         }
 
+        /// <summary>
+        /// This will return the target column name.  this is important because we do not want to return the column name of the current table, but rather that 
+        /// column it is pointing to 
+        /// </summary>
+        /// <param name="This">The Context Relationship</param>
+        /// <param name="ContextSchemaObjectName">The parent with the column name you don't want</param>
+        /// <returns></returns>
+        public static string AsObjectPropertyName(this RelationshipSummary relGroupSummary)
+        {
+            var PROC_NAME = string.Format("RelationshipExtentions.AsObjectPropertyName('FKName={0}')", relGroupSummary.Name);
+            var ToObjectFieldName = "";
+            try
+            {
+                var entity = relGroupSummary.Entity;
+                string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
+                ToObjectFieldName = ToTableName.ToCsObjectName();
+                //string ToObjectFieldName = relGroupSummary.ToUniqueColumnName().ToCsObjectName();
+                var CountOfThisEntityInRelationships = relGroupSummary.Entity.Relationships.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
+                if (CountOfThisEntityInRelationships > 1)
+                    ToObjectFieldName = ToTableName + string.Join(",", relGroupSummary.ToColumnName).ToCsObjectName();
+                else
+                {
+                    ToObjectFieldName = ((relGroupSummary.MultiplicityType.EndsAsMany() ?
+                                    relGroupSummary.ToUniqueColumnName().ToPlural() :
+                                    ToObjectFieldName + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
+                                ).ToCsObjectName();
+                }
+                return ToObjectFieldName;
+            }
+            catch (Exception ex)
+            {
+                return string.Format("/* ERROR: {0} */", string.Format("{0}: {1}", PROC_NAME, ex.Message));
+            }
+        }
         private static string EndAsObjectPropertyName(string fkNametoSelect, IEntity entity)
         {
-            var PROC_NAME = string.Format("RelationshipExtentions.ToObjectPropertyName('{0}')", fkNametoSelect);
+            var PROC_NAME = string.Format("RelationshipExtentions.EndAsObjectPropertyName('{0}')", fkNametoSelect);
             var entityName = entity.Name;
             var FieldName = "";
             try
@@ -152,7 +186,7 @@ namespace EzDbCodeGen.Core
                                          || (entity.Properties.ContainsKey(ToTableNameSingular))
                                          || (entityName == relationship.ToTableName)
                                          || (SameTableCount > 1))
-                                            ? relationship.ToUniqueColumnName() : ToTableNameSingular);
+                                            ? relationship.ToUniqueColumnName() : ToTableNameSingular).ToCsObjectName();
                     PreviousFields.Add(FieldName);
                     objectSuffix = Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
 
@@ -165,8 +199,7 @@ namespace EzDbCodeGen.Core
             }
             catch (Exception ex)
             {
-                FieldName += "";
-                //throw new Exception(string.Format("{0}: Error while figuring out the correct class name for this foriegn Key", PROC_NAME), ex);
+                return string.Format("/* ERROR: {0} */", string.Format("{0}: Error while figuring out the correct class name for this foriegn Key", PROC_NAME));
             }
             return FieldName;
         }
