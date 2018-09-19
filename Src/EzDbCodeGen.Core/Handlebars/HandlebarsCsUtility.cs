@@ -69,19 +69,8 @@ namespace EzDbCodeGen.Core
                             var relGroupSummary = relationshipList.AsSummary();
                             var toGroupRelationshipList = entity.Parent[relGroupSummary.ToTableName].Relationships.GroupByFKName();
                             var CountOfThisEntityInTargetRelationships = toGroupRelationshipList.CountItems(RelationSearchField.ToTableName, relGroupSummary.FromTableName);
-                            /*
-                            if (CountOfThisEntityInTargetRelationships == 1)
-                            {
-                                FieldName = entity.Parent[relGroupSummary.FromTableName].Alias + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
-                            }
-                            else if (CountOfThisEntityInTargetRelationships > 1)
-                            {
-                                FieldName = string.Join(",", relGroupSummary.ToColumnName) + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
-                            }
-                            */
-                            //$$$
 
-                            int SameTableCount = RelationshipsOneToOne.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
+                            int SameTableCount = groupedByFKName.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
                             //Need to resolve the to table name to what the alias table name is
                             string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
                             string ToTableNameSingular = ToTableName.ToSingular();
@@ -151,7 +140,7 @@ namespace EzDbCodeGen.Core
                     var groupedByFKName = relZeroOrOneToMany.GroupByFKName();
                     foreach (var FKName in groupedByFKName.Keys)
                     {
-                        if (FKName.Contains("FK_Fact_Sale_Bill_To_Customer_Key_Dimension_Customer") || (FKName.Contains("FK_Fact_Sale_Bill_To_Customer_Key_Dimension_Customer")))
+                        if (FKName.Contains("FK_tbl_Tax_tbl_Parcel") || (FKName.Contains("FK_tbl_Tax_tbl_Parcel")))
                         {
                             entity.Name += "";
                         }
@@ -160,19 +149,7 @@ namespace EzDbCodeGen.Core
                         var relGroupSummary = relationshipList.AsSummary();
                         string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
                         string ToObjectFieldName = relGroupSummary.AsObjectPropertyName();
-                        /*
-                        string ToObjectFieldName = ToTableName.ToCsObjectName();
-                        var CountOfThisEntityInRelationships = relZeroOrOneToMany.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
-                        if (CountOfThisEntityInRelationships > 1) { 
-                            ToObjectFieldName = ToTableName + string.Join(",", relGroupSummary.ToColumnName).ToCsObjectName();
-                        } else
-                        {
-                            ToObjectFieldName = ((relGroupSummary.MultiplicityType.EndsAsMany() ?
-                                            relGroupSummary.ToUniqueColumnName().ToPlural() :
-                                            ToObjectFieldName + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
-                                        ).ToCsObjectName();
-                        }
-                        */
+
                         writer.WriteSafeString(string.Format(
                             "\n{0}this.{1} = new HashSet<{2}>(); //{3} 0|1->*"
                             , prefix, ToObjectFieldName.ToPlural(), ToTableName, relGroupSummary.Name));
@@ -196,16 +173,11 @@ namespace EzDbCodeGen.Core
                     List<string> PreviousOneToManyFields = new List<string>();
                     PreviousOneToManyFields.Clear();
 
-                    if (entity.Name.Contains("Relationship"))
-                    {
-                        entity.Name += "";
-                    }
-
                     var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
                     var groupedByFKName = RelationshipsOneToMany.GroupByFKName();
                     foreach (var FKName in groupedByFKName.Keys)
                     {
-                        if (FKName.Contains("FK_Fact_Sale_Customer_Key_Dimension_Customer") || (FKName.Contains("FK_Fact_Sale_Bill_To_Customer_Key_Dimension_Customer")))
+                        if (FKName.Contains("FKNAMEHERE"))
                         {
                             entity.Name += "";
                         }
@@ -213,68 +185,20 @@ namespace EzDbCodeGen.Core
                         var relGroupSummary = relationshipList.AsSummary();
                         string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
                         string ToObjectFieldName = relGroupSummary.AsObjectPropertyName();
-                        /*
-                        string ToObjectFieldName = ToTableName.ToCsObjectName();
-                        //string ToObjectFieldName = relGroupSummary.ToUniqueColumnName().ToCsObjectName();
-                        var CountOfThisEntityInRelationships = RelationshipsOneToMany.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
-                        if (CountOfThisEntityInRelationships > 1)
-                            ToObjectFieldName = ToTableName + string.Join(",", relGroupSummary.ToColumnName).ToCsObjectName();
-                        else
-                        {
-                            ToObjectFieldName = ((relGroupSummary.MultiplicityType.EndsAsMany() ?
-                                            relGroupSummary.ToUniqueColumnName().ToPlural() :
-                                            ToObjectFieldName + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
-                                        ).ToCsObjectName();
-                        }
-                        */
+
                         //Check and see we have multiple declarations of thre same table,  if we do, we will need an inverse 
                         // property annotation figure out how to property find the correct object property target 
                         var inversePropertyAttribute = "";
-                        if (RelationshipsOneToMany.CountItems(relGroupSummary.ToTableName) > 1) {
-                            var InversePropertyName = "";
-
+                        if (groupedByFKName.CountItems(relGroupSummary.ToTableName) > 1) {
                             var toGroupRelationshipList = entity.Parent[relGroupSummary.ToTableName].Relationships.GroupByFKName();
                             if (!toGroupRelationshipList.ContainsKey(FKName)) throw new Exception(string.Format("The inverse of FK {0} ({1}->{2})", FKName, relGroupSummary.FromTableName, relGroupSummary.ToTableName));
                             var inverseOfThisFK = toGroupRelationshipList[FKName];
                             var relGroupSummaryInverse = inverseOfThisFK.AsSummary();
                             var InversePropertyNamePotential = relGroupSummaryInverse.EndAsObjectPropertyName();
                             if (InversePropertyNamePotential.Length > 0) inversePropertyAttribute = string.Format("[InverseProperty(\"{0}\")]", InversePropertyNamePotential);
-                            /*
-
-                            var CountOfThisEntityInTargetRelationships = toGroupRelationshipList.CountItems(RelationSearchField.ToTableName, relGroupSummary.FromTableName);
-                            if (CountOfThisEntityInTargetRelationships == 1)
-                            {
-                                InversePropertyName = entity.Parent[relGroupSummary.FromTableName].Alias;
-                            }
-                            else if (CountOfThisEntityInTargetRelationships > 1)
-                            {
-                                InversePropertyName = string.Join(",", relGroupSummary.ToColumnName).ToCsObjectName();
-                            }
-                            if (InversePropertyName.Length > 0)
-                            {
-                                inversePropertyAttribute = string.Format("[InverseProperty(\"{0}\")]",
-                                    (relGroupSummaryInverse.MultiplicityType.EndsAsMany() ?
-                                        relGroupSummaryInverse.ToUniqueColumnName().ToPlural() :
-                                        InversePropertyName + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
-                                    );
-                            }
-
-
-                            var InversePropertyNamePotential = entity.Parent.Entities[relGroupSummaryInverse.ToTableName].Alias.ToCsObjectName();
-                            if (CountOfThisEntityInRelationships > 1)
-                            {
-                                InversePropertyNamePotential = ToTableName + string.Join(",", relGroupSummaryInverse.ToColumnName).ToCsObjectName();
-                            }
-                            else
-                            {
-                                InversePropertyNamePotential = ((relGroupSummaryInverse.MultiplicityType.EndsAsMany() ?
-                                                relGroupSummaryInverse.ToUniqueColumnName().ToPlural() :
-                                                ToObjectFieldName + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
-                                            ).ToCsObjectName();
-                            }
-                                                        */
                         }
-                        writer.WriteSafeString(string.Format("\n\n{0}//<summary>{1}</summary>", prefix, relGroupSummary.Name));
+
+                        writer.WriteSafeString(string.Format("\n\n{0}//<summary>{1} {2}</summary>", prefix, relGroupSummary.Name, relGroupSummary.MultiplicityType.AsString()));
                         writer.WriteSafeString(string.Format("\n{0}[System.Diagnostics.CodeAnalysis.SuppressMessage(\"Microsoft.Usage\", \"CA2227: CollectionPropertiesShouldBeReadOnly\")]", prefix));
                         if (inversePropertyAttribute.Length > 0) writer.WriteSafeString(string.Format("\n{0}{1}", prefix, inversePropertyAttribute));
                         writer.WriteSafeString(string.Format("\n{0}public virtual ICollection<{1}> {2} {{ get; set; }}", prefix, ToTableName, ToObjectFieldName.ToPlural()));
@@ -394,7 +318,7 @@ namespace EzDbCodeGen.Core
                         var relGroupSummary = relationshipList.AsSummary();
                         string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
                         
-                        int SameTableCount = RelationshipsManyToOne.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
+                        int SameTableCount = groupedByFKName.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
                         //Need to resolve the to table name to what the alias table name is
                         string ToTableNameSingular = ToTableName.ToSingular();
                         string FieldName = ((PreviousManyToOneFields.Contains(ToTableNameSingular)
