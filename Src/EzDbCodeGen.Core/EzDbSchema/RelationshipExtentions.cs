@@ -11,11 +11,22 @@ namespace EzDbCodeGen.Core
     public class RelationshipGroup :  Dictionary<string, IRelationshipList>
     {
         public IDatabase Database { get; set; }
+        /// <summary>
+        /// Counts the number if itmes that exist that match the string in searchFor.  This will default searching in ToTableName
+        /// </summary>
+        /// <param name="searchFor">The string search for.</param>
+        /// <returns></returns>
         public int CountItems(string searchFor)
         {
             return CountItems(RelationSearchField.ToTableName, searchFor);
         }
-
+        /// <summary>
+        /// Counts the number if itmes that exist that match the string in searchFor.  this will search the field specified in searchField
+        /// </summary>
+        /// <param name="searchField">The search field.</param>
+        /// <param name="searchFor">The search for.</param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public int CountItems(RelationSearchField searchField, string searchFor)
         {
             var count = 0;
