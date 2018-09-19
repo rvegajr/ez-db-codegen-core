@@ -151,7 +151,7 @@ namespace EzDbCodeGen.Core
                     var groupedByFKName = relZeroOrOneToMany.GroupByFKName();
                     foreach (var FKName in groupedByFKName.Keys)
                     {
-                        if (FKName.Contains("FK_Fact_Sale_Customer_Key_Dimension_Customer") || (FKName.Contains("FK_Fact_Sale_Bill_To_Customer_Key_Dimension_Customer")))
+                        if (FKName.Contains("FK_Fact_Sale_Bill_To_Customer_Key_Dimension_Customer") || (FKName.Contains("FK_Fact_Sale_Bill_To_Customer_Key_Dimension_Customer")))
                         {
                             entity.Name += "";
                         }
@@ -159,6 +159,8 @@ namespace EzDbCodeGen.Core
                         var relationshipList = groupedByFKName[FKName];
                         var relGroupSummary = relationshipList.AsSummary();
                         string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
+                        string ToObjectFieldName = relGroupSummary.AsObjectPropertyName();
+                        /*
                         string ToObjectFieldName = ToTableName.ToCsObjectName();
                         var CountOfThisEntityInRelationships = relZeroOrOneToMany.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
                         if (CountOfThisEntityInRelationships > 1) { 
@@ -170,7 +172,7 @@ namespace EzDbCodeGen.Core
                                             ToObjectFieldName + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
                                         ).ToCsObjectName();
                         }
-
+                        */
                         writer.WriteSafeString(string.Format(
                             "\n{0}this.{1} = new HashSet<{2}>(); //{3} 0|1->*"
                             , prefix, ToObjectFieldName.ToPlural(), ToTableName, relGroupSummary.Name));
@@ -210,6 +212,8 @@ namespace EzDbCodeGen.Core
                         var relationshipList = groupedByFKName[FKName];
                         var relGroupSummary = relationshipList.AsSummary();
                         string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
+                        string ToObjectFieldName = relGroupSummary.AsObjectPropertyName();
+                        /*
                         string ToObjectFieldName = ToTableName.ToCsObjectName();
                         //string ToObjectFieldName = relGroupSummary.ToUniqueColumnName().ToCsObjectName();
                         var CountOfThisEntityInRelationships = RelationshipsOneToMany.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
@@ -222,19 +226,22 @@ namespace EzDbCodeGen.Core
                                             ToObjectFieldName + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
                                         ).ToCsObjectName();
                         }
-
+                        */
                         //Check and see we have multiple declarations of thre same table,  if we do, we will need an inverse 
                         // property annotation figure out how to property find the correct object property target 
                         var inversePropertyAttribute = "";
                         if (RelationshipsOneToMany.CountItems(relGroupSummary.ToTableName) > 1) {
                             var InversePropertyName = "";
+
                             var toGroupRelationshipList = entity.Parent[relGroupSummary.ToTableName].Relationships.GroupByFKName();
                             if (!toGroupRelationshipList.ContainsKey(FKName)) throw new Exception(string.Format("The inverse of FK {0} ({1}->{2})", FKName, relGroupSummary.FromTableName, relGroupSummary.ToTableName));
                             var inverseOfThisFK = toGroupRelationshipList[FKName];
                             var relGroupSummaryInverse = inverseOfThisFK.AsSummary();
+                            var InversePropertyNamePotential = relGroupSummaryInverse.EndAsObjectPropertyName();
+                            if (InversePropertyNamePotential.Length > 0) inversePropertyAttribute = string.Format("[InverseProperty(\"{0}\")]", InversePropertyNamePotential);
+                            /*
 
                             var CountOfThisEntityInTargetRelationships = toGroupRelationshipList.CountItems(RelationSearchField.ToTableName, relGroupSummary.FromTableName);
-                            /*
                             if (CountOfThisEntityInTargetRelationships == 1)
                             {
                                 InversePropertyName = entity.Parent[relGroupSummary.FromTableName].Alias;
@@ -252,7 +259,6 @@ namespace EzDbCodeGen.Core
                                     );
                             }
 
-                            */
 
                             var InversePropertyNamePotential = entity.Parent.Entities[relGroupSummaryInverse.ToTableName].Alias.ToCsObjectName();
                             if (CountOfThisEntityInRelationships > 1)
@@ -266,8 +272,7 @@ namespace EzDbCodeGen.Core
                                                 ToObjectFieldName + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
                                             ).ToCsObjectName();
                             }
-                            if (InversePropertyNamePotential.Length > 0) inversePropertyAttribute = string.Format("[InverseProperty(\"{0}\")]", InversePropertyNamePotential);
-                            
+                                                        */
                         }
                         writer.WriteSafeString(string.Format("\n\n{0}//<summary>{1}</summary>", prefix, relGroupSummary.Name));
                         writer.WriteSafeString(string.Format("\n{0}[System.Diagnostics.CodeAnalysis.SuppressMessage(\"Microsoft.Usage\", \"CA2227: CollectionPropertiesShouldBeReadOnly\")]", prefix));

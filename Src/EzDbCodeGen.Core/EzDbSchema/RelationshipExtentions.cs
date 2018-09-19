@@ -89,7 +89,7 @@ namespace EzDbCodeGen.Core
         {
             var targetColumnNameCount = 0;
             var fromColumnNameCount = 0;
-            foreach (var rel in This.Parent.Relationships) if (rel.ToColumnName==This.ToColumnName) targetColumnNameCount++;
+            foreach (var rel in This.Parent.Relationships) if (rel.ToColumnName == This.ToColumnName) targetColumnNameCount++;
             foreach (var rel in This.Parent.Relationships) if (rel.FromColumnName == This.FromColumnName) fromColumnNameCount++;
             if (targetColumnNameCount == 1) return This.ToColumnName;
             if (fromColumnNameCount == 1) return This.FromColumnName;
@@ -107,7 +107,7 @@ namespace EzDbCodeGen.Core
         {
             var targetColumnNameCount = 0;
             var fromColumnNameCount = 0;
-            
+
             //Try to see if a combination of names will match a column name that already exists
             foreach (var rel in This.Entity.Relationships) if (rel.ToColumnName == string.Join("", This.ToColumnName)) targetColumnNameCount++;
             foreach (var rel in This.Entity.Relationships) if (rel.FromColumnName == string.Join("", This.FromColumnName)) fromColumnNameCount++;
@@ -125,6 +125,22 @@ namespace EzDbCodeGen.Core
 
             throw new Exception(string.Format("EzDbSchemaRelationshipExtentions.ToUniqueColumnName: Could not find any unique column names to write to :( {0} or {1} for {2}", This.ToColumnName, This.FromColumnName, This.Name));
         }
+        /// <summary>
+        /// Returns a list of Object names with counts to check and see if that object will exist
+        /// </summary>
+        /// <param name="entity">The entity.</param>
+        /// <returns></returns>
+        public static Dictionary<string, int> ObjectNameCounts(this IEntity entity) {
+            var ret = new Dictionary<string, int>();
+            foreach(var FKName in entity.RelationshipGroups.Keys)
+            {
+                var relGroupSummary = entity.RelationshipGroups[FKName].AsSummary();
+                var objectName = relGroupSummary.AsObjectPropertyNameAttempt();
+                if (!ret.ContainsKey(objectName)) ret.Add(objectName, 0);
+                ret[objectName]++;
+            }
+            return ret;
+        }
 
         /// <summary>
         /// This will return the target column name.  this is important because we do not want to return the column name of the current table, but rather that 
@@ -135,17 +151,71 @@ namespace EzDbCodeGen.Core
         /// <returns></returns>
         public static string AsObjectPropertyName(this RelationshipSummary relGroupSummary)
         {
+            return relGroupSummary.AsObjectPropertyName(true);
+        }
+
+
+        /// <summary>
+        /// This will return the target column name.  this is important because we do not want to return the column name of the current table, but rather that 
+        /// column it is pointing to 
+        /// </summary>
+        /// <param name="This">The Context Relationship</param>
+        /// <param name="ContextSchemaObjectName">The parent with the column name you don't want</param>
+        /// <returns></returns>
+        public static string AsObjectPropertyName(this RelationshipSummary relGroupSummary, bool CheckForObjectNameExistance)
+        {
             var PROC_NAME = string.Format("RelationshipExtentions.AsObjectPropertyName('FKName={0}')", relGroupSummary.Name);
             var ToObjectFieldName = "";
             try
             {
+                ToObjectFieldName = relGroupSummary.AsObjectPropertyNameAttempt();
+
+                var objectNameList = new Dictionary<string, int>();
+                if (CheckForObjectNameExistance) objectNameList = relGroupSummary.Entity.ObjectNameCounts();
+                if ((objectNameList.ContainsKey(ToObjectFieldName)) && (objectNameList[ToObjectFieldName] > 1))
+                {
+                    //If we already have this object name, then lets try to see if we can make a unique name with the Column names
+                    ToObjectFieldName = ToObjectFieldName + string.Join(",", relGroupSummary.ToColumnName).ToCsObjectName();
+                }
+
+                if ((objectNameList.ContainsKey(ToObjectFieldName)) && (objectNameList[ToObjectFieldName] > 1))
+                {
+                    throw new Exception(string.Format("Object name {0} already exists in the object list :(", ToObjectFieldName));
+                }
+                return ToObjectFieldName;
+            }
+            catch (Exception ex)
+            {
+                return string.Format("/* ERROR: {0} */", string.Format("{0}: {1}", PROC_NAME, ex.Message));
+            }
+
+        }
+        /// <summary>
+        /// This will return the target column name.  this is important because we do not want to return the column name of the current table, but rather that 
+        /// column it is pointing to.  this DOES NOT check and see if the item already exists.
+        /// </summary>
+        /// <param name="This">The Context Relationship</param>
+        /// <param name="ContextSchemaObjectName">The parent with the column name you don't want</param>
+        /// <returns></returns>
+        private static string AsObjectPropertyNameAttempt(this RelationshipSummary relGroupSummary)
+        {
+            var PROC_NAME = string.Format("RelationshipExtentions.AsObjectPropertyNameAttempt('FKName={0}')", relGroupSummary.Name);
+            var ToObjectFieldName = "";
+            try
+            {
                 var entity = relGroupSummary.Entity;
+                var RelationshipObjectNameList = new List<string>();
                 string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
                 ToObjectFieldName = ToTableName.ToCsObjectName();
                 //string ToObjectFieldName = relGroupSummary.ToUniqueColumnName().ToCsObjectName();
                 var CountOfThisEntityInRelationships = relGroupSummary.Entity.Relationships.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
-                if (CountOfThisEntityInRelationships > 1)
-                    ToObjectFieldName = ToTableName + string.Join(",", relGroupSummary.ToColumnName).ToCsObjectName();
+                if (CountOfThisEntityInRelationships > 1) { 
+                    //ToObjectFieldName = ToTableName + string.Join(",", relGroupSummary.ToColumnName).ToCsObjectName();
+                    ToObjectFieldName = ((relGroupSummary.MultiplicityType.EndsAsMany() ?
+                                relGroupSummary.ToUniqueColumnName().ToPlural() :
+                                string.Join(",", relGroupSummary.ToColumnName) + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
+                            ).ToCsObjectName();
+                }
                 else
                 {
                     ToObjectFieldName = ((relGroupSummary.MultiplicityType.EndsAsMany() ?
