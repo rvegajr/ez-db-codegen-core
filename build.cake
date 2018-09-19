@@ -1,7 +1,7 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
-var IncrementMinorVersion = false;
-var NuGetReleaseNotes = new [] {"Upgraded EzDbSchema Version.", "Deep Refs to Property and Entity on Relationships.", "Config Filter Fixes.", "Inverse and FK Name resolution Fixes."};
+var IncrementMinorVersion = true;
+var NuGetReleaseNotes = new [] {"Fixed issue when schema objects have spaces.", "Additional Config Filter Fixes.", "Upgraded all Nuget Packages"};
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");

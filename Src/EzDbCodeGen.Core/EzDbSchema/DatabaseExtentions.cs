@@ -69,7 +69,7 @@ namespace EzDbCodeGen.Core
             //Rename the aliases of each to the pattern specified in the AliasNamePattern
             foreach (var entity in database.Entities.Values)
             {
-                entity.Alias = Configuration.ReplaceEx(config.Database.AliasNamePattern, new SchemaObjectName(entity));
+                entity.Alias = Configuration.ReplaceEx(config.Database.AliasNamePattern, new SchemaObjectName(entity)).ToCodeFriendly();
             }
 
             //Now we have to make sure there are no Property.Alias fields that have the same name as their parent Entity Alias field (since these will be the column name)
