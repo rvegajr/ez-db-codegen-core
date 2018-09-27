@@ -1,0 +1,21 @@
+﻿{
+    "DefaultSettings": {
+        "Settings": {
+            "ConnectionString": "data source=127.0.0.1;initial catalog=WideWorldImportersDW;user=sa;password=sa"
+        }
+    },
+    "Environments": {
+        "LOCAL": {
+            "Host": [ "localhost*", "localhost.url" ],
+            "Settings": {
+                "ConnectionString": "data source=127.0.0.1;initial catalog=WideWorldImportersDW;user=sa;password=sa"
+            }
+        },
+        "PROD": {
+            "Host": [ "PROD_HOST_NAME", "Ezapi.prod.url" ],
+            "Settings": {
+                "ConnectionString": "data source=PROD_SQL_SERVER;initial catalog=WideWorldImportersDW;user=sa;password=sa"
+            }
+        }
+    }
+}
