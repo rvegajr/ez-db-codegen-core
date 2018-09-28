@@ -1,7 +1,7 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = true;
-var NuGetReleaseNotes = new [] {"Fixed Relation Group Count bug", "Fixed issue when schema objects have spaces.", "Additional Config Filter Fixes.", "Upgraded all Nuget Packages"};
+var NuGetReleaseNotes = new [] {"Added config file search tokens", "Fixed issue connection string was not parsing correctly.", "Upgraded all Nuget Packages"};
 
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
