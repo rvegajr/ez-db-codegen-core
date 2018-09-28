@@ -39,6 +39,39 @@ namespace EzDbCodeGen.Tests
             Assert.True(val.Contains("initial catalog=DATABASENAME"), "Could not find catalog=DATABASENAME address in connection string");
             var val2 = settings.FindValue("/configuration/appSettings/add[@key='UnobtrusiveJavaScriptEnabled']", "value");
             Assert.True(val2.Contains("true"), "Could not true in appSettings var UnobtrusiveJavaScriptEnabled");
+            var val3 = settings.FindValue("/configuration/connectionStrings/add[@name='DatabaseContext']/@connectionString");
+            Assert.True(val3.Contains("initial catalog=DATABASENAME"), "Could not find catalog=DATABASENAME address in connection string");
         }
+
+        [Fact]
+        public void SettingsResolverTests()
+        {
+            SettingsHelper settings = new SettingsHelper();
+            settings.AppSettingsFileName = this.WebSettingsSample;
+            var val = ("@" + WebSettingsSample + ">/configuration/connectionStrings/add[@name='DatabaseContext']/@connectionString").SettingResolution();
+            Assert.True(val.Contains("initial catalog=DATABASENAME"), "Could not find catalog=DATABASENAME address in connection string");
+            var val2 = ("@" + HostSettingsSample + ">/root/Environments/LOCAL/Settings/ConnectionString").SettingResolution();
+            Assert.True(val2.Contains("127.0.0.1"), "Could not find loopback address in connection string");
+            var sameTest = HostSettingsSample + ">/root/Environments/LOCAL/Settings/ConnectionString";
+            var val3 = sameTest.SettingResolution();
+            Assert.True(val3.Equals(sameTest), "String should have not changed");
+
+            //Using Connection string Shortcut Capital "CS" will translate to /configuration/connectionStrings/add[@name='DatabaseContext']/@connectionString
+            var val4 = ("@" + WebSettingsSample + ">CS[DatabaseContext]").SettingResolution();
+            Assert.True(val4.Contains("initial catalog=DATABASENAME"), "Could not find catalog=DATABASENAME address in connection string");
+
+            /*
+             * XML:
+             * Using Connection string Shortcut Capital "AS" will translate to /configuration/appSettings/add[@key='DatabaseContext']/@value
+             * JSON:
+             * Using Connection string Shortcut Capital "AS" will translate to /root/DefaultSettings/Settings/XXXX where XXXX = ConnectionString
+             */
+            var val5 = ("@" + WebSettingsSample + ">AS[UnobtrusiveJavaScriptEnabled]").SettingResolution();
+            Assert.True(val5.Contains("true"), "Could not true in appSettings var UnobtrusiveJavaScriptEnabled");
+            var val6 = ("@" + HostSettingsSample + ">AS[ConnectionString]").SettingResolution();
+            Assert.True(val6.Contains("127.0.0.1"), "Could not find loopback address in connection string");
+
+        }
+
     }
 }
