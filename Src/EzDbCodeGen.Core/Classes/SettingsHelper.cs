@@ -7,15 +7,74 @@ using System.Xml.Linq;
 
 namespace EzDbCodeGen.Core.Classes
 {
+    public static class SettingsExtention {
+        /// <summary>
+        /// Gets the setting from file. For format that string must be in should be @{FILENAME}>{XPATH} 
+        /// Where file name is the settings file in either XML or JSON.  for example @C:/Inetpub/wwwroot/web.config>/xpath/@attribute
+        /// </summary>
+        /// <returns>if the string isng in the pattern noted (with @ and >), then it will return itself, otherwise it will return the value if found</returns>
+        public static string SettingResolution(this string fileName)
+        {
+            return SettingsHelper.GetSettingFromFile(fileName);
+        }
+    }
     public class SettingsHelper
     {
         public SettingsHelper()
         {
 
         }
+        /// <summary>
+        /// Gets the setting from file.
+        /// </summary>
+        /// <param name="fileparm">For format of this parm needs to be @{FILENAME}>{XPATH} Where file name is the settings file in 
+        /// either XML or JSON.  for example @C:/Inetpub/wwwroot/web.config>/ </param>
+        /// <returns>if the string can't result, then it will return itself, otherwise </returns>
+        public static string GetSettingFromFile(string fileparm)
+        {
+            var retValue = fileparm;
+            if ((fileparm.StartsWith("@")) && (fileparm.Contains(">")))
+            {
+                fileparm = fileparm.Substring(1);
+                var arrParts = fileparm.Split('>');
+                var filename = arrParts[0].Trim();
+                var xpath = arrParts[1].Trim();
+                SettingsHelper settings = new SettingsHelper();
+                settings.AppSettingsFileName = filename;
 
+                /*Using Connection string Shortcut Capital "CS" will translate to /configuration/connectionStrings/add[@name='DatabaseContext']/@connectionString
+                 * The syntax is CS[SETTINGNAMEHERE], so the example above would be CS['SETTINGNAMEHERE'] 
+                 * XML:
+                 * Using Connection string Shortcut Capital "AS" will translate to /configuration/appSettings/add[@key='DatabaseContext']/@value
+                 * JSON:
+                 * Using Connection string Shortcut Capital "AS" will translate to /root/DefaultSettings/Settings/XXXX where XXXX = ConnectionString
+                 */
+                if (xpath.StartsWith("CS"))
+                {
+                    xpath = xpath.Replace("CS[", "/configuration/connectionStrings/add[@name='");
+                    xpath = xpath.Replace("]", "']/@connectionString");
+                } else if (xpath.StartsWith("AS"))
+                {
+                    if (settings.isJson)
+                    {
+                        xpath = xpath.Replace("AS[", "/root/DefaultSettings/Settings/");
+                        xpath = xpath.Replace("]", "");
 
+                    }
+                    else if (settings.isXml)
+                    {
+                        xpath = xpath.Replace("AS[", "/configuration/appSettings/add[@key='");
+                        xpath = xpath.Replace("]", "']/@value");
+
+                    }
+                }
+                retValue = settings.FindValue(xpath);
+            }
+            return retValue;
+        }
         private string appSettingsFileName = "";
+        public bool isJson = false;
+        public bool isXml = false;
         /// <summary>
         /// Gets or sets the name of the source file.  This will also cause the reload of the config file
         /// </summary>
@@ -76,14 +135,18 @@ namespace EzDbCodeGen.Core.Classes
         {
             try
             {
+                isJson = false;
+                isXml = false;
                 var ext = System.IO.Path.GetExtension(FileName).ToLower();
                 var content = System.IO.File.ReadAllText(FileName);
                 if (ext.EndsWith("json"))
                 {
+                    isJson = true;
                     xmldoc = JsonConvert.DeserializeXNode(content, "root").ToXmlDocument();
                 }
                 else if ((ext.EndsWith("xml")) || (ext.EndsWith("config")))
                 {
+                    isXml = true;
                     xmldoc = new XmlDocument();
                     xmldoc.LoadXml(content);
                 }

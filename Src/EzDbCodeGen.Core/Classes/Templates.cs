@@ -6,6 +6,7 @@ using EzDbSchema.Core.Interfaces;
 using EzDbCodeGen.Core.Enums;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Objects;
+using System.Linq;
 
 namespace EzDbCodeGen.Core
 {
@@ -248,21 +249,10 @@ namespace EzDbCodeGen.Core
         {
             try
             {
-                var arr = connectionString.Split(';');
-                foreach (var str in arr)
-                {
-                    var strAsUpper = str.ToUpper();
-                    if (strAsUpper.Contains("SERVER"))
-                        this.Server = (str).Pluck("=");
-                    else if (strAsUpper.Contains("DATA SOURCE"))
-                        this.Server = (str).Pluck("=");
-                    else if (strAsUpper.Contains("DATABASE"))
-                        this.Database = (str).Pluck("=");
-                    else if (strAsUpper.Contains("USER"))
-                        this.UserId = (str).Pluck("=");
-                    else if (strAsUpper.Contains("PASS"))
-                        this.Password = (str).Pluck("=");
-                }
+                this.Server = GetServerName(connectionString);
+                this.Database = GetDatabaseName(connectionString);
+                this.UserId = GetUsername(connectionString);
+                this.Password = GetPassword(connectionString);
                 return true;
             }
             catch (Exception)
@@ -270,6 +260,48 @@ namespace EzDbCodeGen.Core
                 return false;
 
             }
+        }
+        private static readonly string[] serverAliases = { "server", "host", "data source", "datasource", "address",
+                                           "addr", "network address" };
+        private static readonly string[] databaseAliases = { "database", "initial catalog" };
+        private static readonly string[] usernameAliases = { "user id", "uid", "username", "user name", "user" };
+        private static readonly string[] passwordAliases = { "password", "pwd" };
+
+        private static string GetPassword(string connectionString)
+        {
+            return GetValue(connectionString, passwordAliases);
+        }
+
+        private static string GetUsername(string connectionString)
+        {
+            return GetValue(connectionString, usernameAliases);
+        }
+
+        private static string GetDatabaseName(string connectionString)
+        {
+            return GetValue(connectionString, databaseAliases);
+        }
+
+        private static string GetServerName(string connectionString)
+        {
+            return GetValue(connectionString, serverAliases);
+        }
+
+        private static string GetValue(string connectionString, params string[] keyAliases)
+        {
+            var keyValuePairs = connectionString.Split(';')
+                                                .Where(kvp => kvp.Contains('='))
+                                                .Select(kvp => kvp.Split(new char[] { '=' }, 2))
+                                                .ToDictionary(kvp => kvp[0].Trim(),
+                                                              kvp => kvp[1].Trim(),
+                                                              StringComparer.InvariantCultureIgnoreCase);
+            foreach (var alias in keyAliases)
+            {
+                string value;
+                if (keyValuePairs.TryGetValue(alias, out value))
+                    return value;
+            }
+            return string.Empty;
         }
 
         public IDatabase LoadSchema()
