@@ -12,10 +12,15 @@ Please note I owe you so much more documenation on this!! more to come! :)
 * [Visual Studio 2017] (https://visualstudio.microsoft.com/) - You will get everything you need except the sdk!  please download the latest version of this before trying to run the powershell script
 * You will need MSSQL with some database installed.  If you need a sample database,  feel free to look for the [World Wide Importers](https://github.com/Microsoft/sql-server-samples/releases/tag/wide-world-importers-v1.0) samples.
 
+NOTE:  If you have not set your powershell execution remote policy first,  you will need to do this as noted in [Powershell Execution Policy](https://www.pdq.com/blog/powershell-how-to-write-your-first-powershell-script/)
+* Open the powershell command prompt in administrator mode and type:
+Set-ExecutionPolicy RemoteSigned
+
 ### Using this project:
 
 Lets go through a test run of how to use this before we get into the nitty gritty:
 ####  From NuGet (or use the nuget package manager)
+
 1. Install-Package EzDbCodeGen  - it will create a folder in EzDbCodeGen.NuGet.TestTarget called EzDbCodeGen
 2. Update the connection string in ezdbcodegen.ps1 with the database you wish to create your templates on
 3. right click on ezdbcodegen.ps1 and select "Open with PowerShell ISE" (because for whatever reason,  the direct executer just hangs for me)
