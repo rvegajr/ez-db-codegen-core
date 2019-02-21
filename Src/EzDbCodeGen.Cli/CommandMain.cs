@@ -75,7 +75,11 @@ namespace EzDbCodeGen.Cli
                 {
                     var schemaName = "MySchema";
                     if (schemaNameOption.HasValue()) schemaName = schemaNameOption.Value();
-                    if (sourceConnectionStringOption.HasValue()) AppSettings.Instance.ConnectionString = sourceConnectionStringOption.Value();
+                    if (sourceConnectionStringOption.HasValue())
+                    {
+                        AppSettings.Instance.ConnectionString = sourceConnectionStringOption.Value().SettingResolution();
+                    }
+
                     if (configFileOption.HasValue()) AppSettings.Instance.ConfigurationFileName = configFileOption.Value();
 
                     var Errors = new StringBuilder();
