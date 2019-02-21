@@ -16,6 +16,7 @@ public int MAJOR = 0; public int MINOR = 1; public int REVISION = 2; public int 
 var VersionInfoText = System.IO.File.ReadAllText(thisDir + "Src/VersionInfo.cs");
 var AssemblyFileVersionAttribute = Pluck(VersionInfoText, "AssemblyFileVersionAttribute(\"", "\")]");
 var CurrentAssemblyVersionAttribute = Pluck(VersionInfoText, "System.Reflection.AssemblyVersionAttribute(\"", "\")]");
+var deployPath = thisDir + "artifacts" + System.IO.Path.DirectorySeparatorChar;
 
 var AssemblyVersionAttribute = CurrentAssemblyVersionAttribute;
 var CurrentNugetVersion = VersionStringParts(AssemblyVersionAttribute, MAJOR, MINOR, REVISION);
@@ -89,6 +90,7 @@ Task("Build")
         .UseToolVersion(MSBuildToolVersion.Default)
 		.WithTarget("publish")
 		.WithProperty("DeployOnBuild", "true")
+		.WithProperty("PublishDirectory", deployPath)
 	  );
     }
     else
