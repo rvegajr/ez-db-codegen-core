@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net461;netcoreapp2.0;netcoreapp2.1</TargetFrameworks>
-	<Version>1.1.22.0</Version>
+    <TargetFrameworks>netstandard2.0;net461;netcoreapp2.0;netcoreapp2.1;netcoreapp2.2</TargetFrameworks>
+	<Version>1.1.23.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="1.0.23" />
+    <PackageReference Include="EzDbSchema" Version="1.0.26" />
     <PackageReference Include="Handlebars.Net" Version="1.9.5" />
     <PackageReference Include="Json.Comparer.Core" Version="0.6.9" />
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
