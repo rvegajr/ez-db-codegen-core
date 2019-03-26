@@ -183,6 +183,43 @@ namespace EzDbCodeGen.Core
                 }
             });
 
+            Handlebars.RegisterHelper("StringFormat", (writer, context, parameters) => {
+                if (parameters.Count() != 2)
+                {
+                    writer.WriteSafeString("Warning: StringFormat needs to have 2 parameters, [0]=StringToActOn, [1]='lower,upper,snake,title,pascal,trim,plural,single,nettype,jstype' ");
+                }
+                else
+                {
+                    var strToFormat = parameters[0].ToSafeString();
+                    var arrActions = parameters[1].ToSafeString().Split(',');
+                    foreach(var _action in arrActions)
+                    {
+                        var action = _action.ToLower().Trim();
+                        if (action.Equals("lower"))
+                            strToFormat = strToFormat.ToLower();
+                        else if (action.Equals("upper"))
+                            strToFormat = strToFormat.ToUpper();
+                        else if (action.Equals("snake"))
+                            strToFormat = strToFormat.ToSnakeCase();
+                        else if (action.Equals("title"))
+                            strToFormat = strToFormat.ToTitleCase();
+                        else if (action.Equals("pascal"))
+                            strToFormat = strToFormat.ToPascalCase();
+                        else if (action.Equals("trim"))
+                            strToFormat = strToFormat.Trim();
+                        else if (action.Equals("plural"))
+                            strToFormat = strToFormat.ToPlural();
+                        else if (action.Equals("single"))
+                            strToFormat = strToFormat.ToSingular();
+                        else if (action.Equals("nettype"))
+                            strToFormat = strToFormat.ToNetType();
+                        else if (action.Equals("jstype"))
+                            strToFormat = strToFormat.ToJsType();
+                    }
+                    writer.WriteSafeString(strToFormat);
+                }
+            });
+
             Handlebars.RegisterHelper("EntityCustomAttribute", (writer, context, parameters) => {
                 var entity = (IEntity)context;
                 var entityName = entity.Name;
