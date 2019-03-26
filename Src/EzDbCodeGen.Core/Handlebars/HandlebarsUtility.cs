@@ -215,6 +215,8 @@ namespace EzDbCodeGen.Core
                             strToFormat = strToFormat.ToNetType();
                         else if (action.Equals("jstype"))
                             strToFormat = strToFormat.ToJsType();
+                        else if (action.Equals("sentence"))
+                            strToFormat = strToFormat.ToSentenceCase();
                     }
                     writer.WriteSafeString(strToFormat);
                 }
