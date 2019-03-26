@@ -162,7 +162,7 @@ Task("NuGet-Pack")
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.config.json", Target = "content/EzDbCodeGen" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRender.hbs", Target = "content/EzDbCodeGen/Templates" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRenderAsFiles.hbs", Target = "content/EzDbCodeGen/Templates" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/bin/Release/netcoreapp2.1/publish/**.*", Target = "content/EzDbCodeGen/bin" }
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/bin/Release/netcoreapp2.2/publish/**.*", Target = "content/EzDbCodeGen/bin" }
 		},
 		ArgumentCustomization = args => args.Append("")		
     };
