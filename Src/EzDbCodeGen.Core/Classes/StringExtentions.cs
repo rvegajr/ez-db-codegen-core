@@ -187,6 +187,17 @@ namespace EzDbCodeGen.Core.Extentions.Strings
             return rgx.Replace(stringToConvert.Replace("-", "_"), "");
         }
 
+        public static string ToSentenceCase(this string stringToConvert)
+        {
+            if (stringToConvert == null)
+                throw new ArgumentNullException("stringToConvert");
+            return Regex.Replace(
+                stringToConvert,
+                "(?<!^)([A-Z][a-z]|(?<=[a-z])[A-Z])",
+                " $1",
+                System.Text.RegularExpressions.RegexOptions.Compiled).Trim();
+        }
+
         /// <summary>
         /// Returns the .net data type from the SQL datatype
         /// </summary>
