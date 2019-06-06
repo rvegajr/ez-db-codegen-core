@@ -53,8 +53,20 @@ Copy-Item -Path $EzDbSampleTemplateFilesSource -Destination $EzDbSampleTemplateF
 Write-Output "init.ps1: Copying '$EzDbConfigFileSource' to solution root '$EzDbConfigFileTarget'"
 Copy-Item -Path $EzDbConfigFileSource -Destination $EzDbConfigFileTarget
 
+$DllName = "EzDbCodeGen.Cli.dll"
+$dllLocation = (Get-ChildItem -Path $contentPath -Filter $DllName -Recurse -ErrorAction SilentlyContinue -Force).FullName
+If (-NOT( $dllLocation ) ) {
+    $ErrorMessage = "Cli Application dll [" + $DllName + "] could not be found, is it even in the NuGet package?"
+    Write-Error -Message $ErrorMessage -ErrorAction Stop
+}
+foreach ($dll in $dllLocation)
+{
+    $EzDbCliPathSource = Join-Path $path::GetDirectoryName($dll) ""
+    break
+}
+Write-Output "init.ps1: Copying Cli content application '$EzDbCliPathSource' to '$EzDbCliPathTarget'"
+Copy-Item $EzDbCliPathSource -Destination $EzDbCliPathTarget -Recurse
 <# 
-content files now magically get copieed to the output directly,  took out the copy code
 Experimental code to update the solution file
 
 Write-Output "Checking to see if we have to make any changes to the solution for newly added files from '$project.FileName'"
