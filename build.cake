@@ -10,9 +10,11 @@ FilePath msBuildPathX64 = (vsLatest==null)
                             : vsLatest.CombineWithFilePath("./MSBuild/Current/bin/msbuild.exe");
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
+var framework = Argument("framework", "netcoreapp2.2");
+var runtime = Argument("runtime", "Portable");
+
 var binDir = Directory("./bin") ;
 var thisDir = System.IO.Path.GetFullPath(".") + System.IO.Path.DirectorySeparatorChar;
-var publishDir = binDir + System.IO.Path.DirectorySeparatorChar + "publish" + System.IO.Path.DirectorySeparatorChar;
 var coreProjectFile = thisDir + "Src/EzDbCodeGen.Core/EzDbCodeGen.Core.csproj";
 var cliProjectFile = thisDir + "Src/EzDbCodeGen.Cli/EzDbCodeGen.Cli.csproj";
 var solutionFile = thisDir + "Src/ez-db-codegen-core.sln";
@@ -22,6 +24,7 @@ var VersionInfoText = System.IO.File.ReadAllText(thisDir + "Src/VersionInfo.cs")
 var AssemblyFileVersionAttribute = Pluck(VersionInfoText, "AssemblyFileVersionAttribute(\"", "\")]");
 var CurrentAssemblyVersionAttribute = Pluck(VersionInfoText, "System.Reflection.AssemblyVersionAttribute(\"", "\")]");
 var deployPath = thisDir + "artifacts" + System.IO.Path.DirectorySeparatorChar;
+var publishDir = deployPath + System.IO.Path.DirectorySeparatorChar + "publish" + System.IO.Path.DirectorySeparatorChar;
 
 var AssemblyVersionAttribute = CurrentAssemblyVersionAttribute;
 var CurrentNugetVersion = VersionStringParts(AssemblyVersionAttribute, MAJOR, MINOR, REVISION);
@@ -89,16 +92,25 @@ Task("Build")
     {
 		Information("Building using MSBuild at " + msBuildPathX64);
 		
-		MSBuild(solutionFile, new MSBuildSettings { ToolPath = msBuildPathX64 }
-			.WithProperty("DeployOnBuild", "true")
-			.SetConfiguration(configuration)
+		MSBuild(solutionFile, settings =>
+			settings.WithProperty("DeployOnBuild", "true")
+			.WithProperty("PublishProfile", "FolderProfile")
 		);
+ 
+        DotNetCoreBuild(cliProjectFile, new DotNetCoreBuildSettings
+        {
+            Framework = framework,
+            Configuration = configuration
+        });
 		
-		MSBuild(cliProjectFile, new MSBuildSettings { ToolPath = msBuildPathX64 }
-			.UseToolVersion(MSBuildToolVersion.Default)
-			.WithProperty("PublishDirectory", deployPath)
-			.SetConfiguration(configuration)
-		);		
+		/*
+        DotNetCoreBuild(cliProjectFile, new DotNetCoreBuildSettings
+        {
+            Framework = framework,
+            Configuration = configuration,
+            OutputDirectory = "./bin/Release/"
+        });
+		*/	
     }
     else
     {
@@ -108,8 +120,15 @@ Task("Build")
     }
 });
 
-Task("Run-Unit-Tests")
+Task("Publish")
     .IsDependentOn("Build")
+    .Does(() =>
+{
+	 DoPackage("EzDbCodeGen.Cli", "netcoreapp2.2", NugetVersion, "portable");
+});
+
+Task("Run-Unit-Tests")
+    .IsDependentOn("publish")
     .Does(() =>
 {
     NUnit3(thisDir + "Src/**/bin/" + configuration + "/*.Tests.dll", new NUnit3Settings {
@@ -169,7 +188,7 @@ Task("NuGet-Pack")
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.config.json", Target = "content/EzDbCodeGen" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRender.hbs", Target = "content/EzDbCodeGen/Templates" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRenderAsFiles.hbs", Target = "content/EzDbCodeGen/Templates" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/bin/Release/netcoreapp2.2/publish/**.*", Target = "content/EzDbCodeGen/bin" }
+			new NuSpecContent { Source = deployPath + @"publish/EzDbCodeGen.Cli/netcoreapp2.2/portable/**.*", Target = "content/EzDbCodeGen/bin" }
 		},
 		ArgumentCustomization = args => args.Append("")		
     };
@@ -250,5 +269,30 @@ public bool UpdateVersionInProjectFile(string projectFileName, string NewVersion
 
 	System.IO.File.WriteAllText(projectFileName, newText);	
 	return true;
+}
+  
+private void DoPackage(string project, string framework, string NugetVersion, string runtimeId = null)
+{
+    var publishedTo = System.IO.Path.Combine(publishDir, project, framework);
+    var projectDir = System.IO.Path.Combine("./Src", project);
+    var packageId = $"{project}";
+    var nugetPackProperties = new Dictionary<string,string>();
+    var publishSettings = new DotNetCorePublishSettings
+    {
+        Configuration = configuration,
+        OutputDirectory = publishedTo,
+        Framework = framework,
+		ArgumentCustomization = args => args.Append($"/p:Version={NugetVersion}").Append($"--verbosity normal")
+    };
+    if (!string.IsNullOrEmpty(runtimeId))
+    {
+        publishedTo = System.IO.Path.Combine(publishedTo, runtimeId);
+        publishSettings.OutputDirectory = publishedTo;
+        // "portable" is not an actual runtime ID. We're using it to represent the portable .NET core build.
+        publishSettings.Runtime = (runtimeId != null && runtimeId != "portable") ? runtimeId : null;
+        packageId = $"{project}.{runtimeId}";
+        nugetPackProperties.Add("runtimeId", runtimeId);
+    }
+    DotNetCorePublish(projectDir, publishSettings);
 }
 
