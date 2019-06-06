@@ -1,8 +1,13 @@
+#tool nuget:?package=vswhere
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = true;
-var NuGetReleaseNotes = new [] {"Added config file search tokens", "Fixed issue connection string was not parsing correctly.", "Upgraded all Nuget Packages"};
+var NuGetReleaseNotes = new [] {"VS019", "Added Sentence Casing", "Updated by adding StringFormat helper that lets the template chain string functions such as 'lower,snake,title,trim', etc", "Upgraded all Nuget Packages"};
 
+DirectoryPath vsLatest  = VSWhereLatest();
+FilePath msBuildPathX64 = (vsLatest==null)
+                            ? null
+                            : vsLatest.CombineWithFilePath("./MSBuild/Current/bin/msbuild.exe");
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
 var binDir = Directory("./bin") ;
@@ -82,16 +87,18 @@ Task("Build")
 {
     if(IsRunningOnWindows())
     {
-      // Use MSBuild
-      MSBuild(solutionFile, settings =>
-        settings.SetConfiguration(configuration));
+		Information("Building using MSBuild at " + msBuildPathX64);
 		
-	  MSBuild(cliProjectFile,  settings => settings.SetConfiguration(configuration)
-        .UseToolVersion(MSBuildToolVersion.Default)
-		.WithTarget("publish")
-		.WithProperty("DeployOnBuild", "true")
-		.WithProperty("PublishDirectory", deployPath)
-	  );
+		MSBuild(solutionFile, new MSBuildSettings { ToolPath = msBuildPathX64 }
+			.WithProperty("DeployOnBuild", "true")
+			.SetConfiguration(configuration)
+		);
+		
+		MSBuild(cliProjectFile, new MSBuildSettings { ToolPath = msBuildPathX64 }
+			.UseToolVersion(MSBuildToolVersion.Default)
+			.WithProperty("PublishDirectory", deployPath)
+			.SetConfiguration(configuration)
+		);		
     }
     else
     {
@@ -214,9 +221,9 @@ public string Pluck(string str, string leftString, string rightString)
 			lpos = str.LastIndexOf(leftString, rpos);
 			if ((lpos > 0) && (rpos > lpos))
 			{
-				return str.Substring(lpos + leftString.Length, (rpos - lpos) - leftString.Length);
+ 				return str.Substring(lpos + leftString.Length, (rpos - lpos) - leftString.Length);
 			}
-		}
+		} 
 	}
 	catch (Exception)
 	{

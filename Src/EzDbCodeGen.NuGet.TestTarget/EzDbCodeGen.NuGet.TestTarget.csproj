@@ -16,9 +16,5 @@
     <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\WebApiControllersTemplate.hbs" Link="EzDbCodeGen\Templates\WebApiControllersTemplate.hbs" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="EzDbCodeGen" Version="1.1.7" />
-  </ItemGroup>
-
   
 </Project>
