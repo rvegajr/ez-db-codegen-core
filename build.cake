@@ -165,8 +165,8 @@ Task("NuGet-Pack")
 		{
 			{ @"Configuration", @"Release" }
 		},
+			//new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/readme.txt", Target = "content" },
 		Files = new[] {
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/readme.txt", Target = "content" },
 
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net461/EzDbCodeGen.Core.dll", Target = "lib/net461" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net461/EzDbCodeGen.Core.pdb", Target = "lib/net461" },
@@ -185,10 +185,10 @@ Task("NuGet-Pack")
 
 			new NuSpecContent { Source = thisDir + @"nuget/init.ps1", Target = "tools" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.ps1", Target = "tools" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.config.json", Target = "content/EzDbCodeGen" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRender.hbs", Target = "content/EzDbCodeGen/Templates" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRenderAsFiles.hbs", Target = "content/EzDbCodeGen/Templates" },
-			new NuSpecContent { Source = deployPath + @"publish/EzDbCodeGen.Cli/netcoreapp2.2/portable/**.*", Target = "content/EzDbCodeGen/bin" }
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.config.json", Target = "payload/EzDbCodeGen" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRender.hbs", Target = "payload/EzDbCodeGen/Templates" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRenderAsFiles.hbs", Target = "payload/EzDbCodeGen/Templates" },
+			new NuSpecContent { Source = deployPath + @"publish/EzDbCodeGen.Cli/netcoreapp2.2/portable/**.*", Target = "payload/EzDbCodeGen/bin" }
 		},
 		ArgumentCustomization = args => args.Append("")		
     };
