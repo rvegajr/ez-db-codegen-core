@@ -1,6 +1,6 @@
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27428.2027
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29001.49
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EzDbCodeGen.Cli", "EzDbCodeGen.Cli\EzDbCodeGen.Cli.csproj", "{4844B164-746F-4402-9CF0-092B560A818C}"
 EndProject
@@ -13,7 +13,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		VersionInfo.cs = VersionInfo.cs
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EzDbCodeGen.NuGet.TestTarget", "EzDbCodeGen.NuGet.TestTarget\EzDbCodeGen.NuGet.TestTarget.csproj", "{65BB9D33-EDDF-42A3-AF9C-8B61AEAD648E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EzDbCodeGen.NuGet.TestTarget", "EzDbCodeGen.NuGet.TestTarget\EzDbCodeGen.NuGet.TestTarget.csproj", "{65BB9D33-EDDF-42A3-AF9C-8B61AEAD648E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
