@@ -5,10 +5,11 @@ $path = [System.IO.Path]
 $projectPath = Join-Path $path::GetDirectoryName($project.FileName) ""
 $projectFileName = $path::GetFullPath($project.FileName)
 $contentPath = Join-Path $installPath "content"
+$payloadPath = Join-Path $installPath "payload"
 
 $ReadMeTextFileName = Join-Path $contentPath "readme.txt"
 
-$EzDbCodeGenPathSource = Join-Path $contentPath "EzDbCodeGen"
+$EzDbCodeGenPathSource = Join-Path $payloadPath "EzDbCodeGen"
 $EzDbCodeGenPathTarget = Join-Path $projectPath "EzDbCodeGen"
 
 $EzDbTemplatePathSource = Join-Path $EzDbCodeGenPathSource "Templates"
@@ -54,9 +55,9 @@ Write-Output "init.ps1: Copying '$EzDbConfigFileSource' to solution root '$EzDbC
 Copy-Item -Path $EzDbConfigFileSource -Destination $EzDbConfigFileTarget
 
 $DllName = "EzDbCodeGen.Cli.dll"
-$dllLocation = (Get-ChildItem -Path $contentPath -Filter $DllName -Recurse -ErrorAction SilentlyContinue -Force).FullName
+$dllLocation = (Get-ChildItem -Path $payloadPath -Filter $DllName -Recurse -ErrorAction SilentlyContinue -Force).FullName
 If (-NOT( $dllLocation ) ) {
-    $ErrorMessage = "Cli Application dll [" + $DllName + "] could not be found, is it even in the NuGet package?"
+    $ErrorMessage = "Cli Application dll [" + $DllName + "] could not be found in the payload path [" + $payloadPath + "], is it even in the NuGet package?"
     Write-Error -Message $ErrorMessage -ErrorAction Stop
 }
 foreach ($dll in $dllLocation)
@@ -66,6 +67,8 @@ foreach ($dll in $dllLocation)
 }
 Write-Output "init.ps1: Copying Cli content application '$EzDbCliPathSource' to '$EzDbCliPathTarget'"
 Copy-Item $EzDbCliPathSource -Destination $EzDbCliPathTarget -Recurse
+
+
 <# 
 Experimental code to update the solution file
 
