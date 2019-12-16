@@ -72,16 +72,25 @@ namespace EzDbCodeGen.Core
                 entity.Alias = Configuration.ReplaceEx(config.Database.AliasNamePattern, new SchemaObjectName(entity)).ToCodeFriendly();
             }
 
+
             //Now we have to make sure there are no Property.Alias fields that have the same name as their parent Entity Alias field (since these will be the column name)
             foreach (var entity in database.Entities.Values)
             {
-                foreach (var property in entity.Properties.Values)
+                foreach (var propertyKey in entity.Properties.Keys)
                 {
-                    if ((!string.IsNullOrEmpty(property.Alias)) && (property.Alias.Equals(entity.Alias)))
+                    if ((config.IsIgnoredColumn(entity.Properties[propertyKey].Alias)) || (config.IsIgnoredColumn(entity.Properties[propertyKey].Name))) entity.Properties.Remove(propertyKey);
+                }
+            }
+
+            //Loop through all the properties and make sure they do not have can names that are in the column filters 
+            foreach (var entity in database.Entities.Values)
+            {
+                foreach (var propertyKey in entity.Properties.Keys)
+                {
+                    if ((config.IsIgnoredColumn(entity.Properties[propertyKey].Alias)) || (config.IsIgnoredColumn(entity.Properties[propertyKey].Name)))
                     {
-                        property.Alias += config.Database.PropertyObjectNameCollisionSuffix;
+                        if (!entity.Properties[propertyKey].IsKey) entity.Properties.Remove(propertyKey);
                     }
-                    property.Alias = property.Alias.ToCodeFriendly();
                 }
             }
 
