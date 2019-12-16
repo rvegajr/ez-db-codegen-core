@@ -26,6 +26,8 @@ namespace EzDbCodeGen.Core.Config
         public bool Ignore { get; set; } = false;
         public string AliasRenameTo { get; set; } = "";
         public Overrides Overrides { get; set; } = new Overrides();
+        public Dictionary<object, object> Misc { get; set; } = new Dictionary<object, object>();
+
         public void ClearPKOverrides()
         {
             this.Overrides.PrimaryKey.Clear();
@@ -50,6 +52,10 @@ namespace EzDbCodeGen.Core.Config
         public string SchemaName { get; set; } = "";
         public string PropertyObjectNameCollisionSuffix { get; set; } = "Value";
         public string InverseFKTargetNameCollisionSuffix { get; set; } = "Item";
+        public Dictionary<object, object> Misc { get; set; } = new Dictionary<object, object>();
+
+        public string[] ColumnNameFilters = (new List<string>()).ToArray();
+
     }
 
     public class Configuration
@@ -233,10 +239,39 @@ namespace EzDbCodeGen.Core.Config
         public static Configuration FromFile(string FileName)
         {
             var ret = JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(FileName));
+            foreach(var e in ret.Entities)
+            {
+                if (e.Misc.ContainsKey("PrimaryKey"))
+                {
+                    var arrPK = e.Misc["PrimaryKey"].ToString().Split(',');
+                    //Overrides.PrimaryKey overrides Misc,  but if it doesn't exist,  we will use the Misc Primary key list
+                    if (e.Overrides.PrimaryKey.Count==0)
+                    {
+                        foreach(var newPk in arrPK)
+                        {
+                            e.AddPKOverride(newPk);
+                        }
+                    }
+                }
+            }
             if (ret.Database.AliasNamePattern.Length == 0) ret.Database.AliasNamePattern = Configuration.OBJECT_NAME;
             return ret;
         }
 
+        public bool IsIgnoredColumn(string columnNameToCheck)
+        {
+            var ignoreColumn = false;
+            foreach (var columnNameFilterItem in Database.ColumnNameFilters)
+            {
+                if (columnNameToCheck.Contains(@"*")) 
+                {
+                    var isMatched = Regex.IsMatch(columnNameFilterItem, "^" + Regex.Escape(columnNameToCheck).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                    if (isMatched) return true;
+                }
+                else if (columnNameFilterItem.Equals(columnNameToCheck)) return true;
+            }
+            return ignoreColumn;
+        }
         public bool IsIgnoredEntity(string entityNameToCheck)
         {
             var schemaObjectName = new SchemaObjectName(entityNameToCheck);

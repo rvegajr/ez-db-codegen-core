@@ -13,7 +13,11 @@
         */
         "PropertyNameSuffix": "Value", //If a proerty has the same name as its parent Entity,  this is the suffix that will be appended to the Alias name
         "AliasNamePattern": "{SCHEMANAME-P|X'dbo'}{OBJECTNAME-S|X' '|X'tbl_'}", /* Default value is {OBJECTNAME} if blank or not present*/
-        "SchemaName": "MyEntities"
+        "SchemaName": "MyEntities",
+		    "Misc" : {
+			    "Field1" : "Value1",
+			    "Field2" : "Value2"
+		    }
     },
     /* Entities higher up will be utilized for ignore actions and rename actions.*/
     "Entities": [
