@@ -60,7 +60,7 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=Northwind;user id=sa;password=sa");
+                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
                 Configuration.ReloadInstance(@"C:\Temp\ezdbcodegen.config.json");
                 var database = template.LoadSchema().Filter();
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
