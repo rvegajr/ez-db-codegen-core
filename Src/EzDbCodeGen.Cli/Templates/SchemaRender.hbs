@@ -2,7 +2,7 @@
 Schema Name: {{Name}}
 {{#each Entities}}
 Entity Name= {{@key}}  Singular={{ToSingular @key}} {{Schema}} {{TemporalType}} {{IsTemporalView}} {{Schema}} 
-  Properties: 
+  Properties: Count {{Properties.Count}}
   {{#each Properties}}
     {{@key}} Type={{Type}} net={{ToNetType Type IsNullable}} Identity={{IsIdentity}} IsKey={{IsKey}} MaxLength={{MaxLength}}
     {{#each RelatedTo}}

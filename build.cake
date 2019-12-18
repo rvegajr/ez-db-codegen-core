@@ -2,7 +2,8 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = true;
-var NuGetReleaseNotes = new [] {".netcore2.2 target nuget deploy fix", "VS019", "Added Sentence Casing", "Updated by adding StringFormat helper that lets the template chain string functions such as 'lower,snake,title,trim', etc", "Upgraded all Nuget Packages"};
+var NuGetReleaseNotes = new [] {"Database and Entity objects now contain 'Misc' and allows for any key value pair to be realized in the object model",
+ "Database.ColumnNameFilters is an array that allows wild card specification of filtering out column names globally", "Vastly improved nuget module updates (cleans and backs up files in the target EzDbCodeGen Path)"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
 FilePath msBuildPathX64 = (vsLatest==null)

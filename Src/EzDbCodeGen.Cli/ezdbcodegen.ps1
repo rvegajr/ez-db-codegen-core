@@ -4,7 +4,7 @@ if ($confirmation -eq 'y') {
 	$path = [System.IO.Path]
 
 	$DllName = 'EzDbCodeGen.Cli.dll'
-	$BinPath = Join-Path $PSScriptRoot "bin"
+	$BinPath = Join-Path $PSScriptRoot "appbin"
 	$TemplatePath = Join-Path $PSScriptRoot "Templates"
 	$ConfigFileName = Join-Path $PSScriptRoot "ezdbcodegen.config.json"
 
