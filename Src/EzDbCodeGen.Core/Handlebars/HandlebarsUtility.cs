@@ -25,6 +25,14 @@ namespace EzDbCodeGen.Core
     {
         public static void RegisterHelpers()
         {
+            Handlebars.RegisterHelper("Debugger", (writer, context, parameters) => {
+                if (parameters.Count() > 0)
+                {
+                    var prefix = parameters.AsString(0);
+                    writer.WriteSafeString(prefix);
+                }
+            });
+
             Handlebars.RegisterHelper("ContextAsJson", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('ContextAsJson')";
                 IRelationship relationship;
