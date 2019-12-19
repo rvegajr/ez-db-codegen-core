@@ -155,7 +155,7 @@ Task("NuGet-Pack")
         ProjectUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core"),
         //IconUrl                 = new Uri(""),
         LicenseUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core/blob/master/LICENSE"),
-        Copyright               = @"Noctusoft 2018",
+        Copyright               = @"Noctusoft 2018-2019",
         ReleaseNotes            = NuGetReleaseNotes,
         Tags                    = new [] {"Code Generation", "Code Generator", "Database", "Schema" },
         RequireLicenseAcceptance= false,
@@ -187,6 +187,7 @@ Task("NuGet-Pack")
 			new NuSpecContent { Source = thisDir + @"nuget/init.ps1", Target = "tools" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.ps1", Target = "tools" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.config.json", Target = "payload/EzDbCodeGen" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/readme.txt", Target = "payload/readme.txt" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRender.hbs", Target = "payload/EzDbCodeGen/Templates" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRenderAsFiles.hbs", Target = "payload/EzDbCodeGen/Templates" },
 			new NuSpecContent { Source = deployPath + @"publish/EzDbCodeGen.Cli/netcoreapp2.2/portable/**.*", Target = "payload/EzDbCodeGen/bin" }

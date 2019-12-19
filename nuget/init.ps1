@@ -11,6 +11,11 @@ Write-Host "EMPTY :("
 
 Then copy from 'START COPY to END COPY' at the top of the init.ps1 commenting out the param
 
+Copy init.ps1 to <Solution Path>\packages\<Package Name>
+
+for example:
+"C:\Dev\\NuGetCommandTestHarness\packages\EzDbCodeGen.1.1.51"
+
 Some sample directory settings are 
 $installPath="C:\Dev\Noctusoft\NuGetCommandTestHarness\packages\EzDbCodeGen.1.1.51"
 $toolsPath="C:\Dev\Noctusoft\NuGetCommandTestHarness\packages\EzDbCodeGen.1.1.51\tools"
@@ -50,9 +55,9 @@ Write-Output '$packagesPath	   ='+$packagesPath
 Write-Output '$projectPath     ='+$projectPath
 Write-Output '$projectFileName ='+$projectFileName
 
-$dte.Solution.Open($solutionFileName)
+$project.Solution.Open($solutionFileName)
 
-Write-Host $dte.Application.FileName
+Write-Host $project.Application.FileName
 ## END OF SCAFFOLDING
 <#
 param($installPath, $toolsPath, $package, $project)
@@ -81,7 +86,7 @@ $projectFileName = $path::GetFullPath($project.FileName)
 $contentPath = Join-Path $installPath "content"
 $payloadPath = Join-Path $installPath "payload"
 
-$ReadMeTextFileName = Join-Path $contentPath "readme.txt"
+$projectName = $path::GetFileNameWithoutExtension($projectFileName)
 
 $EzDbCodeGenPathSource = Join-Path $payloadPath "EzDbCodeGen"
 $EzDbCodeGenPathTarget = Join-Path $projectPath "EzDbCodeGen"
@@ -91,9 +96,13 @@ $EzDbTemplatePathTarget = Join-Path $EzDbCodeGenPathTarget "Templates"
 
 $EzDbRenderSource = Join-Path $toolsPath "ezdbcodegen.ps1"
 $EzDbRenderTarget = Join-Path $EzDbCodeGenPathTarget "ezdbcodegen.ps1"
+$ProjectEzDbRenderTarget = Join-Path $EzDbCodeGenPathTarget "$projectName.codegen.ps1"
 
 $EzDbCliPathSource = Join-Path $EzDbCodeGenPathSource "bin"
 $EzDbCliPathTarget = Join-Path $EzDbCodeGenPathTarget "appbin"
+
+$ReadMeTextFileNameSource = Join-Path $payloadPath "readme.txt"
+$ReadMeTextFileNameTarget = Join-Path $EzDbCodeGenPathTarget "readme.txt"
 
 $EzDbSampleTemplateSource = Join-Path $EzDbTemplatePathSource "SchemaRender.hbs"
 $EzDbSampleTemplateTarget = Join-Path $EzDbTemplatePathTarget "SchemaRender.hbs"
@@ -102,33 +111,29 @@ $EzDbSampleTemplateFilesTarget = Join-Path $EzDbTemplatePathTarget "SchemaRender
 
 $EzDbConfigFileSource = Join-Path $EzDbCodeGenPathSource "ezdbcodegen.config.json"
 $EzDbConfigFileTarget = Join-Path $EzDbCodeGenPathTarget "ezdbcodegen.config.json"
+$ProjectEzDbConfigFileTarget = Join-Path $EzDbCodeGenPathTarget "$projectName.config.json"
 
-Write-Output '$installPath	   ='+$installPath
-Write-Output '$toolsPath	   ='+$toolsPath
-Write-Output '$package		   ='+$package
-Write-Output '$project		   ='+$project
-Write-Output '$projectFileName ='+$projectFileName
-Write-Output '$PSScriptRoot    ='+$PSScriptRoot
-Write-Output '$projectPath     ='+$projectPath
-$DateStamp = get-date -uformat "%Y-%m-%d@%H-%M-%S"
+Write-Output "Project Name is '$projectName'"
+
+Write-Output "installPath	  =$installPath"
+Write-Output "toolsPath	      =$toolsPath"
+Write-Output "package		  =$package"
+Write-Output "project		  =$project"
+Write-Output "projectFileName =$projectFileName"
+Write-Output "PSScriptRoot    =$PSScriptRoot"
+Write-Output "projectPath     =$projectPath"`
+
+$DATESTRING = (Get-Date).ToString("s").Replace(":","-")
+$TEMPPATH =  Join-Path $env:TEMP "EzDbCodeGen"
+if(!(Test-Path -Path $TEMPPATH )){
+    New-Item -ItemType directory -Path $TEMPPATH
+}
 
 Write-Output "init.ps1: Clearing out old binary files"
 Get-ChildItem -Path $EzDbCliPathTarget  | foreach ($_) {
     Remove-Item $_.fullname -Force -Recurse
     "Removed :" + $_.fullname
 }
-if((Test-Path -Path $EzDbConfigFileTarget )) {
-    $EzDbConfigFileTargetBackup = Join-Path $EzDbCodeGenPathTarget "ezdbcodegen.config.json-$DateStamp"
-    Copy-Item -Path $EzDbConfigFileTarget -Destination $EzDbConfigFileTargetBackup
-    Remove-Item $EzDbConfigFileTarget -Force -Recurse
-}
-if((Test-Path -Path $EzDbRenderTarget )) {
-    $EzDbRenderTargetBackup = Join-Path $EzDbCodeGenPathTarget "ezdbcodegen.ps1-$DateStamp"
-    Copy-Item -Path $EzDbRenderTarget -Destination $EzDbRenderTargetBackup
-    Remove-Item $EzDbRenderTarget -Force -Recurse
-}
-
-Remove-Item $EzDbCliPathTarget -Force -Recurse
 
 Write-Output "init.ps1: Making sure that '$EzDbTemplatePathTarget' exists"
 if(!(Test-Path -Path $EzDbTemplatePathTarget )){
@@ -147,20 +152,45 @@ foreach ($dll in $dllLocation)
     $EzDbCliPathSource = Join-Path $path::GetDirectoryName($dll) ""
     break
 }
+
 Write-Output '$EzDbCliPathSource     ='+$EzDbCliPathSource
 Write-Output "init.ps1: Copying Cli content application '$EzDbCliPathSource' to '$EzDbCliPathTarget'"
-Copy-Item $EzDbCliPathSource -Destination $EzDbCliPathTarget -Recurse
+Copy-Item -Path "$EzDbCliPathSource\*" -Destination "$EzDbCliPathTarget" -Recurse
 
 Write-Output "init.ps1: Copying Sample Templates"
-Copy-Item -Path $EzDbSampleTemplateSource -Destination $EzDbSampleTemplateTarget -ErrorAction SilentlyContinue -Force
-Copy-Item -Path $EzDbSampleTemplateFilesSource -Destination $EzDbSampleTemplateFilesTarget -ErrorAction SilentlyContinue -Force
+Copy-Item $EzDbSampleTemplateSource -Destination $EzDbSampleTemplateTarget -ErrorAction SilentlyContinue -Force
+Copy-Item $EzDbSampleTemplateFilesSource -Destination $EzDbSampleTemplateFilesTarget -ErrorAction SilentlyContinue -Force
 
-Write-Output "init.ps1: Copying '$EzDbConfigFileSource' to solution root '$EzDbConfigFileTarget'"
-Copy-Item -Path $EzDbConfigFileSource -Destination $EzDbConfigFileTarget
-Copy-Item -Path $EzDbRenderSource -Destination $EzDbRenderTarget
+Write-Output "init.ps1: Copying Config and script files"
+if((Test-Path -Path $EzDbConfigFileTarget )) {
+    $EzDbConfigFileTargetBackup = Join-Path $TEMPPATH "ezdbcodegen.config-$DATESTRING.json"
+    "WARNING! ezdbcodegen.config.json already exists, backing it up to '$EzDbConfigFileTargetBackup'" 
+    Copy-Item $EzDbConfigFileTarget -Destination $EzDbConfigFileTargetBackup
+}
+if(!(Test-Path -Path $ProjectEzDbConfigFileTarget )) {
+    "Project specific config file doesn't exist,  so '$ProjectEzDbConfigFileTarget' will be created and text 'MyDatabase' will be changed to '$projectName'" 
+    (Get-Content $EzDbConfigFileSource) -replace "MyDatabase", "$projectName" | Set-Content $ProjectEzDbConfigFileTarget
+}
+Copy-Item $EzDbConfigFileSource -Destination $EzDbConfigFileTarget
 
+if((Test-Path -Path $EzDbRenderTarget )) {
+    $EzDbRenderTargetBackup = Join-Path $TEMPPATH "ezdbcodegen-$DATESTRING.ps1"
+    "WARNING! ezdbcodegen.ps1 already exists, backing it up to '$EzDbRenderTargetBackup'" 
+    Copy-Item $EzDbRenderTarget -Destination $EzDbRenderTargetBackup
+}
+if(!(Test-Path -Path $ProjectEzDbRenderTarget )) {
+    "Project specific script file doesn't exist,  so '$ProjectEzDbRenderTarget' will be created and text 'ezdbcodegen.config.json' will be changed to '$projectName.config.json'" 
+    (Get-Content $EzDbRenderSource) -replace 'ezdbcodegen.config', "$projectName.config" | Set-Content $ProjectEzDbRenderTarget
+
+}
+Copy-Item $EzDbRenderSource -Destination $EzDbRenderTarget
+Copy-Item $ReadMeTextFileNameSource -Destination $ReadMeTextFileNameTarget
+(Get-Content $ReadMeTextFileNameTarget) -replace '%PSPATH%', "$ProjectEzDbRenderTarget" | Set-Content $ReadMeTextFileNameTarget
+
+#Clear out unneeded files from the appbin path
 $BinTemplateConfig = Join-Path $EzDbCliPathTarget "\ezdbcodegen.config.json" 
 Remove-Item $BinTemplateConfig -Force 
 $BinTemplatePath = Join-Path $EzDbCliPathTarget "\Templates\" 
 Remove-Item $BinTemplatePath -Force -Recurse
 
+Start-Process $ReadMeTextFileNameTarget
