@@ -2,7 +2,8 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = true;
-var NuGetReleaseNotes = new [] {".netcore2.2 target nuget deploy fix", "VS019", "Added Sentence Casing", "Updated by adding StringFormat helper that lets the template chain string functions such as 'lower,snake,title,trim', etc", "Upgraded all Nuget Packages"};
+var NuGetReleaseNotes = new [] {"Database and Entity objects now contain 'Misc' and allows for any key value pair to be realized in the object model",
+ "Database.ColumnNameFilters is an array that allows wild card specification of filtering out column names globally", "Vastly improved nuget module updates (cleans and backs up files in the target EzDbCodeGen Path)"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
 FilePath msBuildPathX64 = (vsLatest==null)
@@ -154,7 +155,7 @@ Task("NuGet-Pack")
         ProjectUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core"),
         //IconUrl                 = new Uri(""),
         LicenseUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core/blob/master/LICENSE"),
-        Copyright               = @"Noctusoft 2018",
+        Copyright               = @"Noctusoft 2018-2019",
         ReleaseNotes            = NuGetReleaseNotes,
         Tags                    = new [] {"Code Generation", "Code Generator", "Database", "Schema" },
         RequireLicenseAcceptance= false,
@@ -186,6 +187,7 @@ Task("NuGet-Pack")
 			new NuSpecContent { Source = thisDir + @"nuget/init.ps1", Target = "tools" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.ps1", Target = "tools" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.config.json", Target = "payload/EzDbCodeGen" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/readme.txt", Target = "payload/readme.txt" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRender.hbs", Target = "payload/EzDbCodeGen/Templates" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRenderAsFiles.hbs", Target = "payload/EzDbCodeGen/Templates" },
 			new NuSpecContent { Source = deployPath + @"publish/EzDbCodeGen.Cli/netcoreapp2.2/portable/**.*", Target = "payload/EzDbCodeGen/bin" }

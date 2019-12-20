@@ -55,6 +55,26 @@ namespace EzDbCodeGen.Tests
         }
 
         [Fact]
+        public void ConfigReadTest()
+        {
+            try
+            {
+                var codeGenerator = new CodeGenerator();
+                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
+                Configuration.ReloadInstance(@"C:\Temp\ezdbcodegen.config.json");
+                var database = template.LoadSchema().Filter();
+                var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
+                if (File.Exists(OutputPath)) File.Delete(OutputPath);
+                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), template, OutputPath);
+                Assert.True(File.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output file {0} was not created", codeGenerator.OutputPath));
+            }
+            catch (Exception ex)
+            {
+                Assert.True(false, ex.Message);
+            }
+        }
+
+        [Fact]
         public void RenderTemplateMultipleFilesTest()
         {
             try
