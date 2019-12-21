@@ -1,9 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <IsPackable>false</IsPackable>
-	<RuntimeFrameworkVersion>2.2.8</RuntimeFrameworkVersion>		
   </PropertyGroup>
 
   <ItemGroup>
@@ -17,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="1.0.30" />
+    <PackageReference Include="EzDbSchema" Version="1.0.31" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.4.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1">

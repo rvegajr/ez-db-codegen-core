@@ -100,6 +100,7 @@ $ProjectEzDbRenderTarget = Join-Path $EzDbCodeGenPathTarget "$projectName.codege
 
 $EzDbCliPathSource = Join-Path $EzDbCodeGenPathSource "bin"
 $EzDbCliPathTarget = Join-Path $EzDbCodeGenPathTarget "appbin"
+$EzDbCliPathOldTarget = Join-Path $EzDbCodeGenPathTarget "bin"
 
 $ReadMeTextFileNameSource = Join-Path $payloadPath "readme.txt"
 $ReadMeTextFileNameTarget = Join-Path $EzDbCodeGenPathTarget "readme.txt"
@@ -130,9 +131,16 @@ if(!(Test-Path -Path $TEMPPATH )){
 }
 
 Write-Output "init.ps1: Clearing out old binary files"
+Get-ChildItem -Path $EzDbCliPathOldTarget  | foreach ($_) {
+    Remove-Item $_.fullname -Force -Recurse
+    "Removed :" + $_.fullname
+}
 Get-ChildItem -Path $EzDbCliPathTarget  | foreach ($_) {
     Remove-Item $_.fullname -Force -Recurse
     "Removed :" + $_.fullname
+}
+if((Test-Path -Path $EzDbCliPathOldTarget )){
+	Remove-Item –path $EzDbCliPathOldTarget -Force -Recurse
 }
 
 Write-Output "init.ps1: Making sure that '$EzDbTemplatePathTarget' exists"

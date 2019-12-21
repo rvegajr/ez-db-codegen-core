@@ -1,4 +1,5 @@
 ﻿using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbSchema.Core.Interfaces;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -98,7 +99,7 @@ namespace EzDbCodeGen.Core.Config
                     returnString = returnString.Replace(template, strResolved);
                 } else if (template.Contains(Configuration.OBJECT_NAME.Substring(0, Configuration.OBJECT_NAME.Length - 1)))
                 {
-                    strResolved = ReplaceEx(template, schemaObjectName.ObjectName);
+                    strResolved = ReplaceEx(template, schemaObjectName.TableName);
                     returnString = returnString.Replace(template, strResolved);
                 }
             }
@@ -258,17 +259,44 @@ namespace EzDbCodeGen.Core.Config
             return ret;
         }
 
-        public bool IsIgnoredColumn(string columnNameToCheck)
+        public bool IsIgnoredColumn(IProperty property)
+        {
+            return (IsIgnoredColumn(property.Parent.Schema, property.Parent.Name, property.Alias) || IsIgnoredColumn(property.Parent.Schema, property.Parent.Name, property.Alias));
+        }
+        public bool IsIgnoredColumn(string schemaToCheck, string tableCheck, string columnNameToCheck)
         {
             var ignoreColumn = false;
             foreach (var columnNameFilterItem in Database.ColumnNameFilters)
             {
-                if (columnNameToCheck.Contains(@"*")) 
+                var SchemaColumnNameFilterItem = Database.DefaultSchema; var TableColumnNameFilterItem = "*"; var ColumnColumnNameFilterItem = "*";
+                var arr = columnNameFilterItem.Split('.');
+                if (arr.Length == 3)
                 {
-                    var isMatched = Regex.IsMatch(columnNameFilterItem, "^" + Regex.Escape(columnNameToCheck).Replace("\\?", ".").Replace("\\*", ".*") + "$");
-                    if (isMatched) return true;
+                    SchemaColumnNameFilterItem = arr[0];
+                    TableColumnNameFilterItem = arr[1];
+                    ColumnColumnNameFilterItem = arr[2];
                 }
-                else if (columnNameFilterItem.Equals(columnNameToCheck)) return true;
+
+                if (arr.Length == 2)
+                {
+                    SchemaColumnNameFilterItem = Database.DefaultSchema;
+                    TableColumnNameFilterItem = arr[0];
+                    ColumnColumnNameFilterItem = arr[1];
+                }
+                if (arr.Length == 1) //if there is only one parm, then we are going to assume that it affects all schemas
+                {
+                    SchemaColumnNameFilterItem = "*";
+                    ColumnColumnNameFilterItem = arr[0];
+                }
+                //if (columnNameToCheck.Contains(@"*")) 
+                //{
+                    var isSchemaMatched = Regex.IsMatch(schemaToCheck, "^" + Regex.Escape(SchemaColumnNameFilterItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                    var isTableMatched = Regex.IsMatch(tableCheck, "^" + Regex.Escape(TableColumnNameFilterItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                    var isColumnMatched = Regex.IsMatch(columnNameToCheck, "^" + Regex.Escape(ColumnColumnNameFilterItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                    //var isMatched = Regex.IsMatch(columnNameFilterItem, "^" + Regex.Escape(columnNameToCheck).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                    if (isSchemaMatched && isTableMatched && isColumnMatched) return true;
+                //}
+                //else if (columnNameFilterItem.Equals(columnNameToCheck)) return true;
             }
             return ignoreColumn;
         }
