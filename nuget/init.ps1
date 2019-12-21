@@ -139,8 +139,8 @@ Get-ChildItem -Path $EzDbCliPathTarget  | foreach ($_) {
     Remove-Item $_.fullname -Force -Recurse
     "Removed :" + $_.fullname
 }
-if((Test-Path -Path $EzDbCliPathOldTarget )){
-	Remove-Item –path $EzDbCliPathOldTarget -Force -Recurse
+if((Test-Path -Path $EzDbCliPathOldTarget )) {
+    Remove-Item -path $EzDbCliPathOldTarget -Force
 }
 
 Write-Output "init.ps1: Making sure that '$EzDbTemplatePathTarget' exists"
@@ -198,7 +198,6 @@ Copy-Item $ReadMeTextFileNameSource -Destination $ReadMeTextFileNameTarget
 #Clear out unneeded files from the appbin path
 $BinTemplateConfig = Join-Path $EzDbCliPathTarget "\ezdbcodegen.config.json" 
 Remove-Item $BinTemplateConfig -Force 
-$BinTemplatePath = Join-Path $EzDbCliPathTarget "\Templates\" 
+$BinTemplatePath = Join-Path $EzDbCliPathTarget "\Templates"
 Remove-Item $BinTemplatePath -Force -Recurse
-
 Start-Process $ReadMeTextFileNameTarget
