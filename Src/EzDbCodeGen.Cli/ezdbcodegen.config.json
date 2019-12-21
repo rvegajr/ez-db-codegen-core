@@ -1,7 +1,7 @@
 ﻿{
-    "Database": {
-        "DefaultSchema": "dbo", /* Default schemas are assumed names when searching for an object name*/
-        /*AliasNamePattern - You can use the following variables here {SCHEMANAME}, {OBJECTNAME} with replace patterns after the instructions, for example:
+  "Database": {
+    "DefaultSchema": "dbo", /* Default schemas are assumed names when searching for an object name*/
+    /*AliasNamePattern - You can use the following variables here {SCHEMANAME}, {OBJECTNAME} with replace patterns after the instructions, for example:
           Lets say the Schema name is "CUSTOMER" and the Object name is "tbl_Address" 
             You have the following one letter codes to modify the string after the name seperated by "|"
                 U=Upper Case,  L=Lower Case, P=Proper Case, X'<String to remove>'= Clear String, R'Old string'=>'New String', S=Single, M=Pluralize, T=TitleCase
@@ -11,18 +11,29 @@
         "{SCHEMANAME-L}{OBJECTNAME-L|X'tbl_'}" = "customeraddress"
         "{SCHEMANAME-P}{OBJECTNAME-P|X'tbl_'}" ="CustomerAddress"
         */
-        "PropertyNameSuffix": "Value", //If a proerty has the same name as its parent Entity,  this is the suffix that will be appended to the Alias name
-        "AliasNamePattern": "{SCHEMANAME-P|X'dbo'}{OBJECTNAME-S|X' '|X'tbl_'}", /* Default value is {OBJECTNAME} if blank or not present*/
-        "SchemaName": "MyEntities",
-		"Misc" : {
-			"Field1" : "Value1",
-			"Field2" : "Value2"
-		},
-		"ColumnNameFilters" : [
-			"AddDate*",
-			"LastUpdateDate*"
-		]
+    "PropertyNameSuffix": "Value", //If a proerty has the same name as its parent Entity,  this is the suffix that will be appended to the Alias name
+    "AliasNamePattern": "{SCHEMANAME-P|X'dbo'}{OBJECTNAME-S|X' '|X'tbl_'}", /* Default value is {OBJECTNAME} if blank or not present*/
+    "SchemaName": "MyEntities",
+    "Misc": {
+      "Field1": "Value1",
+      "Field2": "Value2"
     },
+    /* You can specify this in format of dbo.TABLENAME.AddDate
+        <schema>.<table>.<column> - If you specify 
+        <table>.<column>          -
+        <column>                  - 
+    */
+    "ColumnNameFilters": [
+      "AddDate*", //Will filter out every column that begins with AddDate in every table in every schema
+      "AdventureWorksDWBuildVersion.DBVersion", //Will filter out column DBVersion in table AdventureWorksDWBuildVersion in Default schema
+      "Customers.LastUpdateDate*", //Will filter out every column that begins with LastUpdateDate in the Customer table IN THE DEFAULT SCHEMA
+      "*.Customers.LastUpdateDate*", //Will filter out every column that begins with LastUpdateDate in the Customer table in every schema
+      "System.FactCallCenter.Date", //Will filter out Date column for table FactCallCenter in schema System
+      "FactCallCenter.ServiceGrade", //Will filter out ServiceGrade column for table FactCallCenter in the Default Schema 
+      "Date", //Will filter out every column that equals Date in every table in every schema
+      "AccountCodeAlternateKey" //Will filter out column with a name of AccountCodeAlternateKey in every column and schema
+    ]
+  },
     /* Entities higher up will be utilized for ignore actions and rename actions.*/
     "Entities": [
         /*
@@ -43,21 +54,15 @@
           */
             "Name": "ViewName",
             "Ignore": false,
-			"Misc" : {
-				"CacheEnabled" : false,
-				"CacheDuration" : 10,
-				"PrimaryKey" : "Column1,Column2"
-			}
+			      "Misc" : {
+				      "CacheEnabled" : false,
+				      "CacheDuration" : 10,
+				      "PrimaryKey" : "Column1,Column2"
+			      }
         },
         {
-            "Name": "MARSxtra.tempload17",
-            "Ignore": false,
-            "Overrides": {
-                "PrimaryKey": [
-                    { "FieldName": "PeriodId" },
-                    { "FieldName": "Loan Number" }
-                ]
-            }
+            "Name": "*DatabaseLog*",
+            "Ignore": true
         },
         {
             "Name": "MARSxtra.tempload",

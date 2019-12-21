@@ -2,7 +2,7 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = true;
-var NuGetReleaseNotes = new [] {"Database and Entity objects now contain 'Misc' and allows for any key value pair to be realized in the object model",
+var NuGetReleaseNotes = new [] {"Upgraded to DotNetCore 3.1", "Database and Entity objects now contain 'Misc' and allows for any key value pair to be realized in the object model",
  "Database.ColumnNameFilters is an array that allows wild card specification of filtering out column names globally", "Vastly improved nuget module updates (cleans and backs up files in the target EzDbCodeGen Path)"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
@@ -11,7 +11,7 @@ FilePath msBuildPathX64 = (vsLatest==null)
                             : vsLatest.CombineWithFilePath("./MSBuild/Current/bin/msbuild.exe");
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
-var framework = Argument("framework", "netcoreapp2.2");
+var framework = Argument("framework", "netcoreapp3.1");
 var runtime = Argument("runtime", "Portable");
 
 var binDir = Directory("./bin") ;
@@ -125,7 +125,7 @@ Task("Publish")
     .IsDependentOn("Build")
     .Does(() =>
 {
-	 DoPackage("EzDbCodeGen.Cli", "netcoreapp2.2", NugetVersion, "portable");
+	 DoPackage("EzDbCodeGen.Cli", "netcoreapp3.1", NugetVersion, "portable");
 });
 
 Task("Run-Unit-Tests")
@@ -175,14 +175,11 @@ Task("NuGet-Pack")
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netstandard2.0/EzDbCodeGen.Core.dll", Target = "lib/netstandard2.0" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netstandard2.0/EzDbCodeGen.Core.pdb", Target = "lib/netstandard2.0" },
 
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.0/EzDbCodeGen.Core.dll", Target = "lib/netcoreapp2.0" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.0/EzDbCodeGen.Core.pdb", Target = "lib/netcoreapp2.0" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.2/EzDbCodeGen.Core.dll", Target = "lib/netcoreapp2.0" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.2/EzDbCodeGen.Core.pdb", Target = "lib/netcoreapp2.0" },
 			
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.1/EzDbCodeGen.Core.dll", Target = "lib/netcoreapp2.1" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.1/EzDbCodeGen.Core.pdb", Target = "lib/netcoreapp2.1" },
-
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.2/EzDbCodeGen.Core.dll", Target = "lib/netcoreapp2.2" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.2/EzDbCodeGen.Core.pdb", Target = "lib/netcoreapp2.2" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp3.1/EzDbCodeGen.Core.dll", Target = "lib/netcoreapp3.1" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp3.1/EzDbCodeGen.Core.pdb", Target = "lib/netcoreapp3.1" },
 
 			new NuSpecContent { Source = thisDir + @"nuget/init.ps1", Target = "tools" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.ps1", Target = "tools" },
@@ -190,7 +187,7 @@ Task("NuGet-Pack")
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/readme.txt", Target = "payload/readme.txt" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRender.hbs", Target = "payload/EzDbCodeGen/Templates" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRenderAsFiles.hbs", Target = "payload/EzDbCodeGen/Templates" },
-			new NuSpecContent { Source = deployPath + @"publish/EzDbCodeGen.Cli/netcoreapp2.2/portable/**.*", Target = "payload/EzDbCodeGen/bin" }
+			new NuSpecContent { Source = deployPath + @"publish/EzDbCodeGen.Cli/netcoreapp3.1/portable/**.*", Target = "payload/EzDbCodeGen/bin" }
 		},
 		ArgumentCustomization = args => args.Append("")		
     };

@@ -96,7 +96,7 @@ namespace EzDbCodeGen.Core
             Handlebars.RegisterHelper("ExtractTableName", (writer, context, parameters) => {
                 if (parameters.Count() > 0)
                 {
-                    writer.WriteSafeString((new SchemaObjectName(parameters[0].ToSafeString())).ObjectName);
+                    writer.WriteSafeString((new SchemaObjectName(parameters[0].ToSafeString())).TableName);
                 }
             });
             Handlebars.RegisterHelper("ExtractSchemaName", (writer, context, parameters) => {

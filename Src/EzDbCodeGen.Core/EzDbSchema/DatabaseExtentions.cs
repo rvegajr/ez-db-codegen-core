@@ -9,17 +9,21 @@ using Newtonsoft.Json;
 
 namespace EzDbCodeGen.Core
 {
-    public class SchemaObjectName
+    public class SchemaObjectColumnName : SchemaObjectName
     {
-        public string SchemaName = "";
-        public string ObjectName = "";
-        public SchemaObjectName(IEntity entity)
+        public string ColumnName = "";
+        public SchemaObjectColumnName(IProperty property)
         {
-            SchemaName = entity.Schema ?? Configuration.Instance.Database.DefaultSchema;
-            ObjectName = entity.Name ?? "";
+            SchemaName = property.Parent.Schema ?? Configuration.Instance.Database.DefaultSchema;
+            TableName = property.Parent.Name ?? "";
+            ColumnName = property.Alias;
         }
 
-        public SchemaObjectName(string schemaObjectName)
+        public SchemaObjectColumnName(string schemaObjectName)
+        {
+            this.Parse(schemaObjectName);
+        }
+        public override SchemaObjectName Parse(string schemaObjectName)
         {
             SchemaName = Configuration.Instance.Database.DefaultSchema;
             if (SchemaName.Length == 0) SchemaName = "dbo";
@@ -27,20 +31,83 @@ namespace EzDbCodeGen.Core
             {
                 var arr = schemaObjectName.Split('.');
                 SchemaName = arr[0];
-                ObjectName = arr[1];
-            } else
-            {
-                ObjectName = schemaObjectName;
+                TableName = arr[1];
+                if (arr.Length == 3)
+                {
+                    SchemaName = arr[0];
+                    TableName = arr[1];
+                    ColumnName = arr[2];
+                }
+
+                if (arr.Length == 2)
+                {
+                    TableName = arr[0];
+                    ColumnName = arr[1];
+                }
+                if (arr.Length == 1) throw new ArgumentException(string.Format("Cannot figure out what table {0} would belong to", schemaObjectName));
             }
+            else
+            {
+                throw new ArgumentException(string.Format("Cannot figure out what table {0} would belong to", schemaObjectName));
+            }
+            return this;
         }
+
 
         /// <summary>
         /// Will return this object as a fully qualified string SchemaName.ObjectName
         /// </summary>
         /// <returns></returns>
-        public string AsFullName()
+        public override string AsFullName()
         {
-            return SchemaName + "." + ObjectName;
+            return SchemaName + "." + TableName + ColumnName;
+        }
+    }
+
+    public class SchemaObjectName
+    {
+        public SchemaObjectName()
+        {
+
+        }
+        public string SchemaName = "";
+        public string TableName = "";
+        public SchemaObjectName(IEntity entity)
+        {
+            SchemaName = entity.Schema ?? Configuration.Instance.Database.DefaultSchema;
+            TableName = entity.Name ?? "";
+        }
+
+        public SchemaObjectName(string schemaObjectName)
+        {
+            this.Parse(schemaObjectName);
+        }
+
+        public virtual SchemaObjectName Parse(string schemaObjectName)
+        {
+            SchemaName = Configuration.Instance.Database.DefaultSchema;
+            if (SchemaName.Length == 0) SchemaName = "dbo";
+            if (schemaObjectName.Contains("."))
+            {
+                var arr = schemaObjectName.Split('.');
+                SchemaName = arr[0];
+                TableName = arr[1];
+            }
+            else
+            {
+                TableName = schemaObjectName;
+            }
+            return this;
+        }
+
+
+        /// <summary>
+        /// Will return this object as a fully qualified string SchemaName.ObjectName
+        /// </summary>
+        /// <returns></returns>
+        public virtual string AsFullName()
+        {
+            return SchemaName + "." + TableName;
         }
     }
 
@@ -66,43 +133,29 @@ namespace EzDbCodeGen.Core
         /// <param name="config">Configuration file</param>
         public static IDatabase Filter(this IDatabase database, Configuration config)
         {
-            //Rename the aliases of each to the pattern specified in the AliasNamePattern
-            foreach (var entity in database.Entities.Values)
-            {
-                entity.Alias = Configuration.ReplaceEx(config.Database.AliasNamePattern, new SchemaObjectName(entity)).ToCodeFriendly();
-            }
-
-
-            //Now we have to make sure there are no Property.Alias fields that have the same name as their parent Entity Alias field (since these will be the column name)
-            foreach (var entity in database.Entities.Values)
-            {
-                foreach (var propertyKey in entity.Properties.Keys)
-                {
-                    if ((config.IsIgnoredColumn(entity.Properties[propertyKey].Alias)) || (config.IsIgnoredColumn(entity.Properties[propertyKey].Name))) entity.Properties.Remove(propertyKey);
-                }
-            }
-
-            //Loop through all the properties and make sure they do not have can names that are in the column filters 
-            foreach (var entity in database.Entities.Values)
-            {
-                foreach (var propertyKey in entity.Properties.Keys)
-                {
-                    if ((config.IsIgnoredColumn(entity.Properties[propertyKey].Alias)) || (config.IsIgnoredColumn(entity.Properties[propertyKey].Name)))
-                    {
-                        if (!entity.Properties[propertyKey].IsKey) entity.Properties.Remove(propertyKey);
-                    }
-                }
-            }
-
             //Use config settings to remove those entities we want out filtered out,  the wild card can affect these selections
             var DeleteList = new List<string>();
             foreach (var entityKey in database.Entities.Keys)
             {
                 if (config.IsIgnoredEntity(entityKey)) DeleteList.Add(entityKey);
             }
-            foreach( var keyToDelete in DeleteList)
+            foreach (var keyToDelete in DeleteList)
             {
                 database.Entities.Remove(keyToDelete);
+            }
+
+
+            //Rename the aliases of each to the pattern specified in the AliasNamePattern
+            foreach (var entity in database.Entities.Values)
+            {
+                entity.Alias = Configuration.ReplaceEx(config.Database.AliasNamePattern, new SchemaObjectName(entity)).ToCodeFriendly();
+                foreach (var propertyKey in entity.Properties.Keys)
+                {
+                    if (config.IsIgnoredColumn(entity.Properties[propertyKey]))
+                    {
+                        entity.Properties.Remove(propertyKey);
+                    }
+                }
             }
 
             // go through each matching entity and delete all keys don't match the override
@@ -177,7 +230,7 @@ namespace EzDbCodeGen.Core
             foreach (var entity in database.Entities.Values)
             {
                 if ((entity.Schema.ToLower() == schemaObjectName.SchemaName.ToLower()) 
-                    && (entity.Name.ToLower() == schemaObjectName.ObjectName.ToLower()))
+                    && (entity.Name.ToLower() == schemaObjectName.TableName.ToLower()))
                 {
                     return entity;
                 }
