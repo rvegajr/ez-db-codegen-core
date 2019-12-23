@@ -57,6 +57,8 @@ namespace EzDbCodeGen.Core.Config
 
         public string[] ColumnNameFilters = (new List<string>()).ToArray();
 
+        public string[] ColumnNameComputed = (new List<string>()).ToArray();
+
     }
 
     public class Configuration
@@ -299,6 +301,48 @@ namespace EzDbCodeGen.Core.Config
                 //else if (columnNameFilterItem.Equals(columnNameToCheck)) return true;
             }
             return ignoreColumn;
+        }
+
+        public bool IsComputedColumn(IProperty property)
+        {
+            return (IsComputedColumn(property.Parent.Schema, property.Parent.Name, property.Alias) || IsComputedColumn(property.Parent.Schema, property.Parent.Name, property.Alias));
+        }
+        public bool IsComputedColumn(string schemaToCheck, string tableCheck, string columnNameToCheck)
+        {
+            var computedColumn = false;
+            foreach (var columnNameComputedItem in Database.ColumnNameComputed)
+            {
+                var SchemaColumnNameComputedItem = Database.DefaultSchema; var TableColumnNameComputedItem = "*"; var ColumnColumnNameComputedItem = "*";
+                var arr = columnNameComputedItem.Split('.');
+                if (arr.Length == 3)
+                {
+                    SchemaColumnNameComputedItem = arr[0];
+                    TableColumnNameComputedItem = arr[1];
+                    ColumnColumnNameComputedItem = arr[2];
+                }
+
+                if (arr.Length == 2)
+                {
+                    SchemaColumnNameComputedItem = Database.DefaultSchema;
+                    TableColumnNameComputedItem = arr[0];
+                    ColumnColumnNameComputedItem = arr[1];
+                }
+                if (arr.Length == 1) //if there is only one parm, then we are going to assume that it affects all schemas
+                {
+                    SchemaColumnNameComputedItem = "*";
+                    ColumnColumnNameComputedItem = arr[0];
+                }
+                //if (columnNameToCheck.Contains(@"*")) 
+                //{
+                var isSchemaMatched = Regex.IsMatch(schemaToCheck, "^" + Regex.Escape(SchemaColumnNameComputedItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                var isTableMatched = Regex.IsMatch(tableCheck, "^" + Regex.Escape(TableColumnNameComputedItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                var isColumnMatched = Regex.IsMatch(columnNameToCheck, "^" + Regex.Escape(ColumnColumnNameComputedItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                //var isMatched = Regex.IsMatch(columnNameFilterItem, "^" + Regex.Escape(columnNameToCheck).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                if (isSchemaMatched && isTableMatched && isColumnMatched) return true;
+                //}
+                //else if (columnNameFilterItem.Equals(columnNameToCheck)) return true;
+            }
+            return computedColumn;
         }
         public bool IsIgnoredEntity(string entityNameToCheck)
         {
