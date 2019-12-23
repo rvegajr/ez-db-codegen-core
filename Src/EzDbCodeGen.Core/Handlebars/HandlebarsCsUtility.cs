@@ -497,8 +497,14 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var prefixSetter = ((parameters.Count()>1) ? parameters.AsString(1) : ""); 
-					writer.WriteSafeString(((IEntity)context).PrimaryKeys.AsLinqEquationString(prefix, " && ", "==", prefixSetter).Trim());
+                    var prefixSetter = ((parameters.Count()>1) ? parameters.AsString(1) : "");
+                    var entityName = ((IEntity)context).Name;
+                    if (entityName.Contains("ZipCode"))
+                    {
+                        entityName += "  ";
+                        entityName = entityName.Trim();
+                    }
+                    writer.WriteSafeString(((IEntity)context).PrimaryKeys.AsLinqEquationString(prefix, " && ", "==", prefixSetter).Trim());
                 }
                 catch (Exception ex)
                 {
@@ -525,7 +531,13 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-					writer.WriteSafeString(((IEntity)context).PrimaryKeys.AsCsvString(prefix).Trim());
+                    var useObjectPropertyName = false;  //this will attempt to resolve the property name within context of its own objects
+                    if (parameters.Length > 1)
+                    {
+                        useObjectPropertyName = parameters.AsString(1).StartsWith("O");
+                    }
+
+                    writer.WriteSafeString(((IEntity)context).PrimaryKeys.AsCsvString(prefix, useObjectPropertyName).Trim());
                 }
                 catch (Exception ex)
                 {
