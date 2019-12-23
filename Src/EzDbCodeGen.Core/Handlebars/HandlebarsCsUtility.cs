@@ -98,7 +98,7 @@ namespace EzDbCodeGen.Core
 
                     if (keyAttribute.Length > 0) writer.WriteSafeString(prefix + keyAttribute + "\n");
                     if (fkAttributes.Length > 0) writer.WriteSafeString(prefix + fkAttributes + "\n");
-                    if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime")) writer.WriteSafeString(prefix + "[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
+                    if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime") || (Config.Configuration.Instance.IsComputedColumn(property))) writer.WriteSafeString(prefix + "[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
                     if (decimalAttribute.Length > 0) writer.WriteSafeString(prefix + decimalAttribute + "\n");
                     if (columnAttribute.Length > 0) writer.WriteSafeString(prefix + columnAttribute + "\n");
                     writer.WriteSafeString(prefix); //Write the space header to make sure there is always space
