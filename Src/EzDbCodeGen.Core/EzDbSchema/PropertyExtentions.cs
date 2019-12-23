@@ -90,7 +90,8 @@ namespace EzDbCodeGen.Core
             for (int i = 0; i < This.Count; i++)
             {
                 var property = This[i];
-				ret += (i > 0 ? delimiter + @" " : @" ") + prefix + (prefix.Length > 0 ? "." : "") + property.Alias + elementSet + prefixSetter + (prefixSetter.Length > 0 ? "." : "") + property.Alias.ToSingular();
+                var entityName = property.Parent.Name;
+                ret += (i > 0 ? delimiter + @" " : @" ") + prefix + (prefix.Length > 0 ? "." : "") + property.AsObjectPropertyName() + elementSet + prefixSetter + (prefixSetter.Length > 0 ? "." : "") + property.Alias.ToSingular();
             }
             return ret;
         }
@@ -183,8 +184,10 @@ namespace EzDbCodeGen.Core
 		/// <param name="varPrefix">What the variable will be prefixed with.</param>
 		public static string AsCsvString(this IProperty This, string varPrefix)
 		{
-			return This.Parent.PrimaryKeys.AsCsvString(varPrefix);
+			return This.Parent.PrimaryKeys.AsCsvString(varPrefix, true);
 		}
+
+
 
         /// <summary>
         /// Useful for rendering the primary keys for a FindAsync
@@ -194,13 +197,28 @@ namespace EzDbCodeGen.Core
         ///   Parm1, Parm2, Parm3
         /// </summary>
         /// <param name="varPrefix">What the variable will be prefixed with.</param>
-		public static string AsCsvString(this IPrimaryKeyProperties This, string varPrefix)
+        /// <param name="AsObjectPropertyName">Use the object property name as opposed to alias.</param>
+        public static string AsCsvString(this IProperty This, string varPrefix, bool AsObjectPropertyName)
+        {
+            return This.Parent.PrimaryKeys.AsCsvString(varPrefix, AsObjectPropertyName);
+        }
+
+        /// <summary>
+        /// Useful for rendering the primary keys for a FindAsync
+        /// Will return the primary keys in the following format
+        ///   [0]Parm1 (number), Parm2(text), Parm3 (number)
+        ///   will return
+        ///   Parm1, Parm2, Parm3
+        /// </summary>
+        /// <param name="varPrefix">What the variable will be prefixed with.</param>
+        /// <param name="AsObjectPropertyName">Use the object property name as opposed to alias.</param>
+		public static string AsCsvString(this IPrimaryKeyProperties This, string varPrefix, bool AsObjectPropertyName)
         {
             var ret = "";
 			for (int i = 0; i < This.Count; i++)
             {
 				var property = This[i];
-                ret += (i > 0 ? @", " : @" ") + ((varPrefix.Length > 0) ? varPrefix + "." : "") + property.Alias;
+                ret += (i > 0 ? @", " : @" ") + ((varPrefix.Length > 0) ? varPrefix + "." : "") + ((AsObjectPropertyName) ? property.AsObjectPropertyName() : property.Alias);
             }
             return ret;
         }
@@ -232,6 +250,11 @@ namespace EzDbCodeGen.Core
 			return This.Parent.PrimaryKeys.AsParmBooleanCheck(varPrefix, op);
 		}
 
+        public static string AsParmBooleanCheck(this IProperty This, string varPrefix, string op, bool UseObjectPropertyName)
+        {
+            return This.Parent.PrimaryKeys.AsParmBooleanCheck(varPrefix, op, UseObjectPropertyName);
+        }
+
         /// <summary>
         /// Useful for rendering the keys for comparing if a request will be valid
         /// Will return the primary keys in the following format
@@ -241,13 +264,24 @@ namespace EzDbCodeGen.Core
         /// </summary>
         /// <param name="varPrefix">What the variable will be prefixed with.</param>
         /// <param name="op">The operator you wish to apply to the operands.. typically '==' or '!=' </param>
-		public static string AsParmBooleanCheck(this IPrimaryKeyProperties This, string varPrefix, string op)
+		public static string AsParmBooleanCheck(this IPrimaryKeyProperties This, string varPrefix, string op, bool UseObjectPropertyName)
         {
             var ret = "";
 			for (int i = 0; i < This.Count; i++)
             {
 				var property = This[i];
-                ret += (i > 0 ? @" && " : @"") + property.Alias + " " + op.Trim() + " " + varPrefix + "." + property.Alias;
+                ret += (i > 0 ? @" && " : @"") + property.Alias + " " + op.Trim() + " " + varPrefix + "." + ((UseObjectPropertyName) ? property.AsObjectPropertyName() : property.Alias);
+            }
+            return ret;
+        }
+
+        public static string AsParmBooleanCheck(this IPrimaryKeyProperties This, string varPrefix, string op)
+        {
+            var ret = "";
+            for (int i = 0; i < This.Count; i++)
+            {
+                var property = This[i];
+                ret += (i > 0 ? @" && " : @"") + property.Alias + " " + op.Trim() + " " + varPrefix + "." + property.AsObjectPropertyName();
             }
             return ret;
         }

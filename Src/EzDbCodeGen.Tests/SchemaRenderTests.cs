@@ -49,7 +49,7 @@ namespace EzDbCodeGen.Tests
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
                 codeGenerator.ConfigurationFileName = @"C:\Dev\Summit\MARSApi\Src\MARSApi.Web\EzDbCodeGen\MARSApi.Web.config.json";
-                codeGenerator.ProcessTemplate((@"C:\Dev\Summit\MARSApi\Src\MARSApi.Web\EzDbCodeGen\Templates\Ef6ModelsTemplateAnnotations.hbs").ResolvePathVars(), template, OutputPath);
+                codeGenerator.ProcessTemplate((@"C:\Dev\Summit\MARSApi\Src\MARSApi.Web\EzDbCodeGen\Templates\WebApiControllersTemplate.hbs").ResolvePathVars(), template, OutputPath);
                 Assert.True(File.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output file {0} was not created", codeGenerator.OutputPath));
             }
             catch (Exception ex)
