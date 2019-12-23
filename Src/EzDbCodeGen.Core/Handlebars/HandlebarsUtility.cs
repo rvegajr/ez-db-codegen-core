@@ -668,6 +668,8 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var p = (IProperty)context;
+                    var entityName = p.Parent.Name;
+
                     if ((p.Parent.IsAuditable()) && (p.Parent.isAuditablePropertyName(p.Name)))
                         options.Inverse(writer, (object)context);
                     else

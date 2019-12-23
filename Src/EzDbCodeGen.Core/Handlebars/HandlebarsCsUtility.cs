@@ -24,9 +24,10 @@ namespace EzDbCodeGen.Core
                     var entity = property.Parent;
                     var database = entity.Parent;
                     var entityName = entity.Name;
-                    if (entityName.Contains("tbl_DocumentLocation"))
+                    if (entityName.Contains("Gender"))
                     {
-                        entityName += "";
+                        entityName += "  ";
+                        entityName = entityName.Trim();
                     }
                     var decimalAttribute = "";
                     var keyAttribute = "";
@@ -35,10 +36,15 @@ namespace EzDbCodeGen.Core
                     var columnAttribute = "";
 
 
-                    if ((!property.Name.Equals(entity.Alias)) || 
-                        (property.Parent.Relationships.FindItems(RelationSearchField.ToColumnName, property.Name).Count >= 1) ) {
+                    if ((property.Name.Equals(entity.Alias)) ||
+                          (property.Parent.Relationships.FindItems(RelationSearchField.ToColumnName, property.Name).Count >= 1))
+                    {
                         columnAttribute = string.Format("[Column(\"{0}\")]", property.Name);
-                    }
+                    } 
+                    /*else if (property.Name.Equals(entity.Alias))  //if the propery is the same as the object name, then we might need to have a column specifier incase we have to rename it
+                    {
+                        columnAttribute = string.Format("[Column(\"{0}\")]", property.Name);
+                    }*/
                     if (property.Type == "decimal")
                     {
                         decimalAttribute = "[DecimalPrecision(" + property.Precision + ", " + property.Scale + ")]";

@@ -292,13 +292,19 @@ namespace EzDbCodeGen.Core
                 var database = entity.Parent;
                 var entityName = entity.Name;
                 //debugging line
-                if ((entityName.Contains("CompanyFinancialReport")) && (property.Name.Contains("PreparedBy")))
-                    entityName += "";
+                if (entityName.Contains("Gender"))
+                {
+                    entityName += "  ";
+                    entityName = entityName.Trim();
+                }
+
                 //if this property Alias already exists in a ToColumnName of a relationship,  there is a good chance that it should be an Id field to this column name,  
                 // lets write out the PropertyNameCollisionSuffix suffix to make sure the name doesn't collide
                 if (property.Parent.Relationships.FindItems(RelationSearchField.ToColumnName, property.Alias).Count >= 1)
                 {
-                    propertyName += nameCollisionSuffix;
+                    propertyName = propertyName + nameCollisionSuffix;
+                } else if (entity.Alias.Equals(propertyName)) {
+                    propertyName = propertyName + nameCollisionSuffix;
                 }
             }
             catch (Exception ex)
