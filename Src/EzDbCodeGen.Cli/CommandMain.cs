@@ -67,6 +67,10 @@ namespace EzDbCodeGen.Cli
                 "Option to pass a project file that will be altered with the ouputpath that the template files will be written to.  This only pertains to older version of a visual studio project file.",
                 CommandOptionType.SingleValue);
 
+            var templateFilterFileMasks = app.Option("-f|--filter <optionvalue>",
+                "Option to ignore template file names (seperated by comma, wildcards are acceptable) for those runs where a path is sent through parm -t (or --template).",
+                CommandOptionType.SingleValue);
+
             app.OnExecute(() =>
             {
                 var pfx = "Unknown: ";
@@ -138,7 +142,8 @@ namespace EzDbCodeGen.Cli
                         SchemaName = schemaName,
                         VerboseMessages = AppSettings.Instance.VerboseMessages,
                         ConfigurationFileName = AppSettings.Instance.ConfigurationFileName,
-                        ProjectPath = ((projectFileToModifyOption.HasValue()) ? projectFileToModifyOption.Value() : "")
+                        ProjectPath = ((projectFileToModifyOption.HasValue()) ? projectFileToModifyOption.Value() : ""),
+                        TemplateFileNameFilter = ((templateFilterFileMasks.HasValue()) ? templateFilterFileMasks.Value() : "")
                     };
 
                     var version = Assembly.GetAssembly(typeof(CodeGenerator)).GetName().Version;

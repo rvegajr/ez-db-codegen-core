@@ -655,6 +655,23 @@ namespace EzDbCodeGen.Core.Extentions.Strings
                 throw;
             }
         }
+        /// <summary>
+        /// This will determine if the string this executed on contains a match in a wild card comma delimited list.  For example 
+        /// "ThisIsAString".IsIn("*Is*") = true,  "ThisIsAString".IsIn("*String") = true
+        /// </summary>
+        /// <param name="stringToCheck"></param>
+        /// <param name="wildCardCommaDelimited"></param>
+        /// <param name="columnNameToCheck"></param>
+        public static bool IsIn(this string stringToCheck, string wildCardCommaDelimited)
+        {
+            var isFiltered = false;
+            foreach (var wildCardCommaDelimitedItem in wildCardCommaDelimited.Split(','))
+            {
+                isFiltered = Regex.IsMatch(stringToCheck, "^" + Regex.Escape(wildCardCommaDelimitedItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                if (isFiltered) break;
+            }
+            return isFiltered;
+        }
 
         public static string StringMod(this string str, string CommaDelimitedInstructionList)
         {

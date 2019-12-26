@@ -32,12 +32,14 @@ namespace EzDbCodeGen.Core
         public static string OP_OUTPUT_PATH_END = "</OUTPUT_PATH>";
         public static string OP_PROJECT_PATH_END = "</PROJECT_PATH>";
         public static string VAR_THIS_PATH = "$THIS_PATH$";
+        public static string VAR_TEMP_PATH = "$TEMP$";
 
         public virtual string TemplatePath { get; set; } = "";
         public virtual string OutputPath { get; set; } = "";
         public virtual string ProjectPath { get; set; } = "";
         public virtual string ConnectionString { get; set; } = "";
         public virtual string ConfigurationFileName { get; set; } = "";
+        public virtual string TemplateFileNameFilter { get; set; } = "";  //"FileName*,SampleFile*"
 
         public TemplatePathOption TemplatePathOption { get; set; } = TemplatePathOption.Auto;
         public virtual bool VerboseMessages { get; set; } = true;
@@ -165,11 +167,18 @@ namespace EzDbCodeGen.Core
 
         protected ReturnCodes ProcessTemplate(DirectoryName pathName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
         {
-            var filesEndingInHbs = Directory.EnumerateFiles(pathName).Where(f => f.EndsWith("hbs", StringComparison.InvariantCulture));
+            var filesEndingInHbs = Directory.EnumerateFiles(pathName).Where(f => f.EndsWith("hbs", StringComparison.InvariantCulture)).ToList();
             var returnCodeList = new ReturnCodes();
-            foreach (var templateFullFileName in filesEndingInHbs)
+            foreach (var _templateFullFileName in filesEndingInHbs)
             {
-                returnCodeList.Merge(ProcessTemplate((FileName)templateFullFileName, originalTemplateInputSource, compareToTemplateInputSource, outputPath));
+                string templateFullFileName = (FileName)_templateFullFileName;
+                if ((this.TemplateFileNameFilter.Length>0) && (Path.GetFileNameWithoutExtension(templateFullFileName).IsIn(this.TemplateFileNameFilter)))
+                {
+                    CurrentTask = string.Format("Template {0} will be ignored because it matches a pattern in TemplateFileNameFilter", Path.GetFileNameWithoutExtension(templateFullFileName));
+                } else
+                {
+                    returnCodeList.Merge(ProcessTemplate((FileName)_templateFullFileName, originalTemplateInputSource, compareToTemplateInputSource, outputPath));
+                }
             }
             return returnCodeList;
         }
@@ -262,6 +271,7 @@ namespace EzDbCodeGen.Core
                             CurrentTask = string.Format("'@' was found at the beginning of ProjectPath but doesn't do anything here and will be ignored");
                         }
                         if (this.ProjectPath.Contains(CodeGenBase.VAR_THIS_PATH)) this.ProjectPath = Path.GetFullPath(this.ProjectPath.Replace(CodeGenBase.VAR_THIS_PATH, Path.GetDirectoryName(templateFileName).PathEnds()));
+                        if (this.ProjectPath.Contains(CodeGenBase.VAR_TEMP_PATH)) this.ProjectPath = Path.GetFullPath(this.ProjectPath.Replace(CodeGenBase.VAR_TEMP_PATH, Path.GetDirectoryName(templateFileName).PathEnds()));
                         CurrentTask = string.Format("Project Path modifier found in template, resolved to: {0}", this.ProjectPath);
                         templateAsString = templateAsString.Replace(CodeGenBase.OP_PROJECT_PATH, "").Replace(CodeGenBase.OP_PROJECT_PATH_END, "").Trim();
                     }
@@ -278,6 +288,7 @@ namespace EzDbCodeGen.Core
                             forceDeleteReloadOfDirectory = true;
                         }
                         if (this.OutputPath.Contains(CodeGenBase.VAR_THIS_PATH)) this.OutputPath = Path.GetFullPath(this.OutputPath.Replace(CodeGenBase.VAR_THIS_PATH, Path.GetDirectoryName(templateFileName).PathEnds()));
+                        if (this.OutputPath.Contains(CodeGenBase.VAR_TEMP_PATH)) this.OutputPath = Path.GetFullPath(this.OutputPath.Replace(CodeGenBase.VAR_TEMP_PATH, Path.GetDirectoryName(templateFileName).PathEnds()));
                         CurrentTask = string.Format("Output Path modifier found in template, resolved to: {0}", this.OutputPath);
 
                         //If we asked for a force of a reload and if we don't contain a file operator, then the output path must be a single file result.
