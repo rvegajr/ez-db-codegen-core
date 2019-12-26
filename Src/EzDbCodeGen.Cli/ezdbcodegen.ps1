@@ -27,7 +27,6 @@ if ($confirmation -eq 'y') {
 	Write-Output '       DllPath=' $DllPath
 	Write-Output 'ConfigFileName=' $ConfigFileName
 
-	$CliCallArguments = $DllName + ' -t "' + $TemplatePath + '" -sc "' + $ConnectionString + '" -cf "' + $ConfigFileName + '" -v'
 	$FullCallArguments = 'dotnet ' + $DllName + ' -t "' + $TemplatePath + '" -sc "' + $ConnectionString + '" -cf "' + $ConfigFileName + '" -v ; pause'
 	<# We have to double escape the string so the powershell invoke Start-Process arguements are properly escaped #>
 	Start-Process "powershell" -WorkingDirectory $DllPath -wait -ArgumentList $FullCallArguments.Replace('"','""').Replace('"','""')

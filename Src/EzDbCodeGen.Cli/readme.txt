@@ -1,6 +1,6 @@
 Hi! Thanks for installing EzDbCodeGen!
 
-This app uses dotnet core 2.2,  please make sure this is installed where you are running this application 
+This app uses dotnet core 3.1,  please make sure this is installed where you are running this application 
 
 Lets assume this app is called "SuperApp"
 

@@ -189,8 +189,9 @@ if((Test-Path -Path $EzDbRenderTarget )) {
 if(!(Test-Path -Path $ProjectEzDbRenderTarget )) {
     "Project specific script file doesn't exist,  so '$ProjectEzDbRenderTarget' will be created and text 'ezdbcodegen.config.json' will be changed to '$projectName.config.json'" 
     (Get-Content $EzDbRenderSource) -replace 'ezdbcodegen.config', "$projectName.config" | Set-Content $ProjectEzDbRenderTarget
-
+    (Get-Content $ProjectEzDbRenderTarget) -replace '$ConnectionString', '$ConnectionString + ''" -f "SchemaRender*"' | Set-Content $ProjectEzDbRenderTarget
 }
+
 Copy-Item $EzDbRenderSource -Destination $EzDbRenderTarget
 Copy-Item $ReadMeTextFileNameSource -Destination $ReadMeTextFileNameTarget
 (Get-Content $ReadMeTextFileNameTarget) -replace '%PSPATH%', "$ProjectEzDbRenderTarget" | Set-Content $ReadMeTextFileNameTarget
