@@ -10,6 +10,7 @@ namespace EzDbCodeGen.Cli
     /// Example Usages:
     ///         -t "Templates/SchemaRenderAsFiles.hbs" -sc "Server=localhost;Database=WideWorldImportersDW;user id=sa;password=sa"
     ///         -t "Templates/SchemaRenderAsFilesNoOutput.hbs" -sc "Server=localhost;Database=WideWorldImportersDW;user id=sa;password=sa" -p "C:\Temp\EzDbCodeGen"
+    ///         -t "C:\Dev\PXD\cem-rest-api\CppeDb.WebApi\EzDbCodeGen\Templates\Ef6ModelsTemplate.hbs" -sc "Server=localhost;Database=CPPE;user id=cppeuser;password=Cpp3Us3r" -cf "C:\Dev\PXD\cem-rest-api\CppeDb.WebApi\EzDbCodeGen\CppeDb.WebApi.config.json"
     /// </summary>
 
     class Program
