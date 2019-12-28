@@ -44,14 +44,14 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=MARS;user id=sa;password=sa");
-                Configuration.FromFile(@"C:\Dev\Summit\MARSApi\Src\MARSApi.Web\EzDbCodeGen\MARSApi.Web.config.json");
+                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=CPPE;user id=**USER**;password=***REMOVED***");
+                Configuration.FromFile(@"C:\Dev\PXD\cem-rest-api\CppeDb.WebApi\EzDbCodeGen\CppeDb.WebApi.config.json");
                 //ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=WideWorldImportersDW;user id=User;password=Server@Database");
                 var database = template.LoadSchema().Filter();
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
-                codeGenerator.ConfigurationFileName = @"C:\Dev\Summit\MARSApi\Src\MARSApi.Web\EzDbCodeGen\MARSApi.Web.config.json";
-                codeGenerator.ProcessTemplate((@"C:\Dev\Summit\MARSApi\Src\MARSApi.Web\EzDbCodeGen\Templates\WebApiControllersTemplate.hbs").ResolvePathVars(), template, OutputPath);
+                codeGenerator.ConfigurationFileName = @"C:\Dev\PXD\cem-rest-api\CppeDb.WebApi\EzDbCodeGen\CppeDb.WebApi.config.json";
+                codeGenerator.ProcessTemplate((@"C:\Dev\PXD\cem-rest-api\CppeDb.WebApi\EzDbCodeGen\Templates\Ef6ModelsTemplate.hbs").ResolvePathVars(), template, OutputPath);
                 Assert.True(File.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output file {0} was not created", codeGenerator.OutputPath));
             }
             catch (Exception ex)

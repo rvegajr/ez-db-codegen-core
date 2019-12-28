@@ -19,6 +19,8 @@
 		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
 		<dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
 		<dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />	  
+        <dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers" />
+        <dependency id="System.Data.SqlClient" version="4.8.0" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETStandard2.0">
 		<dependency id="EzDbSchema" version="1.0.31" exclude="Build,Analyzers" />
@@ -26,6 +28,8 @@
 		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
 		<dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
 		<dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />	  
+        <dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers" />
+        <dependency id="System.Data.SqlClient" version="4.8.0" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETCoreApp2.0">
 		<dependency id="EzDbSchema" version="1.0.31" exclude="Build,Analyzers" />
@@ -33,6 +37,8 @@
 		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
 		<dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
 		<dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />	  
+        <dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers" />
+        <dependency id="System.Data.SqlClient" version="4.8.0" exclude="Build,Analyzers" />
       </group>
       <group targetFramework=".NETCoreApp3.1">
 		<dependency id="EzDbSchema" version="1.0.31" exclude="Build,Analyzers" />
@@ -40,6 +46,8 @@
 		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
 		<dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
 		<dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />	  
+        <dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers" />
+        <dependency id="System.Data.SqlClient" version="4.8.0" exclude="Build,Analyzers" />
       </group>
     </dependencies>
   </metadata>

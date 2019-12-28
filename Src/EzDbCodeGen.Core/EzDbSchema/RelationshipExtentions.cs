@@ -255,7 +255,7 @@ namespace EzDbCodeGen.Core
                 foreach (var relationshipGroup in entity.RelationshipGroups)
                 {
                     var relationship = relationshipGroup.Value.AsSummary();
-                    if (relationship.Name.StartsWith("FK_tbl_DocumentLocationHistory_tbl_DocumentLocation"))
+                    if (relationship.Name.StartsWith("FK_SaltWaterDisposalFacilities_Areas"))
                     {
                         relationship.Name += "";
                     }
@@ -266,7 +266,7 @@ namespace EzDbCodeGen.Core
                     FieldName = ((PreviousFields.Contains(ToTableNameSingular)
                                          || (entity.Properties.ContainsKey(ToTableNameSingular))
                                          || (entityName == relationship.ToTableName)
-                                         || (SameTableCount > 1))
+                                         || (SameTableCount > 1)) 
                                             ? relationship.ToUniqueColumnName() : ToTableNameSingular).ToCsObjectName();
                     PreviousFields.Add(FieldName);
                     objectSuffix = Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
@@ -496,7 +496,8 @@ namespace EzDbCodeGen.Core
                                 || 
                                 (
                                     ((ret.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany) || (ret.MultiplicityType == RelationshipMultiplicityType.OneToMany)) &&
-                                    ((relationship.MultiplicityType == RelationshipMultiplicityType.OneToMany) || (relationship.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany))
+                                    ((relationship.MultiplicityType == RelationshipMultiplicityType.OneToMany) || (relationship.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToMany)
+                                        || (relationship.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToOne))
                                 )
                             );
                             if (ret.MultiplicityType != relationship.MultiplicityType)
