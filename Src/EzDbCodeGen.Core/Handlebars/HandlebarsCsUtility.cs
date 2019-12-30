@@ -146,7 +146,7 @@ namespace EzDbCodeGen.Core
                     var groupedByFKName = relZeroOrOneToMany.GroupByFKName();
                     foreach (var FKName in groupedByFKName.Keys)
                     {
-                        if (FKName.Contains("FK_SaltWaterDisposalFacilities_Areas") || (FKName.Contains("FK_Assets_DevelopmentAreas")) || (FKName.Contains("FK_AreaFactors_Areas")))
+                        if (FKName.Contains("FK_AssetItemAdjustments_Items") || (FKName.Contains("FK_ItemAttributesMapping_Items")) || (FKName.Contains("FK_AreaFactors_Areas")))
                         {
                             entity.Name += "";
                         }
@@ -157,7 +157,7 @@ namespace EzDbCodeGen.Core
                         string ToObjectFieldName = relGroupSummary.AsObjectPropertyName();
                         if ((Config.Configuration.Instance.Database.Misc.ContainsKey("CollectionFieldFormat")) && (Config.Configuration.Instance.Database.Misc["CollectionFieldFormat"].Equals("2PART")))
                         {
-                            ToObjectFieldName = string.Format("{0}_{1}", ToTableName.ToPlural(), relGroupSummary.ToColumnName.First());                                
+                            ToObjectFieldName = string.Format("{0}_{1}", relGroupSummary.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema + ".", ""), relGroupSummary.ToColumnName.First());                                
                         } else
                         {
                             ToObjectFieldName = ToObjectFieldName.ToPlural();
@@ -190,7 +190,7 @@ namespace EzDbCodeGen.Core
                     var groupedByFKName = RelationshipsOneToMany.GroupByFKName();
                     foreach (var FKName in groupedByFKName.Keys)
                     {
-                        if (FKName.Contains("FK_SaltWaterDisposalFacilities_Areas1"))
+                        if (FKName.Contains("FK_ItemAttributesMapping_Items"))
                         {
                             entity.Name += "";
                         }
@@ -200,7 +200,7 @@ namespace EzDbCodeGen.Core
                         string ToObjectFieldName = relGroupSummary.AsObjectPropertyName();
                         if ((Config.Configuration.Instance.Database.Misc.ContainsKey("CollectionFieldFormat")) && (Config.Configuration.Instance.Database.Misc["CollectionFieldFormat"].Equals("2PART")))
                         {
-                            ToObjectFieldName = string.Format("{0}_{1}", ToTableName.ToPlural(), relGroupSummary.ToColumnName.First());
+                            ToObjectFieldName = string.Format("{0}_{1}", relGroupSummary.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema+".", ""), relGroupSummary.ToColumnName.First());
                         }
                         else
                         {
@@ -274,7 +274,7 @@ namespace EzDbCodeGen.Core
                         if (string.IsNullOrWhiteSpace(parameters.AsString(1))) prefix = parameters.AsString(1);
                         if (entity.RelationshipGroups.ContainsKey(parameters.AsString(1))) fkNametoSelect = parameters.AsString(1);
                     }
-                    if (entityName.Contains("SaltWaterDisposalFacili"))
+                    if (entityName.Contains("AreaTargetFormation"))
                     {
                         entityName += "";
                     }
@@ -283,7 +283,7 @@ namespace EzDbCodeGen.Core
                     foreach (var relationshipGroupKV in RelationshipsOneToOne.GroupByFKName())
                     {
                         var relationship = relationshipGroupKV.Value.AsSummary();
-                        if (relationship.Name.Contains("FK_SaltWaterDisposalFacilities_Areas"))
+                        if (relationship.Name.Contains("FK_AreaTargetFormations_AreaTypes"))
                         {
                             relationship.Name += "";
                         }
@@ -407,7 +407,7 @@ namespace EzDbCodeGen.Core
                         objectSuffix = parameters.AsString(2);
                     }
 
-                    if (entity.Name.Contains("Relationship"))
+                    if (entity.Name.Contains("AreaTargetFormation"))
                     {
                         entity.Name += "";
                     }
@@ -418,6 +418,9 @@ namespace EzDbCodeGen.Core
                     var groupedByFKName = RelationshipsManyToOne.GroupByFKName();
                     foreach (var FKName in groupedByFKName.Keys)
                     {
+                        if (FKName.StartsWith("FK_AreaTargetFormations_AreaTypes"))
+                            entity.Name += "";
+
                         var relationshipList = groupedByFKName[FKName];
                         var relGroupSummary = relationshipList.AsSummary();
                         string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
@@ -497,7 +500,7 @@ namespace EzDbCodeGen.Core
                         if (string.IsNullOrWhiteSpace(parameters.AsString(1))) prefix = parameters.AsString(1);
                         if (entity.RelationshipGroups.ContainsKey(parameters.AsString(1))) fkNametoSelect = parameters.AsString(1);
                     }
-                    if (entityName.Contains("Area"))
+                    if (entityName.Contains("AreaTargetFormation"))
                     {
                         entityName += "";
                     }
@@ -518,13 +521,15 @@ namespace EzDbCodeGen.Core
                         {
                             writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} {2}</summary>", prefix, relationship.Name, relationship.MultiplicityType.AsString() ));
                             //writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableName.ToSingular(), (FieldName.Replace(" ", ""))));
-                            writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relationship.FromObjectPropertyName)));
                             //writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", 
                             //    prefix, entity.Parent.Entities[relationship.ToTableName].Alias.ToSingular(), relationship.EndAsObjectPropertyName()));
                             var ToFieldName = relationship.EndAsObjectPropertyName();
-                            if ((ToFieldName.Contains("ERROR:")) || (ToFieldName.Equals(entity.Alias))) ToFieldName = relationship.ToUniqueColumnName();
+                            if ((ToFieldName.Contains("ERROR:")) || (ToFieldName.Equals(entity.Alias))) ToFieldName = relationship.ToUniqueColumnName().Trim();
+                            if (ToFieldName.Equals(entity.Alias)) writer.WriteSafeString(@"\* Commenting the next lines of code out because target field name will equal the object name... make sure DatabasePropertyObjectNameCollisionSuffix in the config is has a value if you need this field.");
+                            writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relationship.FromObjectPropertyName)));
                             writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}",
                                 prefix, entity.Parent.Entities[relationship.ToTableName].Alias.ToSingular(), ToFieldName));
+                            if (ToFieldName.Equals(entity.Alias)) writer.WriteSafeString(@"*/ ");
                         }
                         else
                         {
@@ -604,7 +609,7 @@ namespace EzDbCodeGen.Core
                     var prefix = parameters.AsString(0);
                     var prefixSetter = ((parameters.Count()>1) ? parameters.AsString(1) : "");
                     var entityName = ((IEntity)context).Name;
-                    if (entityName.Contains("ZipCode"))
+                    if (entityName.Contains("ScheduleActivityStatus"))
                     {
                         entityName += "  ";
                         entityName = entityName.Trim();

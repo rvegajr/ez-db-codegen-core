@@ -2,7 +2,7 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = true;
-var NuGetReleaseNotes = new [] {"Fixed missing SqlClient Dependancy", "added TEMP parameter in OUTPUT Path in the template", "Added flexible computed column option", "Fixed Col Attribute Gen Bug", "Upgraded to DotNetCore 3.1", "Database and Entity objects now contain 'Misc' and allows for any key value pair to be realized in the object model",
+var NuGetReleaseNotes = new [] {"Added net472 and net48", "Fixed missing SqlClient Dependancy", "added TEMP parameter in OUTPUT Path in the template", "Added flexible computed column option", "Fixed Col Attribute Gen Bug", "Upgraded to DotNetCore 3.1", "Database and Entity objects now contain 'Misc' and allows for any key value pair to be realized in the object model",
  "Database.ColumnNameFilters is an array that allows wild card specification of filtering out column names globally", "Vastly improved nuget module updates (cleans and backs up files in the target EzDbCodeGen Path)"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
@@ -93,25 +93,10 @@ Task("Build")
     {
 		Information("Building using MSBuild at " + msBuildPathX64);
 		
-		MSBuild(solutionFile, settings =>
-			settings.WithProperty("DeployOnBuild", "true")
-			.WithProperty("PublishProfile", "FolderProfile")
-		);
- 
-        DotNetCoreBuild(cliProjectFile, new DotNetCoreBuildSettings
-        {
-            Framework = framework,
-            Configuration = configuration
-        });
-		
-		/*
-        DotNetCoreBuild(cliProjectFile, new DotNetCoreBuildSettings
-        {
-            Framework = framework,
-            Configuration = configuration,
-            OutputDirectory = "./bin/Release/"
-        });
-		*/	
+		MSBuild(solutionFile, new MSBuildSettings {
+			  ToolPath = msBuildPathX64
+			, Configuration = configuration
+		});
     }
     else
     {
@@ -171,6 +156,12 @@ Task("NuGet-Pack")
 
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net461/EzDbCodeGen.Core.dll", Target = "lib/net461" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net461/EzDbCodeGen.Core.pdb", Target = "lib/net461" },
+
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net472/EzDbCodeGen.Core.dll", Target = "lib/net472" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net472/EzDbCodeGen.Core.pdb", Target = "lib/net472" },
+
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net48/EzDbCodeGen.Core.dll", Target = "lib/net48" },
+			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net48/EzDbCodeGen.Core.pdb", Target = "lib/net48" },
 
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netstandard2.0/EzDbCodeGen.Core.dll", Target = "lib/netstandard2.0" },
 			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netstandard2.0/EzDbCodeGen.Core.pdb", Target = "lib/netstandard2.0" },

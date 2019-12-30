@@ -122,8 +122,8 @@ namespace EzDbCodeGen.Core
             //Try to see if a combination of names will match a column name that already exists
             foreach (var rel in This.Entity.Relationships) if (rel.ToColumnName == string.Join("", This.ToColumnName)) targetColumnNameCount++;
             foreach (var rel in This.Entity.Relationships) if (rel.FromColumnName == string.Join("", This.FromColumnName)) fromColumnNameCount++;
-            if (targetColumnNameCount == 1) return string.Join("", This.ToColumnName);
-            if (fromColumnNameCount == 1) return string.Join("", This.FromColumnName);
+            if (targetColumnNameCount == 1) return string.Join("", This.ToColumnName).Trim();
+            if (fromColumnNameCount == 1) return string.Join("", This.FromColumnName).Trim();
             //If we didn't find one,  then use the target object name
             fromColumnNameCount = 0;
             targetColumnNameCount = 0;
@@ -131,8 +131,8 @@ namespace EzDbCodeGen.Core
             var ToTableAlias = This.Entity.Parent[This.ToTableName].Alias;
             foreach (var rel in This.Entity.Relationships) if (rel.ToColumnName == ToTableAlias) targetColumnNameCount++;
             foreach (var rel in This.Entity.Relationships) if (rel.FromColumnName == FromTableAlias) fromColumnNameCount++;
-            if (targetColumnNameCount == 0) return ToTableAlias;
-            if (fromColumnNameCount == 0) return FromTableAlias;
+            if (targetColumnNameCount == 0) return ToTableAlias.Trim();
+            if (fromColumnNameCount == 0) return FromTableAlias.Trim();
 
             throw new Exception(string.Format("EzDbSchemaRelationshipExtentions.ToUniqueColumnName: Could not find any unique column names to write to :( {0} or {1} for {2}", This.ToColumnName, This.FromColumnName, This.Name));
         }
@@ -273,16 +273,16 @@ namespace EzDbCodeGen.Core
 
                     if (fkNametoSelect == relationship.Name)
                     {
-                        return FieldName + objectSuffix;
+                        return (FieldName + objectSuffix).Trim();
                     }
                 }
-                return string.Format("/* {0} */", fkNametoSelect);
+                return string.Format("/* {0} */", fkNametoSelect).Trim();
             }
             catch (Exception ex)
             {
                 return string.Format("/* ERROR: {0} */", string.Format("{0}: Error while figuring out the correct class name for this foriegn Key", PROC_NAME));
             }
-            return FieldName;
+            return FieldName.Trim();
         }
         /// <summary>
         /// Used to figure out what the target object name for the end of this particular relationship
