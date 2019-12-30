@@ -194,7 +194,7 @@ namespace EzDbCodeGen.Core
             Handlebars.RegisterHelper("StringFormat", (writer, context, parameters) => {
                 if (parameters.Count() != 2)
                 {
-                    writer.WriteSafeString("Warning: StringFormat needs to have 2 parameters, [0]=StringToActOn, [1]='lower,upper,snake,title,pascal,trim,plural,single,nettype,jstype' ");
+                    writer.WriteSafeString("Warning: StringFormat needs to have 2 parameters, [0]=StringToActOn, [1]='lower,upper,snake,title,pascal,trim,plural,single,nettype,jstype,table,schema' ");
                 }
                 else
                 {
@@ -223,6 +223,10 @@ namespace EzDbCodeGen.Core
                             strToFormat = strToFormat.ToNetType();
                         else if (action.Equals("jstype"))
                             strToFormat = strToFormat.ToJsType();
+                        else if (action.Equals("table"))
+                            strToFormat = (new SchemaObjectName(strToFormat.ToSafeString())).TableName;
+                        else if (action.Equals("schema"))
+                            strToFormat = (new SchemaObjectName(strToFormat.ToSafeString())).SchemaName;
                         else if (action.Equals("sentence"))
                             strToFormat = strToFormat.ToSentenceCase();
                     }
