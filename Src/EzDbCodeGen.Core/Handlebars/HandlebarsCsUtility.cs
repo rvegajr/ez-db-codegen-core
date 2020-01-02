@@ -87,7 +87,7 @@ namespace EzDbCodeGen.Core
 
                             //One to one relationships will always point to a virtual item of that class it is related to,  so it needs to have the InverseFKTargetNameCollisionSuffix as the 
                             // virtual target item will
-                            fkAttributes += "[ForeignKey(\"" + FieldName.Replace(" ", "") + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix + "\")]";
+                            fkAttributes += "[ForeignKey(\"" + (FieldName.Replace(" ", "") + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix).Trim() + "\")]";
 
                             PreviousOneToOneFields.Add(relGroupSummary.ToTableName);
                             if (fkAttributes.Length > 0) { break; };
@@ -446,7 +446,7 @@ namespace EzDbCodeGen.Core
                         if (fkNametoSelect.Length == 0)
                         {
                             writer.WriteSafeString(string.Format("\n{0}/// <summary>{1}  *->0|1</summary>", prefix, relGroupSummary.Name));
-                            if (ForeignKeyName.Length > 0) writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, ForeignKeyName));
+                            if (ForeignKeyName.Length > 0) writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, ForeignKeyName.Trim()));
                             writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, FieldName + objectSuffix));
                         } else
                         {
@@ -526,7 +526,7 @@ namespace EzDbCodeGen.Core
                             var ToFieldName = relationship.EndAsObjectPropertyName();
                             if ((ToFieldName.Contains("ERROR:")) || (ToFieldName.Equals(entity.Alias))) ToFieldName = relationship.ToUniqueColumnName().Trim();
                             if (ToFieldName.Equals(entity.Alias)) writer.WriteSafeString(@"\* Commenting the next lines of code out because target field name will equal the object name... make sure DatabasePropertyObjectNameCollisionSuffix in the config is has a value if you need this field.");
-                            writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relationship.FromObjectPropertyName)));
+                            writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relationship.FromObjectPropertyName).Trim()));
                             writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}",
                                 prefix, entity.Parent.Entities[relationship.ToTableName].Alias.ToSingular(), ToFieldName));
                             if (ToFieldName.Equals(entity.Alias)) writer.WriteSafeString(@"*/ ");
