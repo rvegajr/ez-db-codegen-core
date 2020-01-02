@@ -146,7 +146,7 @@ namespace EzDbCodeGen.Core
                     var groupedByFKName = relZeroOrOneToMany.GroupByFKName();
                     foreach (var FKName in groupedByFKName.Keys)
                     {
-                        if (FKName.Contains("FK_AssetItemAdjustments_Items") || (FKName.Contains("FK_ItemAttributesMapping_Items")) || (FKName.Contains("FK_AreaFactors_Areas")))
+                        if (FKName.Contains("FK_AreaTargetFormations_AreaTypes"))
                         {
                             entity.Name += "";
                         }
@@ -190,7 +190,7 @@ namespace EzDbCodeGen.Core
                     var groupedByFKName = RelationshipsOneToMany.GroupByFKName();
                     foreach (var FKName in groupedByFKName.Keys)
                     {
-                        if (FKName.Contains("FK_ItemAttributesMapping_Items"))
+                        if (FKName.Contains("FK_AreaTargetFormations_AreaTypes"))
                         {
                             entity.Name += "";
                         }
@@ -283,7 +283,7 @@ namespace EzDbCodeGen.Core
                     foreach (var relationshipGroupKV in RelationshipsOneToOne.GroupByFKName())
                     {
                         var relationship = relationshipGroupKV.Value.AsSummary();
-                        if (relationship.Name.Contains("FK_ScenarioObjects_Scenarios"))
+                        if (relationship.Name.Contains("FK_AreaTargetFormations_AreaTypes"))
                         {
                             relationship.Name += "";
                         }
@@ -445,7 +445,7 @@ namespace EzDbCodeGen.Core
 
                         if (fkNametoSelect.Length == 0)
                         {
-                            writer.WriteSafeString(string.Format("\n{0}/// <summary>{1}  *->0|1</summary>", prefix, relGroupSummary.Name));
+                            writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} {2}</summary>", prefix, relGroupSummary.Name, relGroupSummary.MultiplicityType.AsString()));
                             if (ForeignKeyName.Length > 0) writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, ForeignKeyName.Trim()));
                             writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableNameSingular, FieldName + objectSuffix));
                         } else
@@ -508,13 +508,17 @@ namespace EzDbCodeGen.Core
                     var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToOne); 
                     foreach (var relationshipGroupKV in RelationshipsOneToOne.GroupByFKName())
                     {
-                        var relationship = relationshipGroupKV.Value.AsSummary();
+                        //var relationship = relationshipGroupKV.Value.AsSummary();
+                        /* Ricky Vega - Turns out that sometimes one column in a composite key is considered many to one while the other is onw to one.  This would filter out the column
+                         in the foriegn key data annoication that would be requried to properly establish the compound key.  Thus, while we still are only interested in obtaining just the relationships 
+                         that are zero or one to one to render the object code,  we still need all the columns the comprise the foriegn key*/
+                        var relationship = entity.RelationshipGroups[relationshipGroupKV.Key].AsSummary();
 
                         var toGroupRelationshipList = entity.Parent[relationship.ToTableName].Relationships.GroupByFKName();
                         if (!toGroupRelationshipList.ContainsKey(relationshipGroupKV.Key)) throw new Exception(string.Format("The inverse of FK {0} ({1}->{2})", relationshipGroupKV.Key, relationship.FromTableName, relationship.ToTableName));
                         var relationshipInverse = toGroupRelationshipList[relationshipGroupKV.Key].AsSummary();
 
-                        if (relationship.Name.StartsWith("FK_ScenarioObjects_Scenarios")) 
+                        if (relationship.Name.StartsWith("FK_AreaTargetFormations_AreaTypes")) 
                             relationship.Name += "";
 
                         if (fkNametoSelect.Length == 0)

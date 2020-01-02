@@ -261,7 +261,11 @@ namespace EzDbCodeGen.Core
                     }
                     //Need to resolve the to table name to what the alias table name is
                     string ToTableName = entity.Parent.Entities[relationship.ToTableName].Alias;
-                    int SameTableCount = entity.Relationships.CountItems(RelationSearchField.ToTableName, relationship.ToTableName);
+                    int SameTableCount = 0;
+                    foreach (var regGroup in entity.RelationshipGroups)
+                    {
+                        if ((regGroup.Key != relationship.Name) && (regGroup.Value.AsSummary()?.ToTableName == relationship.ToTableName)) SameTableCount++;
+                    }
                     string ToTableNameSingular = ToTableName.ToSingular();
                     FieldName = ((PreviousFields.Contains(ToTableNameSingular)
                                          || (entity.Properties.ContainsKey(ToTableNameSingular))
