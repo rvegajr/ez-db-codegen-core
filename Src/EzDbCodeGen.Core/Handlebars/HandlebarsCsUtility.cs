@@ -283,7 +283,7 @@ namespace EzDbCodeGen.Core
                     foreach (var relationshipGroupKV in RelationshipsOneToOne.GroupByFKName())
                     {
                         var relationship = relationshipGroupKV.Value.AsSummary();
-                        if (relationship.Name.Contains("FK_AreaTargetFormations_AreaTypes"))
+                        if (relationship.Name.Contains("FK_ScenarioObjects_Scenarios"))
                         {
                             relationship.Name += "";
                         }
@@ -296,7 +296,7 @@ namespace EzDbCodeGen.Core
                         {
                             writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} {2}</summary>", prefix, relationship.Name, relationship.MultiplicityType.AsString()));
                             //writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, ToTableName.ToSingular(), (FieldName.Replace(" ", ""))));
-                            writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relationship.FromObjectPropertyName)));
+                            writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relationship.FromObjectPropertyName).Trim()));
                             writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}",
                                 prefix, entity.Parent.Entities[relationship.ToTableName].Alias.ToSingular(), relationship.EndAsObjectPropertyName()));
                         }
@@ -514,7 +514,7 @@ namespace EzDbCodeGen.Core
                         if (!toGroupRelationshipList.ContainsKey(relationshipGroupKV.Key)) throw new Exception(string.Format("The inverse of FK {0} ({1}->{2})", relationshipGroupKV.Key, relationship.FromTableName, relationship.ToTableName));
                         var relationshipInverse = toGroupRelationshipList[relationshipGroupKV.Key].AsSummary();
 
-                        if (relationship.Name.StartsWith("FK_AreaTargetFormations_AreaTypes")) 
+                        if (relationship.Name.StartsWith("FK_ScenarioObjects_Scenarios")) 
                             relationship.Name += "";
 
                         if (fkNametoSelect.Length == 0)
