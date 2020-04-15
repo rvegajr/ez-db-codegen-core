@@ -3,125 +3,37 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
 using EzDbCodeGen.Core.Config;
+using EzDbCodeGen.Core.Extentions.Objects;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Interfaces;
+using EzDbSchema.Core.Objects;
 using Newtonsoft.Json;
 
 namespace EzDbCodeGen.Core
-{
-    public class SchemaObjectColumnName : SchemaObjectName
-    {
-        public string ColumnName = "";
-        public SchemaObjectColumnName(IProperty property)
-        {
-            SchemaName = property.Parent.Schema ?? Configuration.Instance.Database.DefaultSchema;
-            TableName = property.Parent.Name ?? "";
-            ColumnName = property.Alias;
-        }
-
-        public SchemaObjectColumnName(string schemaObjectName)
-        {
-            this.Parse(schemaObjectName);
-        }
-        public override SchemaObjectName Parse(string schemaObjectName)
-        {
-            SchemaName = Configuration.Instance.Database.DefaultSchema;
-            if (SchemaName.Length == 0) SchemaName = "dbo";
-            if (schemaObjectName.Contains("."))
-            {
-                var arr = schemaObjectName.Split('.');
-                SchemaName = arr[0];
-                TableName = arr[1];
-                if (arr.Length == 3)
-                {
-                    SchemaName = arr[0];
-                    TableName = arr[1];
-                    ColumnName = arr[2];
-                }
-
-                if (arr.Length == 2)
-                {
-                    TableName = arr[0];
-                    ColumnName = arr[1];
-                }
-                if (arr.Length == 1) throw new ArgumentException(string.Format("Cannot figure out what table {0} would belong to", schemaObjectName));
-            }
-            else
-            {
-                throw new ArgumentException(string.Format("Cannot figure out what table {0} would belong to", schemaObjectName));
-            }
-            return this;
-        }
-
-
-        /// <summary>
-        /// Will return this object as a fully qualified string SchemaName.ObjectName
-        /// </summary>
-        /// <returns></returns>
-        public override string AsFullName()
-        {
-            return SchemaName + "." + TableName + ColumnName;
-        }
-    }
-
-    public class SchemaObjectName
-    {
-        public SchemaObjectName()
-        {
-
-        }
-        public string SchemaName = "";
-        public string TableName = "";
-        public SchemaObjectName(IEntity entity)
-        {
-            SchemaName = entity.Schema ?? Configuration.Instance.Database.DefaultSchema;
-            TableName = entity.Name ?? "";
-        }
-
-        public SchemaObjectName(string schemaObjectName)
-        {
-            this.Parse(schemaObjectName);
-        }
-
-        public virtual SchemaObjectName Parse(string schemaObjectName)
-        {
-            SchemaName = Configuration.Instance.Database.DefaultSchema;
-            if (SchemaName.Length == 0) SchemaName = "dbo";
-            if (schemaObjectName.Contains("."))
-            {
-                var arr = schemaObjectName.Split('.');
-                SchemaName = arr[0];
-                TableName = arr[1];
-            }
-            else
-            {
-                TableName = schemaObjectName;
-            }
-            return this;
-        }
-
-
-        /// <summary>
-        /// Will return this object as a fully qualified string SchemaName.ObjectName
-        /// </summary>
-        /// <returns></returns>
-        public virtual string AsFullName()
-        {
-            return SchemaName + "." + TableName;
-        }
-    }
-
+{     
     public static class DatabaseExtentions
     {
-        /// <summary>
-        /// Filters the specified database using the internal configuration file.  The config file will remove those objects 
-        /// that the config marked as deleted, alter primary keys and rename Alias fields
-        /// </summary>
-        /// <param name="database">The database.</param>
-        /// <returns></returns>
-        public static IDatabase Filter(this IDatabase database)
+
+        public static IEntity IsIgnored(this IEntity entity, bool ValueToSetTo)
         {
-            return database.Filter(Configuration.Instance);
+            var database = entity.Parent;
+            var keyToDelete = entity.Name;
+            if (entity.CustomAttributes == null) entity.CustomAttributes = new CustomAttributes();
+            if (!entity.CustomAttributes.ContainsKey("IsIgnored"))
+                entity.CustomAttributes.Add("IsIgnored", ValueToSetTo);
+            else
+                entity.CustomAttributes["IsIgnored"] = ValueToSetTo;
+            return entity;
+        }
+
+        public static bool IsIgnored(this IEntity entity)
+        {
+            var database = entity.Parent;
+            var keyToDelete = entity.Name;
+            if (entity.CustomAttributes == null) return false;
+            if (entity.CustomAttributes.ContainsKey("IsIgnored"))
+                return entity.CustomAttributes["IsIgnored"].AsBoolean();
+            return false;
         }
 
         /// <summary>
@@ -141,9 +53,12 @@ namespace EzDbCodeGen.Core
             }
             foreach (var keyToDelete in DeleteList)
             {
-                database.Entities.Remove(keyToDelete);
+                if (database.Entities[keyToDelete].CustomAttributes == null) database.Entities[keyToDelete].CustomAttributes = new CustomAttributes();
+                if (!database.Entities[keyToDelete].CustomAttributes.ContainsKey("IsIgnored"))
+                    database.Entities[keyToDelete].CustomAttributes.Add("IsIgnored", true);
+                else
+                    database.Entities[keyToDelete].CustomAttributes["IsIgnored"] = true;
             }
-
 
             //Rename the aliases of each to the pattern specified in the AliasNamePattern
             foreach (var entity in database.Entities.Values)
@@ -153,7 +68,11 @@ namespace EzDbCodeGen.Core
                 {
                     if (config.IsIgnoredColumn(entity.Properties[propertyKey]))
                     {
-                        entity.Properties.Remove(propertyKey);
+                        if (entity.Properties[propertyKey].CustomAttributes == null) entity.Properties[propertyKey].CustomAttributes = new CustomAttributes();
+                        if (!entity.Properties[propertyKey].CustomAttributes.ContainsKey("IsIgnored"))
+                            entity.Properties[propertyKey].CustomAttributes.Add("IsIgnored", true);
+                        else
+                            entity.Properties[propertyKey].CustomAttributes["IsIgnored"] = true;
                     }
                 }
             }

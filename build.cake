@@ -2,7 +2,7 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = true;
-var NuGetReleaseNotes = new [] {"Fixed FK Name Render Bug", "Added missing dependant portable dlls", "Added net472 and net48", "Fixed missing SqlClient Dependancy", "added TEMP parameter in OUTPUT Path in the template", "Added flexible computed column option", "Fixed Col Attribute Gen Bug", "Upgraded to DotNetCore 3.1", "Database and Entity objects now contain 'Misc' and allows for any key value pair to be realized in the object model",
+var NuGetReleaseNotes = new [] {"Fixed self ref FK col naming issue", "Fixed FK Target Column Name Issue", "Fixed FK Name Render Bug", "Added missing dependant portable dlls", "Added net472 and net48", "Fixed missing SqlClient Dependancy", "added TEMP parameter in OUTPUT Path in the template", "Added flexible computed column option", "Fixed Col Attribute Gen Bug", "Upgraded to DotNetCore 3.1", "Database and Entity objects now contain 'Misc' and allows for any key value pair to be realized in the object model",
  "Database.ColumnNameFilters is an array that allows wild card specification of filtering out column names globally", "Vastly improved nuget module updates (cleans and backs up files in the target EzDbCodeGen Path)"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
