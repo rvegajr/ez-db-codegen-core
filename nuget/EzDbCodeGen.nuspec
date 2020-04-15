@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
-  <metadata minClientVersion="3.3.0">
+  <metadata minClientversion="3.3.0">
     <id>EzDbCodeGen</id>
     <version>1.0.1</version>
     <authors>Ricardo Vega Jr</authors>
@@ -14,58 +14,64 @@
     <tags></tags>
     <dependencies>
       <group targetFramework=".NETFramework4.6.1">
-		<dependency id="EzDbSchema" version="1.0.31" exclude="Build,Analyzers" />
-		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers" />
-		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
-		<dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
-		<dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />	  
-        <dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers" />
-        <dependency id="System.Data.SqlClient" version="4.8.0" exclude="Build,Analyzers" />
+		<dependency id="EzDbSchema" version="1.0.36" exclude="Build,Analyzers"  />
+		<dependency id="FastMember" version="1.5.0" exclude="Build,Analyzers"  />
+		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers"  />
+		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers"  />
+		<dependency id="Newtonsoft.Json" version="12.0.3" exclude="Build,Analyzers"  />
+		<dependency id="Pluralize.NET" version="1.0.2" exclude="Build,Analyzers"  />
+		<dependency id="System.Data.SqlClient" version="4.8.1" exclude="Build,Analyzers"  />
+		<dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers"  />
       </group>
       <group targetFramework=".NETFramework4.7.2">
-		<dependency id="EzDbSchema" version="1.0.31" exclude="Build,Analyzers" />
-		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers" />
-		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
-		<dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
-		<dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />	  
-        <dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers" />
-        <dependency id="System.Data.SqlClient" version="4.8.0" exclude="Build,Analyzers" />
+		<dependency id="EzDbSchema" version="1.0.36" exclude="Build,Analyzers"  />
+		<dependency id="FastMember" version="1.5.0" exclude="Build,Analyzers"  />
+		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers"  />
+		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers"  />
+		<dependency id="Newtonsoft.Json" version="12.0.3" exclude="Build,Analyzers"  />
+		<dependency id="Pluralize.NET" version="1.0.2" exclude="Build,Analyzers"  />
+		<dependency id="System.Data.SqlClient" version="4.8.1" exclude="Build,Analyzers"  />
+		<dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers"  />
       </group>
       <group targetFramework=".NETFramework4.8">
-		<dependency id="EzDbSchema" version="1.0.31" exclude="Build,Analyzers" />
-		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers" />
-		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
-		<dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
-		<dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />	  
-        <dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers" />
-        <dependency id="System.Data.SqlClient" version="4.8.0" exclude="Build,Analyzers" />
+		<dependency id="EzDbSchema" version="1.0.36" exclude="Build,Analyzers"  />
+		<dependency id="FastMember" version="1.5.0" exclude="Build,Analyzers"  />
+		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers"  />
+		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers"  />
+		<dependency id="Newtonsoft.Json" version="12.0.3" exclude="Build,Analyzers"  />
+		<dependency id="Pluralize.NET" version="1.0.2" exclude="Build,Analyzers"  />
+		<dependency id="System.Data.SqlClient" version="4.8.1" exclude="Build,Analyzers"  />
+		<dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers"  />
       </group>
       <group targetFramework=".NETStandard2.0">
-		<dependency id="EzDbSchema" version="1.0.31" exclude="Build,Analyzers" />
-		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers" />
-		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
-		<dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
-		<dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />	  
-        <dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers" />
-        <dependency id="System.Data.SqlClient" version="4.8.0" exclude="Build,Analyzers" />
+		<dependency id="EzDbSchema" version="1.0.36" exclude="Build,Analyzers"  />
+		<dependency id="FastMember" version="1.5.0" exclude="Build,Analyzers"  />
+		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers"  />
+		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers"  />
+		<dependency id="Newtonsoft.Json" version="12.0.3" exclude="Build,Analyzers"  />
+		<dependency id="Pluralize.NET" version="1.0.2" exclude="Build,Analyzers"  />
+		<dependency id="System.Data.SqlClient" version="4.8.1" exclude="Build,Analyzers"  />
+		<dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers"  />
       </group>
       <group targetFramework=".NETCoreApp2.0">
-		<dependency id="EzDbSchema" version="1.0.31" exclude="Build,Analyzers" />
-		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers" />
-		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
-		<dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
-		<dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />	  
-        <dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers" />
-        <dependency id="System.Data.SqlClient" version="4.8.0" exclude="Build,Analyzers" />
+		<dependency id="EzDbSchema" version="1.0.36" exclude="Build,Analyzers"  />
+		<dependency id="FastMember" version="1.5.0" exclude="Build,Analyzers"  />
+		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers"  />
+		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers"  />
+		<dependency id="Newtonsoft.Json" version="12.0.3" exclude="Build,Analyzers"  />
+		<dependency id="Pluralize.NET" version="1.0.2" exclude="Build,Analyzers"  />
+		<dependency id="System.Data.SqlClient" version="4.8.1" exclude="Build,Analyzers"  />
+		<dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers"  />
       </group>
       <group targetFramework=".NETCoreApp3.1">
-		<dependency id="EzDbSchema" version="1.0.31" exclude="Build,Analyzers" />
-		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers" />
-		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers" />
-		<dependency id="Newtonsoft.Json" version="12.0.2" exclude="Build,Analyzers" />
-		<dependency id="Pluralize.NET" version="0.1.84" exclude="Build,Analyzers" />	  
-        <dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers" />
-        <dependency id="System.Data.SqlClient" version="4.8.0" exclude="Build,Analyzers" />
+		<dependency id="EzDbSchema" version="1.0.36" exclude="Build,Analyzers"  />
+		<dependency id="FastMember" version="1.5.0" exclude="Build,Analyzers"  />
+		<dependency id="Handlebars.Net" version="1.10.1" exclude="Build,Analyzers"  />
+		<dependency id="Json.Comparer.Core" version="0.6.9" exclude="Build,Analyzers"  />
+		<dependency id="Newtonsoft.Json" version="12.0.3" exclude="Build,Analyzers"  />
+		<dependency id="Pluralize.NET" version="1.0.2" exclude="Build,Analyzers"  />
+		<dependency id="System.Data.SqlClient" version="4.8.1" exclude="Build,Analyzers"  />
+		<dependency id="System.Json" version="4.7.0" exclude="Build,Analyzers"  />
       </group>
     </dependencies>
   </metadata>
