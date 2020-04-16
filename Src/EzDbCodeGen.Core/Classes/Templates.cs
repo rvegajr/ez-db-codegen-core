@@ -7,6 +7,9 @@ using EzDbCodeGen.Core.Enums;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Objects;
 using System.Linq;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {
@@ -62,7 +65,7 @@ namespace EzDbCodeGen.Core
         ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string OutputPath);
     }
 
-    public class TemplateInputDirectObject : ITemplateInput
+    internal class TemplateInputDirectObject : ITemplateInput
     {
         public string SchemaName { get; set; }
         public bool VerboseMessages { get; set; } = true;
@@ -107,7 +110,7 @@ namespace EzDbCodeGen.Core
         }
     }
 
-    public class TemplateInputFileSource : ITemplateInput
+    internal class TemplateInputFileSource : ITemplateInput
     {
         public string SchemaName { get; set; }
         public bool VerboseMessages { get; set; } = true;
@@ -166,7 +169,7 @@ namespace EzDbCodeGen.Core
     /// <summary>
     /// A database connection type of Database Input
     /// </summary>
-	public class TemplateInputDatabaseConnecton : ITemplateInput
+	internal class TemplateInputDatabaseConnecton : ITemplateInput
     {
         public string SchemaName { get; set; }
         public bool VerboseMessages { get; set; } = true;

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;net461;net472;net48;netcoreapp2.2;netcoreapp3.1</TargetFrameworks>
-	<Version>1.1.99.0</Version>
+	<Version>1.2.3.0</Version>
   </PropertyGroup>
 
   <ItemGroup>
@@ -10,12 +10,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="1.0.36" />
+    <PackageReference Include="EzDbSchema" Version="1.0.42" />
+    <PackageReference Include="FastMember" Version="1.5.0" />
     <PackageReference Include="Handlebars.Net" Version="1.10.1" />
     <PackageReference Include="Json.Comparer.Core" Version="0.6.9" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Pluralize.NET" Version="1.0.2" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
     <PackageReference Include="System.Json" Version="4.7.0" />
   </ItemGroup>
 

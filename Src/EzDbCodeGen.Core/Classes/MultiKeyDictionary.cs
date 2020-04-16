@@ -13,6 +13,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {
@@ -22,7 +25,7 @@ namespace EzDbCodeGen.Core
 	/// <typeparam name="K">Primary Key Type</typeparam>
 	/// <typeparam name="L">Sub Key Type</typeparam>
 	/// <typeparam name="V">Value Type</typeparam>
-	public class MultiKeyDictionary<K, L, V>
+	internal class MultiKeyDictionary<K, L, V>
 	{
         protected  Dictionary<K, V> baseDictionary = new Dictionary<K, V>();
         protected  Dictionary<L, K> subDictionary = new Dictionary<L, K>();

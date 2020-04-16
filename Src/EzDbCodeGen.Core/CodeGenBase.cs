@@ -319,7 +319,8 @@ namespace EzDbCodeGen.Core
                     CurrentTask = string.Format("Registering Handlbar helpers");
 					HandlebarsUtility.RegisterHelpers();
 					HandlebarsCsUtility.RegisterHelpers();
-					HandlebarsTsUtility.RegisterHelpers();
+                    HandlebarsCsV0Utility.RegisterHelpers();
+                    HandlebarsTsUtility.RegisterHelpers();
 					CurrentTask = string.Format("Compiling Handlbar Template");
 					var template = Handlebars.Compile(templateAsString);
 					CurrentTask = string.Format("Rendering Handlbar Template");

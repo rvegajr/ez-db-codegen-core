@@ -6,10 +6,13 @@ using EzDbCodeGen.Core.Config;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Interfaces;
 using Newtonsoft.Json;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {
-    public class SchemaObjectColumnName : SchemaObjectName
+    internal class SchemaObjectColumnName : SchemaObjectName
     {
         public string ColumnName = "";
         public SchemaObjectColumnName(IProperty property)
@@ -111,7 +114,7 @@ namespace EzDbCodeGen.Core
         }
     }
 
-    public static class DatabaseExtentions
+    internal static class DatabaseExtentions
     {
         /// <summary>
         /// Filters the specified database using the internal configuration file.  The config file will remove those objects 
@@ -162,7 +165,7 @@ namespace EzDbCodeGen.Core
             foreach (var configEntity in config.Entities)
             {
                 var entitiesMatched = database.FindEntities(configEntity.Name);
-                if (entitiesMatched.Count>0)
+                if (entitiesMatched.Count > 0)
                 {
                     foreach (var entity in entitiesMatched)
                     {
@@ -211,7 +214,8 @@ namespace EzDbCodeGen.Core
         /// <param name="SchemaObjectName">Name of the schema object to search for</param>
         /// <param name="entity">The entity to return</param>
         /// <returns></returns>
-        public static bool EntityExists(this IDatabase _database, string SchemaObjectName, ref IEntity entity) {
+        public static bool EntityExists(this IDatabase _database, string SchemaObjectName, ref IEntity entity)
+        {
             entity = _database.FindEntity(SchemaObjectName);
             return (entity != null);
         }
@@ -229,7 +233,7 @@ namespace EzDbCodeGen.Core
             //Use config settings to 
             foreach (var entity in database.Entities.Values)
             {
-                if ((entity.Schema.ToLower() == schemaObjectName.SchemaName.ToLower()) 
+                if ((entity.Schema.ToLower() == schemaObjectName.SchemaName.ToLower())
                     && (entity.Name.ToLower() == schemaObjectName.TableName.ToLower()))
                 {
                     return entity;
@@ -259,7 +263,9 @@ namespace EzDbCodeGen.Core
                 if (schemaObjectNameSearchParm.Contains(@"*")) //contains wildcard?
                 {
                     isMatch = Regex.IsMatch(entitySchemaObjectName.AsFullName().ToLower(), "^" + Regex.Escape(schemaObjectNameSearchParm.ToLower()).Replace("\\?", ".").Replace("\\*", ".*") + "$");
-                } else {
+                }
+                else
+                {
                     isMatch = (entitySchemaObjectName.AsFullName().ToLower().Equals(schemaObjectNameSearchParm.ToLower()));
                 }
                 if (isMatch) listOfMatchedEntites.Add(entity);
