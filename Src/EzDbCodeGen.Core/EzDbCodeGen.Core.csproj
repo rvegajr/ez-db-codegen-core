@@ -10,7 +10,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="1.0.36" />
+    <PackageReference Include="EzDbSchema" Version="1.0.40" />
     <PackageReference Include="FastMember" Version="1.5.0" />
     <PackageReference Include="Handlebars.Net" Version="1.10.1" />
     <PackageReference Include="Json.Comparer.Core" Version="0.6.9" />
