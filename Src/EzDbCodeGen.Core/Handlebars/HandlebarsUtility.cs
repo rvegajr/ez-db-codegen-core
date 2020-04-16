@@ -13,15 +13,18 @@ using Newtonsoft;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using EzDbSchema.Core.Enums;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {
-    public class HandlebarsBlockHelperHandler {
+    internal class HandlebarsBlockHelperHandler {
         public void HandlebarsBlockHelperIfCond(TextWriter writer, HelperOptions options, dynamic context, params object[] arguments) {
 
         }
     }
-    public static class HandlebarsUtility
+    internal static class HandlebarsUtility
     {
         public static void RegisterHelpers()
         {

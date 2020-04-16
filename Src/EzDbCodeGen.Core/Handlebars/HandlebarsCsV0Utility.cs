@@ -9,10 +9,13 @@ using EzDbSchema.Core.Enums;
 using EzDbCodeGen.Core.Extentions.Objects;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbCodeGen.Core;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {
-    public static class HandlebarsCsV0Utility
+    internal static class HandlebarsCsV0Utility
     {
         public static void RegisterHelpers()
         {

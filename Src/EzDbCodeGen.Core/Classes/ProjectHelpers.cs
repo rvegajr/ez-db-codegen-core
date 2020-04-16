@@ -6,10 +6,13 @@ using System.IO;
 using System.Text;
 using System.Xml;
 using System.Xml.Xsl;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core.Classes
 {
-    public class ProjectHelpers
+    internal class ProjectHelpers
     {
         /// <summary>
         /// Modifies a project file so that it will contain the includes to bring in files to a project.  This is only applicable to older versions of a project.  

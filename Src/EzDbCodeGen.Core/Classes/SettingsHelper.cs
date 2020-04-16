@@ -4,10 +4,13 @@ using System.Collections.Generic;
 using System.Text;
 using System.Xml;
 using System.Xml.Linq;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core.Classes
 {
-    public static class SettingsExtention {
+    internal static class SettingsExtention {
         /// <summary>
         /// Gets the setting from file. For format that string must be in should be @{FILENAME}>{XPATH} 
         /// Where file name is the settings file in either XML or JSON.  for example @C:/Inetpub/wwwroot/web.config>/xpath/@attribute
@@ -18,7 +21,7 @@ namespace EzDbCodeGen.Core.Classes
             return SettingsHelper.GetSettingFromFile(fileName);
         }
     }
-    public class SettingsHelper
+    internal class SettingsHelper
     {
         public SettingsHelper()
         {
@@ -160,7 +163,7 @@ namespace EzDbCodeGen.Core.Classes
             return false;
         }
     }
-    public static class DocumentExtensions
+    internal static class DocumentExtensions
     {
         public static XmlDocument ToXmlDocument(this XDocument xDocument)
         {

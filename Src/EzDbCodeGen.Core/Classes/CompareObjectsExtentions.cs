@@ -4,10 +4,13 @@ using EzDbCodeGen.Core.Enums;
 using EzDbSchema.Core.Interfaces;
 using Json.Comparer;
 using Newtonsoft.Json.Linq;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core.Compare
 {
-	public class EntityTypeDifferences : IComparable<EntityTypeDifferences>
+    public class EntityTypeDifferences : IComparable<EntityTypeDifferences>
     {
         public string EntityName { get; set; }
         public string ChangeStatus { get; set; }
@@ -18,7 +21,7 @@ namespace EzDbCodeGen.Core.Compare
             return string.Compare(this.EntityName, other.EntityName, StringComparison.Ordinal);
         }
     }
-	public static class CompareObjectsExtentions
+	internal static class CompareObjectsExtentions
     {
         /// <summary>
         /// Will compare one schema with another.  

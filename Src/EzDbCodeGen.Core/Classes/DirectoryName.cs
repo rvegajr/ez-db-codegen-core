@@ -1,6 +1,9 @@
 ﻿using System;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Extentions;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {

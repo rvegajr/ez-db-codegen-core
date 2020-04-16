@@ -8,12 +8,15 @@ using EzDbSchema.Core.Interfaces;
 using EzDbSchema.Core.Enums;
 using EzDbCodeGen.Core.Extentions.Objects;
 using EzDbCodeGen.Core.Extentions.Strings;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {
-    public static class HandlebarsCsUtility
+    internal static class HandlebarsCsUtility
     {
-        public static void RegisterHelpers()
+        internal static void RegisterHelpers()
         {
             Handlebars.RegisterHelper("POCOModelPropertyAttributes", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('POCOModelPropertyAttributes')";

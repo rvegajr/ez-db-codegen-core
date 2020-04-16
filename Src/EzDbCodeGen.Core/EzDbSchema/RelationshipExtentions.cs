@@ -4,11 +4,14 @@ using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Enums;
 using EzDbSchema.Core.Interfaces;
 using EzDbSchema.Core.Objects;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {
 
-    public class RelationshipGroup :  Dictionary<string, IRelationshipList>
+    internal class RelationshipGroup :  Dictionary<string, IRelationshipList>
     {
         public IDatabase Database { get; set; }
         /// <summary>
@@ -59,7 +62,7 @@ namespace EzDbCodeGen.Core
         JoinToColumnName
     }
 
-    public class RelationshipSummary 
+    internal class RelationshipSummary 
     {
         public IEntity Entity { get; set; }
         public List<string> FromFieldName { get; set; } = new List<string>();
@@ -92,7 +95,7 @@ namespace EzDbCodeGen.Core
         public bool MultiplicityTypeWarning { get; set; } = false;
 
     }
-    public static class EzDbSchemaRelationshipExtentions
+    internal static class EzDbSchemaRelationshipExtentions
     {
         /// <summary>
         /// Starting from a relationship, function will figure out what the name of the object should be for a foriegn key, taking into account the potential names 
