@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
-  <metadata minClientversion="3.3.0">
+  <metadata minClientVersion="5.4.0">
     <id>EzDbCodeGen</id>
     <version>1.0.1</version>
     <authors>Ricardo Vega Jr</authors>

@@ -61,6 +61,7 @@ namespace EzDbCodeGen.Core.Config
         public string[] ColumnNameFilters = (new List<string>()).ToArray();
 
         public string[] ColumnNameComputed = (new List<string>()).ToArray();
+        public bool DeleteObjectOnFilter { get; set; } = true;
 
     }
 

@@ -358,9 +358,8 @@ namespace EzDbCodeGen.Core
             }
             catch (Exception ex)
             {
-                return string.Format("/* ERROR: {0} */", string.Format("{0}: Error while figuring out the correct class name for this foriegn Key", PROC_NAME));
+                return string.Format("/* ERROR: {0} */", string.Format("{0}: Error while figuring out the correct class name for this foriegn Key.  {1}", PROC_NAME, ex.Message));
             }
-            return FieldName.Trim();
         }
         /// <summary>
         /// Used to figure out what the target object name for the end of this particular relationship

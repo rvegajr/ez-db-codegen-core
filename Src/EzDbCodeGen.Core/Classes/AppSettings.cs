@@ -1,18 +1,16 @@
 ﻿using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Extentions.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Json;
 using JsonPair = System.Collections.Generic.KeyValuePair<string, System.Json.JsonValue>;
-using JsonPairEnumerable = System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Json.JsonValue>>;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Internal
 {
-	internal class AppSettings 
+    internal class AppSettings 
     {
         /// <summary></summary>
         public string ConfigurationFileName { get; set; } = "";

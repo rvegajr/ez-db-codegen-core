@@ -247,7 +247,7 @@ namespace EzDbCodeGen.Core
                 CurrentTask = "Performing Validations";
 				if (originalTemplateInputSource == null) throw new Exception(@"There must be an Template Source passed through originalTemplateInputSource!");
 				CurrentTask = "Loading Source Schema";
-				IDatabase schema = originalTemplateInputSource.LoadSchema();
+				IDatabase schema = originalTemplateInputSource.LoadSchema(EzDbConfig);
                 schema.Name = this.SchemaName;
 
                 if (schema == null) throw new Exception(@"originalTemplateInputSource is not a valid template");
@@ -393,7 +393,7 @@ namespace EzDbCodeGen.Core
 						EffectivePathOption = TemplatePathOption.Clear;
 						if ((compareToTemplateInputSource != null) && (hasEntityKeySpecifier))
 						{
-							schemaToCompareTo = compareToTemplateInputSource.LoadSchema();
+							schemaToCompareTo = compareToTemplateInputSource.LoadSchema(EzDbConfig);
 							if (schemaToCompareTo == null) throw new Exception(@"schemaToCompareTo is not a valid template");
 							EffectivePathOption = TemplatePathOption.SyncDiff;
 						}

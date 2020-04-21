@@ -382,7 +382,6 @@ namespace EzDbCodeGen.Core
                         entity = ((IEntity)context);
 
                     var entityName = entity.Name;
-                    var objectSuffix = "";
                     var fkNametoSelect = "";
                     if (parameters.Count() == 1)
                     {

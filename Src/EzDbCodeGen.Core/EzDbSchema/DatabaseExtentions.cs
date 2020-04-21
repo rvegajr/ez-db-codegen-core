@@ -122,11 +122,13 @@ namespace EzDbCodeGen.Core
         /// </summary>
         /// <param name="database">The database.</param>
         /// <returns></returns>
+        /// 
+        /*
         public static IDatabase Filter(this IDatabase database)
         {
             return database.Filter(Configuration.Instance);
         }
-
+        */
         /// <summary>
         /// This will filter a schema based on the a passed configuration file.  This will remove entites that will need to be ignored and alter primary keys based
         /// on the parameters passed 
@@ -144,7 +146,10 @@ namespace EzDbCodeGen.Core
             }
             foreach (var keyToDelete in DeleteList)
             {
-                database.Entities.Remove(keyToDelete);
+                if (config.Database.DeleteObjectOnFilter)
+                    database.Entities.Remove(keyToDelete);
+                else
+                    database.Entities[keyToDelete].IsEnabled = false;
             }
 
 
@@ -156,8 +161,12 @@ namespace EzDbCodeGen.Core
                 {
                     if (config.IsIgnoredColumn(entity.Properties[propertyKey]))
                     {
-                        entity.Properties.Remove(propertyKey);
+                        if (config.Database.DeleteObjectOnFilter)
+                            entity.Properties.Remove(propertyKey);
+                        else
+                            entity.Properties[propertyKey].IsEnabled = false;
                     }
+                    if ((!entity.IsEnabled) && (!config.Database.DeleteObjectOnFilter)) entity.Properties[propertyKey].IsEnabled = false;
                 }
             }
 
@@ -201,6 +210,21 @@ namespace EzDbCodeGen.Core
                             }
                         }
                     }
+                }
+            }
+
+
+            foreach (var entity in database.Entities.Values)
+            {
+                foreach (var relationship in entity.Relationships)
+                {
+                    if (relationship.Name.Equals("FK_Wells_PIGAreaId_DELETE"))
+                    {
+                        var fkName = (" ").Trim();
+                    }
+                    if ((!entity.IsEnabled) && (!config.Database.DeleteObjectOnFilter)) relationship.IsEnabled = false;
+
+                    //relationship
                 }
             }
 
