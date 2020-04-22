@@ -85,7 +85,9 @@ namespace EzDbCodeGen.Core
 
                     if (keyAttribute.Length > 0) writer.WriteSafeString(keyAttribute);
                     if (fkAttributes.Length > 0) writer.WriteSafeString(fkAttributes);
-                    if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime")) writer.WriteSafeString("[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
+                    //if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime")) 
+                    if (property.Get("Computed", false)) writer.WriteSafeString("[DatabaseGenerated(DatabaseGeneratedOption.Computed)]");
+                    if (property.Get("NotMapped", false)) writer.WriteSafeString("[NotMapped]");
                     if (decimalAttribute.Length > 0) writer.WriteSafeString(decimalAttribute);
                 }
                 catch (Exception ex)

@@ -62,6 +62,9 @@ namespace EzDbCodeGen.Core.Config
         public string[] ColumnNameFilters = (new List<string>()).ToArray();
 
         public string[] ColumnNameComputed = (new List<string>()).ToArray();
+
+        public string[] ColumnNameNotMapped = (new List<string>()).ToArray();
+        
         public bool DeleteObjectOnFilter { get; set; } = true;
 
     }
@@ -379,6 +382,7 @@ namespace EzDbCodeGen.Core.Config
             }
             return computedColumn;
         }
+
         public bool IsIgnoredEntity(string entityNameToCheck)
         {
             var schemaObjectName = new SchemaObjectName(entityNameToCheck);
@@ -437,5 +441,46 @@ namespace EzDbCodeGen.Core.Config
             return filterObject;
         }
 
+        public bool IsNotMappedColumn(IProperty property)
+        {
+            return (IsNotMappedColumn(property.Parent.Schema, property.Parent.Name, property.Alias) || IsNotMappedColumn(property.Parent.Schema, property.Parent.Name, property.Alias));
+        }
+        public bool IsNotMappedColumn(string schemaToCheck, string tableCheck, string columnNameToCheck)
+        {
+            var notMappedColumn = false;
+            foreach (var columnNameNotMappedItem in Database.ColumnNameNotMapped)
+            {
+                var SchemaColumnNameNotMappedItem = Database.DefaultSchema; var TableColumnNameNotMappedItem = "*"; var ColumnColumnNameNotMappedItem = "*";
+                var arr = columnNameNotMappedItem.Split('.');
+                if (arr.Length == 3)
+                {
+                    SchemaColumnNameNotMappedItem = arr[0];
+                    TableColumnNameNotMappedItem = arr[1];
+                    ColumnColumnNameNotMappedItem = arr[2];
+                }
+
+                if (arr.Length == 2)
+                {
+                    SchemaColumnNameNotMappedItem = Database.DefaultSchema;
+                    TableColumnNameNotMappedItem = arr[0];
+                    ColumnColumnNameNotMappedItem = arr[1];
+                }
+                if (arr.Length == 1) //if there is only one parm, then we are going to assume that it affects all schemas
+                {
+                    SchemaColumnNameNotMappedItem = "*";
+                    ColumnColumnNameNotMappedItem = arr[0];
+                }
+                //if (columnNameToCheck.Contains(@"*")) 
+                //{
+                var isSchemaMatched = Regex.IsMatch(schemaToCheck, "^" + Regex.Escape(SchemaColumnNameNotMappedItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                var isTableMatched = Regex.IsMatch(tableCheck, "^" + Regex.Escape(TableColumnNameNotMappedItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                var isColumnMatched = Regex.IsMatch(columnNameToCheck, "^" + Regex.Escape(ColumnColumnNameNotMappedItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                //var isMatched = Regex.IsMatch(columnNameFilterItem, "^" + Regex.Escape(columnNameToCheck).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                if (isSchemaMatched && isTableMatched && isColumnMatched) return true;
+                //}
+                //else if (columnNameFilterItem.Equals(columnNameToCheck)) return true;
+            }
+            return notMappedColumn;
+        }
     }
 }

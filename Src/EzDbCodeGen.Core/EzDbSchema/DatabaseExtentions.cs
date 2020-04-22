@@ -159,6 +159,12 @@ namespace EzDbCodeGen.Core
                 entity.Alias = Configuration.ReplaceEx(config.Database.AliasNamePattern, new SchemaObjectName(entity)).ToCodeFriendly();
                 foreach (var propertyKey in entity.Properties.Keys)
                 {
+                    if (propertyKey.Equals("WaterNetworkId"))
+                    {
+                        var testpropertyKey = propertyKey + "";
+                    }
+                    if (config.IsNotMappedColumn(entity.Properties[propertyKey])) entity.Properties[propertyKey].Set("NotMapped", true);
+                    if (config.IsComputedColumn(entity.Properties[propertyKey])) entity.Properties[propertyKey].Set("Computed", true);
                     if ((config.IsIgnoredColumn(entity.Properties[propertyKey])) || (config.IsObjectNameFiltered(new SchemaObjectName(entity).AsFullName(), propertyKey)))
                     {
                         if (config.Database.DeleteObjectOnFilter)
