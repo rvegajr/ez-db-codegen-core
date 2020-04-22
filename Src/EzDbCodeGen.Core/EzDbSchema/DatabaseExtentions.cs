@@ -159,14 +159,13 @@ namespace EzDbCodeGen.Core
                 entity.Alias = Configuration.ReplaceEx(config.Database.AliasNamePattern, new SchemaObjectName(entity)).ToCodeFriendly();
                 foreach (var propertyKey in entity.Properties.Keys)
                 {
-                    if (config.IsIgnoredColumn(entity.Properties[propertyKey]))
+                    if ((config.IsIgnoredColumn(entity.Properties[propertyKey])) || (config.IsObjectNameFiltered(new SchemaObjectName(entity).AsFullName(), propertyKey)))
                     {
                         if (config.Database.DeleteObjectOnFilter)
                             entity.Properties.Remove(propertyKey);
                         else
                             entity.Properties[propertyKey].IsEnabled = false;
                     }
-                    if ((!entity.IsEnabled) && (!config.Database.DeleteObjectOnFilter)) entity.Properties[propertyKey].IsEnabled = false;
                 }
             }
 
@@ -213,18 +212,40 @@ namespace EzDbCodeGen.Core
                 }
             }
 
-
+            var relationshipsToDelete = new List<string>();
             foreach (var entity in database.Entities.Values)
             {
+                if (entity.Name.Equals("Wells"))
+                {
+                    entity.Name = entity.Name + "";
+                }
                 foreach (var relationship in entity.Relationships)
                 {
                     if (relationship.Name.Equals("FK_Wells_PIGAreaId_DELETE"))
                     {
-                        var fkName = (" ").Trim();
+                        relationship.Name = relationship.Name + "";
                     }
-                    if ((!entity.IsEnabled) && (!config.Database.DeleteObjectOnFilter)) relationship.IsEnabled = false;
 
-                    //relationship
+                    if ((!entity.IsEnabled) && (!config.Database.DeleteObjectOnFilter)) relationship.IsEnabled = false;
+                    /* This allows us to filter the property name using the ObjectFilters wild card string array */
+                    if (relationship.IsEnabled)
+                    {
+                        if (config.IsObjectNameFiltered(new SchemaObjectName(entity).AsFullName(), relationship.Name)) relationship.IsEnabled = false;
+                        if (!relationship.IsEnabled)
+                        {
+                            if (entity.RelationshipGroups.ContainsKey(relationship.Name)) entity.RelationshipGroups.IsEnabled = false;
+                            relationshipsToDelete.Add(relationship.Name);
+                        }
+                    }
+
+                }
+                if (config.Database.DeleteObjectOnFilter) { 
+                    foreach (var relToDelete in relationshipsToDelete)
+                    {
+                        IList<IRelationship> relList = entity.Relationships.Where(r => r.Name.Equals(relToDelete)).ToList();
+                        foreach(var rel in relList) entity.Relationships.Remove(rel);
+                        if (entity.RelationshipGroups.ContainsKey(relToDelete)) entity.RelationshipGroups.Remove(relToDelete);
+                    }
                 }
             }
 

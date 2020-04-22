@@ -30,6 +30,7 @@ namespace EzDbCodeGen.Core.Config
         public bool Ignore { get; set; } = false;
         public string AliasRenameTo { get; set; } = "";
         public Overrides Overrides { get; set; } = new Overrides();
+        public string[] ObjectFilters = (new List<string>()).ToArray();
         public Dictionary<object, object> Misc { get; set; } = new Dictionary<object, object>();
 
         public void ClearPKOverrides()
@@ -63,6 +64,36 @@ namespace EzDbCodeGen.Core.Config
         public string[] ColumnNameComputed = (new List<string>()).ToArray();
         public bool DeleteObjectOnFilter { get; set; } = true;
 
+    }
+
+    public static class ConfigurationExtentions
+    {
+        /// <summary>
+        /// This will search for a string and see if it matches in a list of items To Search
+        /// </summary>
+        /// <param name="itemsToSearch">This list can be literal or file cards on either or both ends</param>
+        /// <param name="objectNameToCheck">String to see if it exists in @itemsToSearch</param>
+        /// <returns></returns>
+        public static bool IsInWildcardList(this string[] itemsToSearch, string objectNameToCheck)
+        {
+            var isFiltered = false;
+            foreach(var itemToSearch in itemsToSearch)
+            {
+                if (itemToSearch== objectNameToCheck)
+                {
+                    isFiltered = true;
+                    break;
+                } else {
+                    if (itemToSearch.Contains(@"*")) //contains wildcard?
+                    {
+                        var isMatched = Regex.IsMatch(objectNameToCheck, "^" + Regex.Escape(itemToSearch).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                        if (isMatched) isFiltered = true;
+                        if (isFiltered) break;
+                    }
+                }
+            }
+            return isFiltered;
+        }
     }
 
     public class Configuration
@@ -372,5 +403,39 @@ namespace EzDbCodeGen.Core.Config
             }
             return ignoreEntity;
         }
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="entityNameToCheck">Needs to be the full object name for the entity</param>
+        /// <param name="objectNametoCheck"></param>
+        /// <returns></returns>
+        public bool IsObjectNameFiltered( string entityNameToCheck, string objectNametoCheck)
+        {
+            var schemaObjectName = new SchemaObjectName(entityNameToCheck);
+            var filterObject = false;
+            var configEntityFound = Entities.Find(e => e.Name == entityNameToCheck);
+            if (configEntityFound == null) configEntityFound = Entities.Find(e => e.Name == schemaObjectName.AsFullName());
+            if (configEntityFound != null)
+            {
+                filterObject = configEntityFound.ObjectFilters.IsInWildcardList(objectNametoCheck);
+            }
+            if (!filterObject)
+            {
+                foreach (var entity in this.Entities)
+                {
+                    if (entity.Name.Contains(@"*")) //contains wildcard?
+                    {
+                        var isMatched = Regex.IsMatch(schemaObjectName.AsFullName(), "^" + Regex.Escape(entity.Name).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                        if (isMatched)
+                        {
+                            filterObject = entity.ObjectFilters.IsInWildcardList(objectNametoCheck);
+                        }
+                        if (filterObject) break;
+                    }
+                }
+            }
+            return filterObject;
+        }
+
     }
 }

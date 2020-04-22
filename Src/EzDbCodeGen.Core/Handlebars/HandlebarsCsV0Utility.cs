@@ -59,7 +59,7 @@ namespace EzDbCodeGen.Core
                     {
                         foreach (var FKKeyValue in property.RelatedTo.GroupByFKName())
                         {
-                            if (FKKeyValue.Key.Equals("FK_FracFleets_FracFleets"))
+                            if (FKKeyValue.Key.Equals("FK_Wells_PIGAreaId_DELETE"))
                                 entityName = (entityName + " ").Trim();
                             var relGroupSummary = entity.RelationshipGroups[FKKeyValue.Key].AsSummary();
                             int SameTableCount = 0;
