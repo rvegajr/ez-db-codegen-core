@@ -171,7 +171,7 @@ namespace EzDbCodeGen.Core
     /// <summary>
     /// A database connection type of Database Input
     /// </summary>
-	internal class TemplateInputDatabaseConnecton : ITemplateInput
+	public class TemplateInputDatabaseConnecton : ITemplateInput
     {
         public string SchemaName { get; set; }
         public bool VerboseMessages { get; set; } = true;
