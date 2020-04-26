@@ -45,7 +45,7 @@ namespace EzDbCodeGen.Core
         public virtual bool VerboseMessages { get; set; } = true;
         public virtual string SchemaName { get; set; } = "MyEzSchema";
         public IDatabase Schema { get; set; }
-        public static Config.Configuration RzDbConfig = Config.Configuration.Instance;
+        public static Config.Configuration RzDbConfig = Internal.AppSettings.Instance.Configuration;
         public string[] AllowedKeys(IDatabase model)
         {
             return model.Keys.Where(k => !k.EndsWith("_Archive", StringComparison.OrdinalIgnoreCase)).ToArray();
@@ -230,7 +230,7 @@ namespace EzDbCodeGen.Core
                 if (File.Exists(ConfigurationFileName))
                 {
                     CurrentTask = string.Format("Config file found! lets read it");
-                    EzDbConfig = Config.Configuration.ReloadInstance(ConfigurationFileName);
+                    EzDbConfig = Configuration.FromFile(ConfigurationFileName);
                     foreach (var item in EzDbConfig.PluralizerCrossReference)
                         Pluralizer.Instance.AddWord(item.SingleWord, item.PluralWord);
                     if (!string.IsNullOrEmpty(EzDbConfig.Database.SchemaName))

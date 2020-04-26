@@ -90,7 +90,7 @@ namespace EzDbCodeGen.Core
 
                             //One to one relationships will always point to a virtual item of that class it is related to,  so it needs to have the InverseFKTargetNameCollisionSuffix as the 
                             // virtual target item will
-                            fkAttributes += "[ForeignKey(\"" + FieldName.Replace(" ", "") + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix + "\")]";
+                            fkAttributes += "[ForeignKey(\"" + FieldName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix + "\")]";
 
                             PreviousOneToOneFields.Add(relGroupSummary.ToTableName);
                             if (fkAttributes.Length > 0) { break; };
@@ -101,7 +101,7 @@ namespace EzDbCodeGen.Core
 
                     if (keyAttribute.Length > 0) writer.WriteSafeString(prefix + keyAttribute + "\n");
                     if (fkAttributes.Length > 0) writer.WriteSafeString(prefix + fkAttributes + "\n");
-                    if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime") || (Config.Configuration.Instance.IsComputedColumn(property))) writer.WriteSafeString(prefix + "[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
+                    if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime") || (Internal.AppSettings.Instance.Configuration.IsComputedColumn(property))) writer.WriteSafeString(prefix + "[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
                     if (property.CustomAttributes.ContainsKey("Computed")) writer.WriteSafeString(prefix + "[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
                     if (decimalAttribute.Length > 0) writer.WriteSafeString(prefix + decimalAttribute + "\n");
                     if (columnAttribute.Length > 0) writer.WriteSafeString(prefix + columnAttribute + "\n");

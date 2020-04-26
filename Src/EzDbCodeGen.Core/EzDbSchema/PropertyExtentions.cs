@@ -347,7 +347,8 @@ namespace EzDbCodeGen.Core
         /// <returns></returns>
         public static string AsObjectPropertyName(this IProperty property)
         {
-            return property.AsObjectPropertyName(Config.Configuration.Instance.Database.PropertyObjectNameCollisionSuffix);
+
+            return property.AsObjectPropertyName(Internal.AppSettings.Instance.Configuration.Database.PropertyObjectNameCollisionSuffix);
         }
 
         /// <summary>

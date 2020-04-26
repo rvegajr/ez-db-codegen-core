@@ -7,6 +7,8 @@ using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Interfaces;
 using Newtonsoft.Json;
 using System.Runtime.CompilerServices;
+using EzDbCodeGen.Internal;
+
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
@@ -15,20 +17,20 @@ namespace EzDbCodeGen.Core
     internal class SchemaObjectColumnName : SchemaObjectName
     {
         public string ColumnName = "";
-        public SchemaObjectColumnName(IProperty property)
+        public SchemaObjectColumnName(IProperty property) : base()
         {
-            SchemaName = property.Parent.Schema ?? Configuration.Instance.Database.DefaultSchema;
+            SchemaName = property.Parent.Schema ?? this.DefaultSchemaName;
             TableName = property.Parent.Name ?? "";
             ColumnName = property.Alias;
         }
 
-        public SchemaObjectColumnName(string schemaObjectName)
+        public SchemaObjectColumnName(string schemaObjectName) : base(schemaObjectName)
         {
             this.Parse(schemaObjectName);
         }
         public override SchemaObjectName Parse(string schemaObjectName)
         {
-            SchemaName = Configuration.Instance.Database.DefaultSchema;
+            SchemaName = this.DefaultSchemaName;
             if (SchemaName.Length == 0) SchemaName = "dbo";
             if (schemaObjectName.Contains("."))
             {
@@ -75,9 +77,11 @@ namespace EzDbCodeGen.Core
         }
         public string SchemaName = "";
         public string TableName = "";
+        protected string DefaultSchemaName = "";
         public SchemaObjectName(IEntity entity)
         {
-            SchemaName = entity.Schema ?? Configuration.Instance.Database.DefaultSchema;
+            DefaultSchemaName = Internal.AppSettings.Instance.Configuration.Database.DefaultSchema;
+            SchemaName = entity.Schema ?? DefaultSchemaName;
             TableName = entity.Name ?? "";
         }
 
@@ -88,7 +92,7 @@ namespace EzDbCodeGen.Core
 
         public virtual SchemaObjectName Parse(string schemaObjectName)
         {
-            SchemaName = Configuration.Instance.Database.DefaultSchema;
+            SchemaName = this.DefaultSchemaName;
             if (SchemaName.Length == 0) SchemaName = "dbo";
             if (schemaObjectName.Contains("."))
             {
@@ -138,6 +142,7 @@ namespace EzDbCodeGen.Core
         /// <param name="config">Configuration file</param>
         public static IDatabase Filter(this IDatabase database, Configuration config)
         {
+            if (config.SourceFileName != AppSettings.Instance.ConfigurationFileName) AppSettings.Instance.ConfigurationFileName = config.SourceFileName;
             //Use config settings to remove those entities we want out filtered out,  the wild card can affect these selections
             var DeleteList = new List<string>();
             foreach (var entityKey in database.Entities.Keys)
@@ -151,7 +156,6 @@ namespace EzDbCodeGen.Core
                 else
                     database.Entities[keyToDelete].IsEnabled = false;
             }
-
 
             //Rename the aliases of each to the pattern specified in the AliasNamePattern
             foreach (var entity in database.Entities.Values)

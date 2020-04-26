@@ -25,7 +25,7 @@ namespace EzDbCodeGen.Tests
                 var codeGenerator = new CodeGenerator();
                 ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
                 //ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=WideWorldImportersDW;user id=User;password=Server@Database");
-                var database = template.LoadSchema(Configuration.Instance);
+                var database = template.LoadSchema(Internal.AppSettings.Instance.Configuration);
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
                 codeGenerator.TemplateFileNameFilter = "SchemaRenderAsFiles*";
@@ -71,7 +71,7 @@ namespace EzDbCodeGen.Tests
                 var codeGenerator = new CodeGenerator();
                 ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
                 //ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=WideWorldImportersDW;user id=User;password=Server@Database");
-                var database = template.LoadSchema(Configuration.Instance);
+                var database = template.LoadSchema(Internal.AppSettings.Instance.Configuration);
                 var str = ((EntityDictionary)database.Entities).ObjectPropertyAsString("#Name");
                 var rel = (RelationshipList)database.Entities["dbo.FactSurveyResponse"].RelationshipGroups["FK_FactSurveyResponse_CustomerKey"];
                 var relStr = rel.ObjectPropertyAsString("");

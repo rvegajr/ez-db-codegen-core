@@ -228,51 +228,25 @@ namespace EzDbCodeGen.Core.Config
         public const string OP_STRING_REPLACE = "R"; // R'Old string'=>'New String'
         public const string OP_SINGULARIZE = "S";
         public const string OP_PLURALIZE = "M";
-        public static Configuration ReloadInstance(string FileName)
-        {
-            _sourceFileName = FileName;
-            instance = Configuration.FromFile(_sourceFileName);
-            return instance;
-        }
         /// <summary>
         /// Gets or sets the name of the source file.  This will also cause the reload of the config file
         /// </summary>
         /// <value>
         /// The name of the source file.
         /// </value>
-        public static string SourceFileName { 
+        public string SourceFileName { 
             get {
-                if (string.IsNullOrEmpty(_sourceFileName)) _sourceFileName = "{ASSEMBLY_PATH}ezdbcodegen.config.json".ResolvePathVars();
+                if (string.IsNullOrEmpty(_sourceFileName)) throw new ArgumentNullException("Need to set SourceFileName to a valid file name");
                 return _sourceFileName;
             }
             set
             {
                 _sourceFileName = value;
-                Configuration.ReloadInstance(_sourceFileName);
             }
         }
-        private static string _sourceFileName = "";
-        private static Configuration instance;
-        private Configuration()
+        private string _sourceFileName = "";
+        public Configuration()
         {
-        }
-        public static Configuration Instance
-        {
-            get
-            {
-                if (instance == null)
-                {
-                    try
-                    {
-                        instance = Configuration.FromFile(SourceFileName);
-                    }
-                    catch (System.Exception ex)
-                    {
-                        throw new Exception(string.Format("Error while parsing {0}. {1}", SourceFileName, ex.Message), ex);
-                    }
-                }
-                return instance;
-            }
         }
         public List<Entity> Entities { get; set; } = new List<Entity>();
         public List<PluralSingle> PluralizerCrossReference { get; set; } = new List<PluralSingle>();
@@ -280,7 +254,7 @@ namespace EzDbCodeGen.Core.Config
         public static Configuration FromFile(string FileName)
         {
             var ret = JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(FileName));
-            foreach(var e in ret.Entities)
+            foreach (var e in ret.Entities)
             {
                 if (e.Misc.ContainsKey("PrimaryKey"))
                 {
@@ -296,6 +270,7 @@ namespace EzDbCodeGen.Core.Config
                 }
             }
             if (ret.Database.AliasNamePattern.Length == 0) ret.Database.AliasNamePattern = Configuration.OBJECT_NAME;
+            ret.SourceFileName = FileName;
             return ret;
         }
 

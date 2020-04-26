@@ -75,7 +75,7 @@ namespace EzDbCodeGen.Core
                                 if (relGroupSummary.ToColumnName.Count > 1)
                                 {
                                     ColumnOrder = string.Format(", Column(Order = {0})", relGroupSummary.ToColumnProperties.Where(p => p.Name.Equals(property.Name)).Select(p => p.KeyOrder).FirstOrDefault());
-                                    fkAttributes += string.Format("[ForeignKey(\"{0}\"){1}]", (FieldName.Replace(" ", "") + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix).Trim(), ColumnOrder);
+                                    fkAttributes += string.Format("[ForeignKey(\"{0}\"){1}]", (FieldName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix).Trim(), ColumnOrder);
                                 }
                             }
                             if (fkAttributes.Length > 0) break;
@@ -116,7 +116,7 @@ namespace EzDbCodeGen.Core
                             var relGroupSummary = relationship.AsSummary();
                             string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
                             //string ToObjectFieldName = relGroupSummary.AsObjectPropertyName();
-                            string ToObjectFieldName = string.Format("{0}_{1}", relGroupSummary.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema + ".", ""), relGroupSummary.ToColumnName.First());
+                            string ToObjectFieldName = string.Format("{0}_{1}", relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", ""), relGroupSummary.ToColumnName.First());
 
                             writer.WriteSafeString(string.Format(
                                 "\n{0}this.{1} = new HashSet<{2}>(); //{3} 0|1->*"
@@ -154,7 +154,7 @@ namespace EzDbCodeGen.Core
                             var relGroupSummary = relationship.AsSummary();
                             string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
                             //string ToObjectFieldName = relGroupSummary.AsObjectPropertyName();
-                            string ToObjectFieldName = string.Format("{0}_{1}", relGroupSummary.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema + ".", ""), relGroupSummary.ToColumnName.First());
+                            string ToObjectFieldName = string.Format("{0}_{1}", relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", ""), relGroupSummary.ToColumnName.First());
 
                             //Check and see we have multiple declarations of the same table,  if we do, we will need an inverse 
                             // property annotation figure out how to property find the correct object property target 
@@ -211,7 +211,7 @@ namespace EzDbCodeGen.Core
                             int SameTableCount = 0;
                             foreach (var rg in entity.RelationshipGroups.Values)
                                 if (rg.AsSummary().ToTableName.Equals(relGroupSummary.ToTableName)) SameTableCount++;
-                            string ToTableNameSingular = relGroupSummary.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema + ".", "").ToSingular();
+                            string ToTableNameSingular = relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular();
                             string _FieldName = ((PreviousManyToOneFields.Contains(ToTableNameSingular)
                                                  || (entity.Properties.ContainsKey(ToTableNameSingular))
                                                  || (entityName == relGroupSummary.ToTableName)
@@ -222,7 +222,7 @@ namespace EzDbCodeGen.Core
 
                             writer.WriteSafeString(string.Format("\n{0}/// <summary>{1}  *->0|1</summary>", prefix, fkName));
                             writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, relGroupSummary.FromFieldName));
-                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relGroupSummary.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
+                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
                             PreviousManyToOneFields.Add(FieldName);
                         }
                     }
@@ -256,14 +256,14 @@ namespace EzDbCodeGen.Core
                             int SameTableCount = 0;
                             foreach (var rg in entity.RelationshipGroups.Values)
                                 if (rg.AsSummary().ToTableName.Equals(relGroupSummary.ToTableName)) SameTableCount++;
-                            string ToTableNameSingular = relGroupSummary.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema + ".", "").ToSingular();
+                            string ToTableNameSingular = relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular();
                             string FieldName = ((PreviousOneToOneFields.Contains(ToTableNameSingular)
                                                  || (entity.Properties.ContainsKey(ToTableNameSingular))
                                                  || (entityName == relGroupSummary.ToTableName)
                                                  || (SameTableCount > 1))
                                                     ?  string.Format(",", relGroupSummary.FromColumnName) : ToTableNameSingular);
                             writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} 1->1</summary>", prefix, relGroupSummary.Name));
-                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relGroupSummary.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
+                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
                             PreviousOneToOneFields.Add(FieldName);
                         }
                     }
@@ -309,7 +309,7 @@ namespace EzDbCodeGen.Core
                             int SameTableCount = 0;
                             foreach(var rg in entity.RelationshipGroups.Values)
                                 if (rg.AsSummary().ToTableName.Equals(relationship.ToTableName)) SameTableCount++;
-                            string ToTableNameSingular = relationship.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema + ".", "").ToSingular();
+                            string ToTableNameSingular = relationship.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular();
                             string _FieldName = ((PreviousOneToOneFields.Contains(ToTableNameSingular)
                                                  || (entity.Properties.ContainsKey(ToTableNameSingular))
                                                  || (entityName == relationship.ToTableName)
@@ -327,7 +327,7 @@ namespace EzDbCodeGen.Core
                             {
                                 writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relationship.FromFieldName)));
                             }
-                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relationship.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
+                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relationship.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
                             PreviousOneToOneFields.Add(FieldName);
 
                         }
@@ -363,7 +363,7 @@ namespace EzDbCodeGen.Core
                     foreach (IRelationship relationship in RelationshipsManyToOne)
                     {
                         int SameTableCount = RelationshipsManyToOne.CountItems(RelationSearchField.ToTableName, relationship.ToTableName);
-                        string ToTableNameSingular = relationship.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema+".", "").ToSingular();
+                        string ToTableNameSingular = relationship.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema+".", "").ToSingular();
                         string ExpandColumnName = ((PreviousManyToOneFields.Contains(ToTableNameSingular) || (entity.Properties.ContainsKey(ToTableNameSingular)) || (entityName == relationship.ToTableName) || (SameTableCount > 1)) ? relationship.FromColumnName : ToTableNameSingular);
                         writer.WriteSafeString(string.Format("\n{0}using (var response = await HttpClient.GetAsync(\"http://testserver/api/{1}?%24expand={2}<t/>&%24top=10\")) ", prefix, entityName, ExpandColumnName));
                         writer.WriteSafeString(string.Format("\n{0}{{ ", prefix));

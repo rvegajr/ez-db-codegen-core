@@ -19,15 +19,15 @@ namespace EzDbCodeGen.Tests
         public void ConfigDb()
         {
 			ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
-			var database = template.LoadSchema(Configuration.Instance);
+			var database = template.LoadSchema(Internal.AppSettings.Instance.Configuration);
         }
 
 
         [Fact]
         public void CompareObjectTestsAreEqual()
         {
-            var db1 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Configuration.Instance);
-            var db2 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Configuration.Instance);
+            var db1 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Internal.AppSettings.Instance.Configuration);
+            var db2 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Internal.AppSettings.Instance.Configuration);
             var list = db1.CompareTo(db2);
             Assert.True(list.Count==0, "Both schemas should equal");
         }
@@ -35,8 +35,8 @@ namespace EzDbCodeGen.Tests
         [Fact]
         public void CompareObjectTestsAreNotEqual()
         {
-            var db1 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Configuration.Instance);
-            var db2 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Configuration.Instance);
+            var db1 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Internal.AppSettings.Instance.Configuration);
+            var db2 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Internal.AppSettings.Instance.Configuration);
             var Entity = db2.Entities[db2.Keys[0]];
             Entity.Name = Entity.Name + "_CHANGED";
             var list = db1.CompareTo(db2);
@@ -46,7 +46,7 @@ namespace EzDbCodeGen.Tests
         [Fact]
         public void AliasPatternTests()
         {
-            var cfg = Configuration.Instance;
+            var cfg = Internal.AppSettings.Instance.Configuration;
             cfg.Database.AliasNamePattern = Configuration.SCHEMA_NAME + Configuration.OBJECT_NAME;
             var db1 = new TemplateInputFileSource(SchemaFileName).LoadSchema(cfg);
             var e1 = db1.FindEntity("Dimension.City");
@@ -69,9 +69,9 @@ namespace EzDbCodeGen.Tests
             };
             c.AddPKOverride("City Key");
             c.AddPKOverride("WWI City ID");
-            Configuration.Instance.Entities.Add(c);
+            Internal.AppSettings.Instance.Configuration.Entities.Add(c);
 
-            var db1 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Configuration.Instance);
+            var db1 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Internal.AppSettings.Instance.Configuration);
             var lst = db1.FindEntities("Dimension.City");
             Assert.True(lst.Count == 1, "Should be 1 entity that match the pattern 'Dimension.City'");
 
@@ -83,7 +83,7 @@ namespace EzDbCodeGen.Tests
             c.AddPKOverride("WWI City ID");
             c.AddPKOverride("City Key");
 
-            var db2 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Configuration.Instance);
+            var db2 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Internal.AppSettings.Instance.Configuration);
             var lst2 = db2.FindEntities("Dimension.City");
             Assert.True(lst.Count == 1, "Should be 1 entity that match the pattern 'Dimension.City'");
 
