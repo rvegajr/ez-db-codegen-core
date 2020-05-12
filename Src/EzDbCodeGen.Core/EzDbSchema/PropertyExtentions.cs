@@ -52,6 +52,15 @@ namespace EzDbCodeGen.Core
         }
 
         /// <summary>
+        /// Is the Propery Computed?
+        /// </summary>
+        /// <returns></returns>
+        internal static bool IsComputed(this IProperty This)
+        {
+            return This.Get("IsComputed", false);
+        }
+
+        /// <summary>
         /// Useful for rendering the primary keys for a comma delimited parameter list
         /// Will return the primary keys in the following format
         ///   [0]Parm1 (number), Parm2(text), Parm3 (number)
@@ -377,9 +386,9 @@ namespace EzDbCodeGen.Core
                 // lets write out the PropertyNameCollisionSuffix suffix to make sure the name doesn't collide
                 if (property.Parent.Relationships.FindItems(RelationSearchField.ToColumnName, property.Alias).Count >= 1)
                 {
-                    propertyName = propertyName + nameCollisionSuffix;
+                    propertyName += nameCollisionSuffix;
                 } else if (entity.Alias.Equals(propertyName)) {
-                    propertyName = propertyName + nameCollisionSuffix;
+                    propertyName += nameCollisionSuffix;
                 }
             }
             catch (Exception ex)

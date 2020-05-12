@@ -242,6 +242,8 @@ namespace EzDbCodeGen.Core
                     return string.Format("Server={0};Database={1};user id={2};password={3}", Server, Database, UserId, Password);
                 case DB_ORACLE:
                     return string.Format("User Id={0};Password={1};Data Source={2};", UserId, Password, Server);
+                default:
+                    break;
             }
             return "";
         }
@@ -302,8 +304,7 @@ namespace EzDbCodeGen.Core
                                                               StringComparer.InvariantCultureIgnoreCase);
             foreach (var alias in keyAliases)
             {
-                string value;
-                if (keyValuePairs.TryGetValue(alias, out value))
+                if (keyValuePairs.TryGetValue(alias, out string value))
                     return value;
             }
             return string.Empty;
