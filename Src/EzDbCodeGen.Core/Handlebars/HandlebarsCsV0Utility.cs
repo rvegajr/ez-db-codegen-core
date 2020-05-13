@@ -58,15 +58,17 @@ namespace EzDbCodeGen.Core
                         {
                             keyAttribute = "[Key" + identityAttribute + "]";
                         }
+
                         foreach (var fkRelatedTo in property.RelatedTo)
                         {
                             var oneToOneCount = property.RelatedTo.Where(r => r.MultiplicityType == RelationshipMultiplicityType.OneToOne).Count();
                             var toProperty = ((EzDbSchema.Core.Objects.Relationship)fkRelatedTo).ToProperty;
                             if ((fkRelatedTo.MultiplicityType == RelationshipMultiplicityType.OneToOne) && (toProperty.IsKey) && (oneToOneCount==1))
                             {
-                                var toFieldName = (fkRelatedTo.ToColumnName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix).Trim();
-                                if (toFieldName.Equals(entity.Alias)) toFieldName = fkRelatedTo.EndAsObjectPropertyName();
-                                fkAttributes += "[ForeignKey(\"" + toFieldName + "\")]";
+                                //var toFieldName = (fkRelatedTo.ToColumnName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix).Trim();
+                                string FKToObjectName = entity.GenerateObjectName(fkRelatedTo.Name, ObjectNameGeneratedFrom.JoinFromColumnName);
+                                //if ((toFieldName.Equals(entity.Alias)) || (!entity.Properties.ContainsKey(toFieldName))) toFieldName = fkRelatedTo.EndAsObjectPropertyName();
+                                fkAttributes += "[ForeignKey(\"" + FKToObjectName + "\")]";
                             }
                         }
                     }
