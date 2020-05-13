@@ -72,36 +72,6 @@ namespace EzDbCodeGen.Core
                             }
                         }
                     }
-                    /*
-                    List<string> PreviousOneToOneFields = new List<string>();
-                    var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToOne).FindItems(RelationSearchField.FromFieldName, property.Name);
-                    var groupedByFKName = RelationshipsOneToOne.GroupByFKName();
-                    foreach (var FKName in groupedByFKName.Keys)
-                    {
-                        string FieldName = "";
-                        var relationshipList = groupedByFKName[FKName];
-                        var relGroupSummary = relationshipList.AsSummary();
-                        var toGroupRelationshipList = entity.Parent[relGroupSummary.ToTableName].Relationships.GroupByFKName();
-                        var CountOfThisEntityInTargetRelationships = toGroupRelationshipList.CountItems(RelationSearchField.ToTableName, relGroupSummary.FromTableName);
-
-                        int SameTableCount = groupedByFKName.CountItems(RelationSearchField.ToTableName, relGroupSummary.ToTableName);
-                        //Need to resolve the to table name to what the alias table name is
-                        string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias;
-                        string ToTableNameSingular = ToTableName.ToSingular();
-                        FieldName = ((PreviousOneToOneFields.Contains(ToTableNameSingular)
-                                    || (entity.Properties.ContainsKey(ToTableNameSingular))
-                                    || (entityName == relGroupSummary.ToTableName)
-                                    || (SameTableCount > 1) || (CountOfThisEntityInTargetRelationships > 1)) ? string.Join(",", relGroupSummary.FromColumnName) : ToTableNameSingular);
-
-                        //One to one relationships will always point to a virtual item of that class it is related to,  so it needs to have the InverseFKTargetNameCollisionSuffix as the 
-                        // virtual target item will
-                        fkAttributes += "[ForeignKey(\"" + (FieldName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix).Trim() + "\")]";
-
-                        PreviousOneToOneFields.Add(relGroupSummary.ToTableName);
-                        if (fkAttributes.Length > 0) { break; };
-
-                    }
-                    */
 
                     var OutputAttributeString = new StringBuilder();
                     if (keyAttribute.Length > 0) OutputAttributeString.Append(keyAttribute);
@@ -116,7 +86,6 @@ namespace EzDbCodeGen.Core
                     Console.WriteLine(PROC_NAME + "- Error! " + ex.Message + " in entity " + entityName);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
-
             });
 
             Handlebars.RegisterHelper("POCOModelFKConstructorInitV0", (writer, context, parameters) => {
@@ -224,7 +193,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if ((fkName.Equals("FK_AreaTargetFormations_TargetFormations")) || (fkName.Equals("FK_AreaTargetFormations_TargetFormations1")))
+                        if ((fkName.Equals("FK_AreaTargetFormations_AreaTypes")) || (fkName.Equals("FK_AreaTargetFormations_TargetFormations1")))
                             fkName = fkName + "";
                         if (FKToUse.Contains(fkName))
                         {
@@ -271,7 +240,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if ((fkName.Equals("FK_Wells_WellStickSurveys")) || (fkName.Equals("FK_Wells_WellStickSurveys")))
+                        if ((fkName.Equals("FK_AreaTargetFormations_AreaTypes")) || (fkName.Equals("FK_Wells_WellStickSurveys")))
                             fkName += fkName + "";
                         if (FKToUse.Contains(fkName))
                         {
@@ -310,8 +279,7 @@ namespace EzDbCodeGen.Core
                     var entity = (IEntity)context;
                     var entityName = entity.Schema + "." + entity.Name;
 
-
-                    if (entityName.Equals("dbo.ForecastHorizontal"))
+                    if (entityName.Equals("dbo.Area"))
                     {
                         entityName = (entityName + " ").Trim();
                     }
@@ -324,7 +292,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if (fkName.Contains("FK_Wells_WellStickSurveys"))
+                        if (fkName.Contains("FK_AreaTargetFormations_AreaTypes"))
                         {
                             entityName = (entityName + " ").Trim();
                         }
@@ -377,22 +345,18 @@ namespace EzDbCodeGen.Core
                                 }
                                 //Determine wich end of the relationship to use, since we need the target, choose the end that does not equal this entities table name (schame.table)
                             }
-                            if (WriteFKAttribute) AttributeText.Append(string.Format("[ForeignKey(\"{0}\")]", string.Join(", ", fkList.ToList())));
-                            if (IsRequired) AttributeText.Append("[Required]");
-                            if (AttributeText.Length>0) writer.WriteSafeString(string.Format("\n{0}{1}", prefix, AttributeText.ToString()));
-                            /*
-                            if (relationship.FromTableName.Equals(relationship.ToTableName))
+                            if (!relationship.MultiplicityType.EndsAsOne())
                             {
-                                writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, relationship.FromFieldName[relationship.FromFieldName.Count-1]));
+                                writer.WriteSafeString(string.Format("\n{0}////WARNING:  There are multiple relationship groups with the same name but different multiplicities.. skipping this one...", prefix));
                             }
                             else
                             {
-                                writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relationship.FromFieldName)));
+                                if (WriteFKAttribute) AttributeText.Append(string.Format("[ForeignKey(\"{0}\")]", string.Join(", ", fkList.ToList())));
+                                if (IsRequired) AttributeText.Append("[Required]");
+                                if (AttributeText.Length > 0) writer.WriteSafeString(string.Format("\n{0}{1}", prefix, AttributeText.ToString()));
+                                writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relationship.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
                             }
-                            */
-                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relationship.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
                             PreviousOneToOneFields.Add(FieldName);
-
                         }
                     }
                 }
