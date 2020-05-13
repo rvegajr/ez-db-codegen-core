@@ -118,7 +118,7 @@ namespace EzDbCodeGen.Core
                 int SameTableCount = 0;
                 foreach (var rg in entity.RelationshipGroups.Values)
                     if (rg.AsSummary().ToTableName.Equals(relGroupSummary.ToTableName)) SameTableCount++;
-                string ToTableNameSingular = relGroupSummary.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema + ".", "").ToSingular();
+                string ToTableNameSingular = relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular();
 
                 var AltName = ToTableNameSingular;
                 if (relGroupSummary.FromTableName.Equals(relGroupSummary.ToTableName)) generatedFrom = ObjectNameGeneratedFrom.ToUniqueColumnName;
@@ -298,14 +298,14 @@ namespace EzDbCodeGen.Core
                     //ToObjectFieldName = ToTableName + string.Join(",", relGroupSummary.ToColumnName).ToCsObjectName();
                     ToObjectFieldName = ((relGroupSummary.MultiplicityType.EndsAsMany() ?
                                 relGroupSummary.ToUniqueColumnName().ToPlural() :
-                                string.Join(",", relGroupSummary.ToColumnName) + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
+                                string.Join(",", relGroupSummary.ToColumnName) + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix)
                             ).ToCsObjectName();
                 }
                 else
                 {
                     ToObjectFieldName = ((relGroupSummary.MultiplicityType.EndsAsMany() ?
                                     relGroupSummary.ToUniqueColumnName().ToPlural() :
-                                    ToObjectFieldName + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix)
+                                    ToObjectFieldName + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix)
                                 ).ToCsObjectName();
                 }
                 return ToObjectFieldName;
@@ -347,7 +347,7 @@ namespace EzDbCodeGen.Core
                                          || (AdditionSameTableCount > 0)) 
                                             ? relationship.ToUniqueColumnName() : ToTableNameSingular).ToCsObjectName();
                     PreviousFields.Add(FieldName);
-                    objectSuffix = Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
+                    objectSuffix = Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix;
 
                     if (fkNametoSelect == relationship.Name)
                     {
@@ -358,9 +358,8 @@ namespace EzDbCodeGen.Core
             }
             catch (Exception ex)
             {
-                return string.Format("/* ERROR: {0} */", string.Format("{0}: Error while figuring out the correct class name for this foriegn Key", PROC_NAME));
+                return string.Format("/* ERROR: {0} */", string.Format("{0}: Error while figuring out the correct class name for this foriegn Key.  {1}", PROC_NAME, ex.Message));
             }
-            return FieldName.Trim();
         }
         /// <summary>
         /// Used to figure out what the target object name for the end of this particular relationship

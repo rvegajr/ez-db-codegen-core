@@ -3,6 +3,8 @@ using System.Runtime.CompilerServices;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Enums;
 using EzDbSchema.Core.Interfaces;
+using EzDbSchema.Core.Objects;
+
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
@@ -14,7 +16,51 @@ namespace EzDbCodeGen.Core
     /// </summary>
     internal static class EzDbSchemaPropertyExtentions
     {
-		/// <summary>
+        /// <summary>
+        /// This will set a custom attribute for the property this is set to, it will create the Custom Attributes object if it does not exist, it will add the key and set if it does exist, and it will simply replace it if the key already exists 
+        /// </summary>
+        /// <param name="This"></param>
+        /// <param name="CustomAttributeName"></param>
+        /// <param name="CustomAttributeObject"></param>
+        internal static IProperty Set(this IProperty This, string CustomAttributeName, object CustomAttributeObject)
+        {
+            if (This.CustomAttributes == null) This.CustomAttributes = new CustomAttributes();
+            if (This.CustomAttributes.ContainsKey(CustomAttributeName))
+                This.CustomAttributes[CustomAttributeName] = CustomAttributeObject;
+            else
+                This.CustomAttributes.Add(CustomAttributeName, CustomAttributeObject);
+            return This;
+        }
+
+        internal static object Get(this IProperty This, string CustomAttributeName)
+        {
+            if (This.CustomAttributes == null) return null;
+            if (This.CustomAttributes.ContainsKey(CustomAttributeName))
+                return This.CustomAttributes[CustomAttributeName];
+            return This;
+        }
+
+        internal static bool Get(this IProperty This, string CustomAttributeName, bool defaultValue)
+        {
+            var ret = This.Get(CustomAttributeName);
+            if (ret == null) return defaultValue;
+            if (bool.TryParse(ret.ToString(), out var res))
+            {
+                return res;
+            }
+            return defaultValue;
+        }
+
+        /// <summary>
+        /// Is the Propery Computed?
+        /// </summary>
+        /// <returns></returns>
+        internal static bool IsComputed(this IProperty This)
+        {
+            return This.Get("IsComputed", false);
+        }
+
+        /// <summary>
         /// Useful for rendering the primary keys for a comma delimited parameter list
         /// Will return the primary keys in the following format
         ///   [0]Parm1 (number), Parm2(text), Parm3 (number)
@@ -24,7 +70,7 @@ namespace EzDbCodeGen.Core
         /// <param name="delimiter">Defaults to ","</param>
         /// <param name="elementSet">Defaults to " "</param>
         /// <returns></returns>
-		private static string AsParmString(this IPrimaryKeyProperties This, string prefix, string delimiter, string elementSet)
+        internal static string AsParmString(this IPrimaryKeyProperties This, string prefix, string delimiter, string elementSet)
 		{
 			var ret = "";
             for (int i = 0; i < This.Count; i++)
@@ -35,14 +81,14 @@ namespace EzDbCodeGen.Core
             return ret;
 		}
 
-		/// <summary>
+        /// <summary>
         /// Useful for rendering the primary keys for a comma delimited parameter list
         /// Will return the primary keys in the following format
         ///   [0]Parm1 (number), Parm2(text), Parm3 (number)
         ///   will return
         ///   int Parm1, string Parm2, int Parm3
         /// </summary>
-		public static string AsParmString(this IPrimaryKeyProperties This)
+        internal static string AsParmString(this IPrimaryKeyProperties This)
         {
 			return This.AsParmString("[FromODataUri] ", ",", " ");
         }
@@ -57,7 +103,7 @@ namespace EzDbCodeGen.Core
         /// <param name="delimiter">Defaults to ","</param>
         /// <param name="elementSet">Defaults to " "</param>
         /// <returns></returns>
-		private static string AsParmString(this IProperty This, string prefix, string delimiter, string elementSet)
+		internal static string AsParmString(this IProperty This, string prefix, string delimiter, string elementSet)
         {
 			return This.Parent.PrimaryKeys.AsParmString(prefix, delimiter, elementSet);
         }
@@ -69,12 +115,12 @@ namespace EzDbCodeGen.Core
         ///   will return
         ///   int Parm1, string Parm2, int Parm3
         /// </summary>
-		public static string AsParmString(this IProperty This )
+		internal static string AsParmString(this IProperty This )
         {
             return This.AsParmString("[FromODataUri] ", ",", " ");
         }
 
-		/// <summary>
+        /// <summary>
         /// Useful for rendering the primary keys for a linq search query
         /// Will return the primary keys in the following format
         ///   [0]Parm1 (number), Parm2(text), Parm3 (number)
@@ -84,9 +130,9 @@ namespace EzDbCodeGen.Core
         /// <param name="prefix">Defaults to "t"</param>
         /// <param name="delimiter">Defaults to " and "</param>
         /// <param name="elementSet">Defaults to " == "</param>
-		/// <param name="prefixSetter">Defaults to ""</param>
-		/// <returns></returns>
-		public static string AsLinqEquationString(this IPrimaryKeyProperties This, string prefix, string delimiter, string elementSet, string prefixSetter)
+        /// <param name="prefixSetter">Defaults to ""</param>
+        /// <returns></returns>
+        internal static string AsLinqEquationString(this IPrimaryKeyProperties This, string prefix, string delimiter, string elementSet, string prefixSetter)
         {
             // t.@_Model[key].PrimaryKeys[0].Name == @key.ToSingular()
             var ret = "";
@@ -310,7 +356,8 @@ namespace EzDbCodeGen.Core
         /// <returns></returns>
         public static string AsObjectPropertyName(this IProperty property)
         {
-            return property.AsObjectPropertyName(Config.Configuration.Instance.Database.PropertyObjectNameCollisionSuffix);
+
+            return property.AsObjectPropertyName(Internal.AppSettings.Instance.Configuration.Database.PropertyObjectNameCollisionSuffix);
         }
 
         /// <summary>
@@ -339,9 +386,9 @@ namespace EzDbCodeGen.Core
                 // lets write out the PropertyNameCollisionSuffix suffix to make sure the name doesn't collide
                 if (property.Parent.Relationships.FindItems(RelationSearchField.ToColumnName, property.Alias).Count >= 1)
                 {
-                    propertyName = propertyName + nameCollisionSuffix;
+                    propertyName += nameCollisionSuffix;
                 } else if (entity.Alias.Equals(propertyName)) {
-                    propertyName = propertyName + nameCollisionSuffix;
+                    propertyName += nameCollisionSuffix;
                 }
             }
             catch (Exception ex)

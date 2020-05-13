@@ -7,6 +7,8 @@ using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Interfaces;
 using Newtonsoft.Json;
 using System.Runtime.CompilerServices;
+using EzDbCodeGen.Internal;
+
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
@@ -15,20 +17,20 @@ namespace EzDbCodeGen.Core
     internal class SchemaObjectColumnName : SchemaObjectName
     {
         public string ColumnName = "";
-        public SchemaObjectColumnName(IProperty property)
+        public SchemaObjectColumnName(IProperty property) : base()
         {
-            SchemaName = property.Parent.Schema ?? Configuration.Instance.Database.DefaultSchema;
+            SchemaName = property.Parent.Schema ?? this.DefaultSchemaName;
             TableName = property.Parent.Name ?? "";
             ColumnName = property.Alias;
         }
 
-        public SchemaObjectColumnName(string schemaObjectName)
+        public SchemaObjectColumnName(string schemaObjectName) : base(schemaObjectName)
         {
             this.Parse(schemaObjectName);
         }
         public override SchemaObjectName Parse(string schemaObjectName)
         {
-            SchemaName = Configuration.Instance.Database.DefaultSchema;
+            SchemaName = this.DefaultSchemaName;
             if (SchemaName.Length == 0) SchemaName = "dbo";
             if (schemaObjectName.Contains("."))
             {
@@ -75,9 +77,11 @@ namespace EzDbCodeGen.Core
         }
         public string SchemaName = "";
         public string TableName = "";
+        protected string DefaultSchemaName = "";
         public SchemaObjectName(IEntity entity)
         {
-            SchemaName = entity.Schema ?? Configuration.Instance.Database.DefaultSchema;
+            DefaultSchemaName = Internal.AppSettings.Instance.Configuration.Database.DefaultSchema;
+            SchemaName = entity.Schema ?? DefaultSchemaName;
             TableName = entity.Name ?? "";
         }
 
@@ -88,7 +92,7 @@ namespace EzDbCodeGen.Core
 
         public virtual SchemaObjectName Parse(string schemaObjectName)
         {
-            SchemaName = Configuration.Instance.Database.DefaultSchema;
+            SchemaName = this.DefaultSchemaName;
             if (SchemaName.Length == 0) SchemaName = "dbo";
             if (schemaObjectName.Contains("."))
             {
@@ -122,11 +126,13 @@ namespace EzDbCodeGen.Core
         /// </summary>
         /// <param name="database">The database.</param>
         /// <returns></returns>
+        /// 
+        /*
         public static IDatabase Filter(this IDatabase database)
         {
             return database.Filter(Configuration.Instance);
         }
-
+        */
         /// <summary>
         /// This will filter a schema based on the a passed configuration file.  This will remove entites that will need to be ignored and alter primary keys based
         /// on the parameters passed 
@@ -136,6 +142,7 @@ namespace EzDbCodeGen.Core
         /// <param name="config">Configuration file</param>
         public static IDatabase Filter(this IDatabase database, Configuration config)
         {
+            if (config.SourceFileName != AppSettings.Instance.ConfigurationFileName) AppSettings.Instance.ConfigurationFileName = config.SourceFileName;
             //Use config settings to remove those entities we want out filtered out,  the wild card can affect these selections
             var DeleteList = new List<string>();
             foreach (var entityKey in database.Entities.Keys)
@@ -144,9 +151,11 @@ namespace EzDbCodeGen.Core
             }
             foreach (var keyToDelete in DeleteList)
             {
-                database.Entities.Remove(keyToDelete);
+                if (config.Database.DeleteObjectOnFilter)
+                    database.Entities.Remove(keyToDelete);
+                else
+                    database.Entities[keyToDelete].IsEnabled = false;
             }
-
 
             //Rename the aliases of each to the pattern specified in the AliasNamePattern
             foreach (var entity in database.Entities.Values)
@@ -154,9 +163,18 @@ namespace EzDbCodeGen.Core
                 entity.Alias = Configuration.ReplaceEx(config.Database.AliasNamePattern, new SchemaObjectName(entity)).ToCodeFriendly();
                 foreach (var propertyKey in entity.Properties.Keys)
                 {
-                    if (config.IsIgnoredColumn(entity.Properties[propertyKey]))
+                    if (propertyKey.Equals("WaterNetworkId"))
                     {
-                        entity.Properties.Remove(propertyKey);
+                        var testpropertyKey = propertyKey + "";
+                    }
+                    if (config.IsNotMappedColumn(entity.Properties[propertyKey])) entity.Properties[propertyKey].Set("NotMapped", true);
+                    if (config.IsComputedColumn(entity.Properties[propertyKey])) entity.Properties[propertyKey].Set("Computed", true);
+                    if ((config.IsIgnoredColumn(entity.Properties[propertyKey])) || (config.IsObjectNameFiltered(new SchemaObjectName(entity).AsFullName(), propertyKey)))
+                    {
+                        if (config.Database.DeleteObjectOnFilter)
+                            entity.Properties.Remove(propertyKey);
+                        else
+                            entity.Properties[propertyKey].IsEnabled = false;
                     }
                 }
             }
@@ -200,6 +218,43 @@ namespace EzDbCodeGen.Core
                                 }
                             }
                         }
+                    }
+                }
+            }
+
+            var relationshipsToDelete = new List<string>();
+            foreach (var entity in database.Entities.Values)
+            {
+                if (entity.Name.Equals("Wells"))
+                {
+                    entity.Name = entity.Name + "";
+                }
+                foreach (var relationship in entity.Relationships)
+                {
+                    if (relationship.Name.Equals("FK_Wells_PIGAreaId_DELETE"))
+                    {
+                        relationship.Name = relationship.Name + "";
+                    }
+
+                    if ((!entity.IsEnabled) && (!config.Database.DeleteObjectOnFilter)) relationship.IsEnabled = false;
+                    /* This allows us to filter the property name using the ObjectFilters wild card string array */
+                    if (relationship.IsEnabled)
+                    {
+                        if (config.IsObjectNameFiltered(new SchemaObjectName(entity).AsFullName(), relationship.Name)) relationship.IsEnabled = false;
+                        if (!relationship.IsEnabled)
+                        {
+                            if (entity.RelationshipGroups.ContainsKey(relationship.Name)) entity.RelationshipGroups.IsEnabled = false;
+                            relationshipsToDelete.Add(relationship.Name);
+                        }
+                    }
+
+                }
+                if (config.Database.DeleteObjectOnFilter) { 
+                    foreach (var relToDelete in relationshipsToDelete)
+                    {
+                        IList<IRelationship> relList = entity.Relationships.Where(r => r.Name.Equals(relToDelete)).ToList();
+                        foreach(var rel in relList) entity.Relationships.Remove(rel);
+                        if (entity.RelationshipGroups.ContainsKey(relToDelete)) entity.RelationshipGroups.Remove(relToDelete);
                     }
                 }
             }

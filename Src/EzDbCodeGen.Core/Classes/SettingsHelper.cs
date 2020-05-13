@@ -160,7 +160,6 @@ namespace EzDbCodeGen.Core.Classes
 
                 throw;
             }
-            return false;
         }
     }
     internal static class DocumentExtensions
