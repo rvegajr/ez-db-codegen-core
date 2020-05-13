@@ -41,29 +41,6 @@ namespace EzDbCodeGen.Tests
         }
 
         [Fact]
-        public void MyConnectionTest()
-        {
-            try
-            {
-                var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=logicbyter.lan;Database=CPPE;user id=localsysadmin;password=localsysadmin");
-                var config = Configuration.FromFile(@"C:\Dev\PXD\cem-rest-api\PLEXEzDbCodeGen\EzDbCodeGen\CppeDb.WebApi.config.json");
-                //ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=WideWorldImportersDW;user id=User;password=Server@Database");
-                var database = template.LoadSchema(config);
-                var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
-                if (File.Exists(OutputPath)) File.Delete(OutputPath);
-                codeGenerator.ConfigurationFileName = @"C:\Dev\PXD\cem-rest-api\PLEXEzDbCodeGen\EzDbCodeGen\CppeDb.WebApi.config.json";
-                codeGenerator.ProcessTemplate((@"C:\Dev\PXD\cem-rest-api\PLEXEzDbCodeGen\EzDbCodeGen\Templates\Ef6ModelsTemplate.hbs").ResolvePathVars(), template, OutputPath);
-                Assert.True(true, string.Format("Template Rendered Output file {0} was not created", codeGenerator.OutputPath));
-            }
-            catch (Exception ex)
-            {
-                Assert.True(false, ex.Message);
-            }
-
-        }
-
-        [Fact]
         public void ArrayObjectPropertyAsStringTest()
         {
             try
