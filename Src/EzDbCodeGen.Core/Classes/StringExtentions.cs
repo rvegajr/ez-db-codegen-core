@@ -311,6 +311,7 @@ namespace EzDbCodeGen.Core.Extentions.Strings
         /// <returns></returns>
         public static string PathEnds(this string PathToMakeSureEndsWithSystemDirectorySeperator)
         {
+            if (PathToMakeSureEndsWithSystemDirectorySeperator == null) return null;
             return PathToMakeSureEndsWithSystemDirectorySeperator + ((!PathToMakeSureEndsWithSystemDirectorySeperator.EndsWith(Path.DirectorySeparatorChar.ToString())) ? Path.DirectorySeparatorChar.ToString() : "");
         }
         /// <summary>

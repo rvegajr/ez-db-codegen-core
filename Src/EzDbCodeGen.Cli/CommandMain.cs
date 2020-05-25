@@ -67,6 +67,14 @@ namespace EzDbCodeGen.Cli
                 "Option to ignore template file names (seperated by comma, wildcards are acceptable) for those runs where a path is sent through parm -t (or --template).",
                 CommandOptionType.SingleValue);
 
+            massRenameSourcePathOption = app.Option("-rsc|--mass-rename-source <path>",
+                "Calling this will override all other actions, this is the soruce path that the files will be read from.",
+                CommandOptionType.SingleValue);
+
+            massRenameTargetPathOption = app.Option("-rtg|--mass-rename-target <path>",
+                "Calling this will override all other actions, this is the target path that will contain the results of the rename.  This is not required and will default to %TEMP%/EzDbCodeGen/",
+                CommandOptionType.SingleValue);
+
             massRenameFromStringOption = app.Option("-rfr|--mass-rename-from <optionvalue>",
                 "Calling this will override all other actions and rename all strings in '-p' from the string passed through -rfr this string value -rto.  You can also pass a string that has the replace parms in the following format 'FromSTR1=ToStr1,FromSTR2=ToStr2'.  Be warned that this is a permanent change!",
                 CommandOptionType.SingleValue);
@@ -90,6 +98,7 @@ namespace EzDbCodeGen.Cli
                             if (!massRenameToStringOption.HasValue()) errors.Add(string.Format("Mass Rename Part String To parm of '-rto' missing and is required. "));
                         }
                         var path = pathNameOption.Value().Unquote().PathEnds() ?? "";
+                        if (massRenameSourcePathOption.HasValue()) path = massRenameSourcePathOption.Value().Unquote().PathEnds() ?? "";
                         if (!Directory.Exists(path)) errors.Add(string.Format("Path {0} does not exist. ", path));
                         returnCode = MassRenameTask(massRenameFromStringOption.Value().Unquote() ?? "", massRenameToStringOption?.Value()?.Unquote() ?? "", path);
                     }
@@ -126,12 +135,14 @@ namespace EzDbCodeGen.Cli
         public static ReturnCodes MassRenameTask(string FromString, string ToString, string Path)
         {
             Console.WriteLine(string.Format("Performing Mass Rename (file name and file contents) in path {0} from {1} to {2}....", Path, FromString, ToString));
-            string tempPath = System.IO.Path.GetTempPath() + "EzDbCodeGen" + System.IO.Path.DirectorySeparatorChar;
-            if (Directory.Exists(tempPath)) Directory.Delete(tempPath, true);
-            if (AppSettings.Instance.VerboseMessages) Console.WriteLine(string.Format("Creating Temporary Path at '{0}'", tempPath));
-            System.IO.Directory.CreateDirectory(tempPath);
-            Copy(Path, tempPath, FromString);
+            string targetPath = System.IO.Path.GetTempPath() + "EzDbCodeGen" + System.IO.Path.DirectorySeparatorChar;
+            if (massRenameTargetPathOption.HasValue()) targetPath = massRenameTargetPathOption.Value();
+            if (Directory.Exists(targetPath)) Directory.Delete(targetPath, true);
+            if (AppSettings.Instance.VerboseMessages) Console.WriteLine(string.Format("Creating Temporary Path at '{0}'", targetPath));
+            System.IO.Directory.CreateDirectory(targetPath);
+            Copy(Path, targetPath, FromString);
             Console.WriteLine(string.Format("Performing Mass Rename (file name and file contents) completed - Directory: {0}, Files: {1}", DirectoryCount, FileCount));
+            Console.WriteLine(string.Format(" - Files have been copied to {0}", targetPath));
             var returnCode = new ReturnCodes("MassRename", ReturnCode.Ok);
             return returnCode;
         }
@@ -253,6 +264,8 @@ namespace EzDbCodeGen.Cli
         private static CommandOption schemaNameOption { get; set; }
         private static CommandOption projectFileToModifyOption { get; set; }
         private static CommandOption templateFilterFileMasks { get; set; }
+        private static CommandOption massRenameSourcePathOption { get; set; }
+        private static CommandOption massRenameTargetPathOption { get; set; }
         private static CommandOption massRenameFromStringOption { get; set; }
         private static CommandOption massRenameToStringOption { get; set; }
 
