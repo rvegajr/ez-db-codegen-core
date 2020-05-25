@@ -436,6 +436,7 @@ namespace EzDbCodeGen.Core.Extentions.Strings
         /// <returns></returns>
         public static string Unquote(this string str)
         {
+            if (str == null) return null;
             var ret = str.Trim();
             if (ret.ToUpper().Equals("NULL")) return null;
             if ((str.StartsWith("\"")) && (str.EndsWith("\"")))
