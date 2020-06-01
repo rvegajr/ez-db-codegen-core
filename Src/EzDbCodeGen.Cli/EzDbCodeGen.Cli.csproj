@@ -1,8 +1,11 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-	<Version>1.2.18.0</Version>	
+	<Version>1.2.20.0</Version>	
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>EzDbCodeGenCli</ToolCommandName>
+    <PackageOutputPath>../../artifacts</PackageOutputPath>	
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.0.0" />

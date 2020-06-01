@@ -1,8 +1,9 @@
 #tool nuget:?package=vswhere
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
+#tool nuget:?package=Cake.Incubator&version=5.1.0
 
 var IncrementMinorVersion = true;
-var NuGetReleaseNotes = new [] {"Added Config parm in Input Template", "Added Option to Soft Disable an object as opposed to a delete"};
+var NuGetReleaseNotes = new [] {"Converted to dotnet global tool"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
 FilePath msBuildPathX64 = (vsLatest==null)
@@ -139,7 +140,7 @@ Task("NuGet-Pack")
         ProjectUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core"),
         //IconUrl                 = new Uri(""),
         LicenseUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core/blob/master/LICENSE"),
-        Copyright               = @"Noctusoft 2018-2019",
+        Copyright               = @"Noctusoft 2018-2020",
         ReleaseNotes            = NuGetReleaseNotes,
         Tags                    = new [] {"Code Generation", "Code Generator", "Database", "Schema" },
         RequireLicenseAcceptance= false,
