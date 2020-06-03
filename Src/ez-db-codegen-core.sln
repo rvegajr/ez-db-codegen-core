@@ -1,4 +1,4 @@
-Microsoft Visual Studio Solution File, Format Version 12.00
+﻿Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29001.49
 MinimumVisualStudioVersion = 10.0.40219.1
@@ -15,12 +15,16 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EzDbCodeGen.NuGet.TestTarget", "EzDbCodeGen.NuGet.TestTarget\EzDbCodeGen.NuGet.TestTarget.csproj", "{65BB9D33-EDDF-42A3-AF9C-8B61AEAD648E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "..\build\_build.csproj", "{1BA716EE-FCE2-4D6E-9100-784AF3B3075D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{1BA716EE-FCE2-4D6E-9100-784AF3B3075D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1BA716EE-FCE2-4D6E-9100-784AF3B3075D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4844B164-746F-4402-9CF0-092B560A818C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{4844B164-746F-4402-9CF0-092B560A818C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4844B164-746F-4402-9CF0-092B560A818C}.Release|Any CPU.ActiveCfg = Release|Any CPU
