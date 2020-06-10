@@ -7,11 +7,17 @@
     <NoWarn>CS0649;CS0169</NoWarn>
     <NukeRootDirectory>..</NukeRootDirectory>
     <NukeScriptDirectory>..</NukeScriptDirectory>
+
+    <!-- NUKE CONFIGURATION -->
+    <NukeVersion>0.24.11</NukeVersion>    
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Nuke.Common" Version="0.24.11" />
+    <PackageReference Include="Nuke.Common" Version="$(NukeVersion)" />
+    <PackageReference Include="Nuke.CodeGeneration" Version="$(NukeVersion)" />
     <PackageDownload Include="GitVersion.Tool" Version="[5.1.1]" />
+    <PackageReference Include="GitVersion.CommandLine" Version="5.3.5" />
+    <PackageReference Include="Nuke.WebDocu" Version="1.5.0" />
+    <PackageReference Include="Nuke.GitHub" Version="1.6.0" />
   </ItemGroup>
-
 </Project>

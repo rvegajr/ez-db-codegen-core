@@ -13,6 +13,17 @@ using static Nuke.Common.EnvironmentInfo;
 using static Nuke.Common.IO.FileSystemTasks;
 using static Nuke.Common.IO.PathConstruction;
 using static Nuke.Common.Tools.DotNet.DotNetTasks;
+using static Nuke.Common.ChangeLog.ChangelogTasks;
+using static Nuke.GitHub.GitHubTasks;
+using static Nuke.GitHub.ChangeLogExtensions;
+using Nuke.GitHub;
+using System.Collections;
+using System.IO;
+using System.Threading.Tasks;
+using System.Xml.Linq;
+using System.Xml.XPath;
+using static Nuke.CodeGeneration.CodeGenerator;
+
 
 [CheckBuildProjectConfigurations]
 [UnsetVisualStudioEnvironmentVariables]
@@ -24,17 +35,20 @@ class Build : NukeBuild
     ///   - Microsoft VisualStudio     https://nuke.build/visualstudio
     ///   - Microsoft VSCode           https://nuke.build/vscode
 
-    public static int Main () => Execute<Build>(x => x.Compile);
-
-    [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-    readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+    public static int Main () => Execute<Build>(x => x.Pack);
 
     [Solution] readonly Solution Solution;
     [GitRepository] readonly GitRepository GitRepository;
     [GitVersion] readonly GitVersion GitVersion;
 
-    AbsolutePath SourceDirectory => RootDirectory / "src";
+    [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
+    readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+    [Parameter] string NugetApiUrl = "https://api.nuget.org/v3/index.json";
+    //[Parameter] string NugetApiKey;
+
+    AbsolutePath SourceDirectory => RootDirectory / "Src";
     AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
+    AbsolutePath ChangeLogFile => RootDirectory / "CHANGELOG.md";
 
     Target Clean => _ => _
         .Before(Restore)
@@ -45,6 +59,7 @@ class Build : NukeBuild
         });
 
     Target Restore => _ => _
+        .Before(Compile)
         .Executes(() =>
         {
             DotNetRestore(s => s
@@ -64,4 +79,49 @@ class Build : NukeBuild
                 .EnableNoRestore());
         });
 
+    Target Pack => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+            int commitNum = 0;
+            string NuGetVersionCustom = GitVersion.NuGetVersionV2;
+
+            //if it's not a tagged release - append the commit number to the package version
+            //tagged commits on master have versions
+            // - v0.3.0-beta
+            //other commits have
+            // - v0.3.0-beta1
+            if (Int32.TryParse(GitVersion.CommitsSinceVersionSource, out commitNum))
+                NuGetVersionCustom = commitNum > 0 ? NuGetVersionCustom + $"{commitNum}" : NuGetVersionCustom;
+
+            var changeLog = GetCompleteChangeLog(ChangeLogFile)
+                .EscapeStringPropertyForMsBuild();
+            var firstChangeLog = changeLog.Split(new string[] {"##"},StringSplitOptions.None)[1]                .Split('-')[0]
+                .Trim();
+            Console.WriteLine(firstChangeLog);
+
+            DotNetPack(s => s
+               .SetProject(Solution.GetProject("EzDbCodeGen.Cli"))
+               .SetPackageId("EzDbCodeGenCli")
+               .SetConfiguration(Configuration)
+               .EnableNoBuild()
+               .EnableNoRestore()
+               .SetVersion(NuGetVersionCustom)
+               .SetNoDependencies(true)
+               .SetOutputDirectory(ArtifactsDirectory)
+               .SetPackageReleaseNotes(changeLog)
+            );
+
+            DotNetPack(s => s
+               .SetProject(Solution.GetProject("EzDbCodeGen.Core"))
+               .SetPackageId("EzDbCodeGen")
+               .SetConfiguration(Configuration)
+               .EnableNoBuild()
+               .EnableNoRestore()
+               .SetVersion(NuGetVersionCustom)
+               .SetNoDependencies(true)
+               .SetOutputDirectory(ArtifactsDirectory)
+               .SetPackageReleaseNotes(changeLog)
+            );
+        });
 }
