@@ -90,7 +90,7 @@ class Build : NukeBuild
             var dotnetPath = ToolPathResolver.GetPathExecutable("dotnet");
 
             StartProcess("GitVersion", " " +
-                            "/updateassemblyinfo ",
+                            "/updateprojectfiles ",
             workingDirectory: RootDirectory)
             // AssertWairForExit() instead of AssertZeroExitCode()
             // because we want to continue all tests even if some fail
@@ -115,10 +115,8 @@ class Build : NukeBuild
 
             var changeLog = GetCompleteChangeLog(ChangeLogFile)
                 .EscapeStringPropertyForMsBuild();
-            Console.WriteLine(changeLog);
             var firstChangeLog = changeLog.Split(new string[] {@"##%20["},StringSplitOptions.None)[1]
                 .Trim();
-            Console.WriteLine(firstChangeLog);
 
             DotNetPack(s => s
                .SetProject(Solution.GetProject("EzDbCodeGen.Cli"))

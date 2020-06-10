@@ -5,9 +5,9 @@
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
     <StartupObject />
-    <AssemblyVersion>1.2.25.0</AssemblyVersion>
-    <FileVersion>1.2.25.0</FileVersion>
-    <InformationalVersion>1.2.25-ci.1+Branch.master.Sha.3c31c59304e65c68c1ed15095332c7d65370e13c</InformationalVersion>
+    <AssemblyVersion>1.2.28.0</AssemblyVersion>
+    <FileVersion>1.2.28.0</FileVersion>
+    <InformationalVersion>1.2.28+Branch.master.Sha.82dea8013e96a86c90de5a442e28ea8553f13c31</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\MySchemaName.db.json" />
