@@ -37,26 +37,27 @@ class Build : NukeBuild
     ///   - Microsoft VisualStudio     https://nuke.build/visualstudio
     ///   - Microsoft VSCode           https://nuke.build/vscode
 
-    public static int Main () => Execute<Build>(x => x.Pack);
+    public static int Main () => Execute<Build>(x => x.Compile);
 
     [Solution] readonly Solution Solution;
     [GitRepository] readonly GitRepository GitRepository;
     [GitVersion] readonly GitVersion GitVersion;
 
     [Parameter("Configuration to build - Default is 'Debug' (local) or 'Release' (server)")]
-    readonly Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
+    Configuration Configuration = IsLocalBuild ? Configuration.Debug : Configuration.Release;
     [Parameter] string NugetApiUrl = "https://api.nuget.org/v3/index.json";
-    //[Parameter] string NugetApiKey;
+    [Parameter] string NugetApiKey = "NOTSET";
 
     AbsolutePath SourceDirectory => RootDirectory / "Src";
     AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
+    AbsolutePath NugetDirectory => ArtifactsDirectory / "nuget";    
     AbsolutePath ChangeLogFile => RootDirectory / "CHANGELOG.md";
-
     Target Clean => _ => _
         .Before(Restore)
         .Executes(() =>
         {
             SourceDirectory.GlobDirectories("**/bin", "**/obj").ForEach(DeleteDirectory);
+            DeleteFiles(RootDirectory, new string[] { ArtifactsDirectory+"/*.nupkg" });
             EnsureCleanDirectory(ArtifactsDirectory);
         });
 
@@ -90,7 +91,7 @@ class Build : NukeBuild
             var dotnetPath = ToolPathResolver.GetPathExecutable("dotnet");
 
             StartProcess("GitVersion", " " +
-                            "/updateassemblyinfo ",
+                            "/updateprojectfiles ",
             workingDirectory: RootDirectory)
             // AssertWairForExit() instead of AssertZeroExitCode()
             // because we want to continue all tests even if some fail
@@ -115,10 +116,8 @@ class Build : NukeBuild
 
             var changeLog = GetCompleteChangeLog(ChangeLogFile)
                 .EscapeStringPropertyForMsBuild();
-            Console.WriteLine(changeLog);
             var firstChangeLog = changeLog.Split(new string[] {@"##%20["},StringSplitOptions.None)[1]
                 .Trim();
-            Console.WriteLine(firstChangeLog);
 
             DotNetPack(s => s
                .SetProject(Solution.GetProject("EzDbCodeGen.Cli"))
@@ -144,4 +143,64 @@ class Build : NukeBuild
                .SetPackageReleaseNotes(changeLog)
             );
         });
+
+        Target Push => _ => _
+            //.DependsOn(Pack)
+            .Requires(() => NugetApiUrl)
+            .Requires(() => NugetApiKey)
+            .Requires(() => Configuration.Equals(Configuration.Release))
+            .Executes(() =>
+            {
+                GlobFiles(ArtifactsDirectory, "*.nupkg")
+                    .NotEmpty()
+                    .Where(x => !x.EndsWith("symbols.nupkg"))
+                    .ForEach(x =>
+                    {
+                        DotNetNuGetPush(s => s
+                            .SetTargetPath(x)
+                            .SetSource(NugetApiUrl)
+                            .SetApiKey(NugetApiKey)
+                        );
+                    });
+            });     
+
+    private void DeleteDirectories(string directory, string[] globPatterns, string[] ignoreList = null)
+    {
+        if (ignoreList == null)
+        {
+            ignoreList = new string[0];
+        }
+
+        var toDelete = GlobDirectories(directory, globPatterns);
+        toDelete.ForEach(_ =>
+        {
+            if (ignoreList.Any(_.Contains))
+            {
+                Console.WriteLine($"DeleteDirectories: Ignoring '{_}' directory...");
+                return;
+            }
+
+            DeleteDirectory(_);
+        });
+    }   
+    
+    private void DeleteFiles(string directory, string[] globPatterns, string[] ignoreList = null)
+    {
+        if (ignoreList == null)
+        {
+            ignoreList = new string[0];
+        }
+
+        var toDelete = GlobFiles(directory, globPatterns);
+        toDelete.ForEach(_ =>
+        {
+            if (ignoreList.Any(_.Contains))
+            {
+                Console.WriteLine($"DeleteFiles: Ignoring '{_}' file...");
+                return;
+            }
+
+            DeleteFile(_);
+        });
+    }                
 }
