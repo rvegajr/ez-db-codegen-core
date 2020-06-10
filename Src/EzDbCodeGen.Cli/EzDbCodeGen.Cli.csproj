@@ -1,11 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
-	<PackAsTool>true</PackAsTool>
-    <ToolCommandName>EzDbCodeGenCli</ToolCommandName>	
-	<PackageOutputPath>./nupkg</PackageOutputPath>	
-	<Version>1.2.23.0</Version>	
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>EzDbCodeGenCli</ToolCommandName>
+    <PackageOutputPath>./nupkg</PackageOutputPath>
+    <AssemblyVersion>1.2.25.0</AssemblyVersion>
+    <FileVersion>1.2.25.0</FileVersion>
+    <InformationalVersion>1.2.25-ci.1+Branch.master.Sha.3c31c59304e65c68c1ed15095332c7d65370e13c</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.0.0" />

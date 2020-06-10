@@ -16,6 +16,7 @@ using static Nuke.Common.Tools.DotNet.DotNetTasks;
 using static Nuke.Common.ChangeLog.ChangelogTasks;
 using static Nuke.GitHub.GitHubTasks;
 using static Nuke.GitHub.ChangeLogExtensions;
+using static Nuke.Common.Tooling.ProcessTasks;
 using Nuke.GitHub;
 using System.Collections;
 using System.IO;
@@ -23,6 +24,7 @@ using System.Threading.Tasks;
 using System.Xml.Linq;
 using System.Xml.XPath;
 using static Nuke.CodeGeneration.CodeGenerator;
+using static Nuke.Common.Tooling.ToolSettingsExtensions;
 
 
 [CheckBuildProjectConfigurations]
@@ -76,15 +78,32 @@ class Build : NukeBuild
                 .SetAssemblyVersion(GitVersion.AssemblySemVer)
                 .SetFileVersion(GitVersion.AssemblySemFileVer)
                 .SetInformationalVersion(GitVersion.InformationalVersion)
-                .EnableNoRestore());
+                .EnableNoRestore()
+                );
+        });
+
+   Target GitVersionTagUpdate => _ => _
+        .DependsOn(Compile)
+        .Executes(() =>
+        {
+
+            var dotnetPath = ToolPathResolver.GetPathExecutable("dotnet");
+
+            StartProcess("GitVersion", " " +
+                            "/updateassemblyinfo ",
+            workingDirectory: RootDirectory)
+            // AssertWairForExit() instead of AssertZeroExitCode()
+            // because we want to continue all tests even if some fail
+            .AssertWaitForExit();
         });
 
     Target Pack => _ => _
-        .DependsOn(Compile)
+        .DependsOn(GitVersionTagUpdate)
         .Executes(() =>
         {
             int commitNum = 0;
             string NuGetVersionCustom = GitVersion.NuGetVersionV2;
+            Console.WriteLine(string.Format("Commits Since Version Source: {0}", GitVersion.CommitsSinceVersionSource));
 
             //if it's not a tagged release - append the commit number to the package version
             //tagged commits on master have versions
@@ -96,7 +115,8 @@ class Build : NukeBuild
 
             var changeLog = GetCompleteChangeLog(ChangeLogFile)
                 .EscapeStringPropertyForMsBuild();
-            var firstChangeLog = changeLog.Split(new string[] {"##"},StringSplitOptions.None)[1]                .Split('-')[0]
+            Console.WriteLine(changeLog);
+            var firstChangeLog = changeLog.Split(new string[] {@"##%20["},StringSplitOptions.None)[1]
                 .Trim();
             Console.WriteLine(firstChangeLog);
 
