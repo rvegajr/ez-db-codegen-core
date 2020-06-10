@@ -316,7 +316,6 @@ namespace EzDbCodeGen.Core
                             /* New work based on using EF docs to figure out fk attributes - https://www.entityframeworktutorial.net/code-first/foreignkey-dataannotations-attribute-in-code-first.aspx
                              * Specifically - [ForeignKey] on the navigation property in the dependent entity */
                             var fkList = new List<string>();
-                            var FKAttribute = "";
                             var WriteFKAttribute = false;
                             var IsRequired = false;
                             var AttributeText = new StringBuilder();
