@@ -14,17 +14,22 @@ services: mssql2017
 nuget:
   account_feed: true
   project_feed: true
+before_build:
+  - ps: gitversion /l console /output buildserver
+  - cmd: gitversion /updateprojectfiles 
+build:
+  verbosity: detailed
 build_script:
-- ps: ./build.ps1
+  - ps: ./build.ps1
 test: off
 deploy_script:
-- ps: ./build.ps1 Pack
-- ps: ./build.ps1 Push --NugetApiUrl "https://www.myget.org/F/noctusoft/api/v2/package" --NugetApiKey $env:MyGetApiKey
+  - ps: ./build.ps1 Pack
+  - ps: ./build.ps1 Push --NugetApiUrl "https://www.myget.org/F/noctusoft/api/v2/package" --NugetApiKey $env:MyGetApiKey
 notifications:
-- provider: Email
-  to:
-  - rvegajr@noctsuft.com
-  subject: Ez Db Code Gen has been successfully deployed
-  on_build_success: true
-  on_build_failure: true
-  on_build_status_changed: false
+  - provider: Email
+    to:
+    - rvegajr@noctsuft.com
+    subject: Ez Db Code Gen has been successfully deployed
+    on_build_success: true
+    on_build_failure: true
+    on_build_status_changed: false
