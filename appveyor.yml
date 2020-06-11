@@ -16,7 +16,8 @@ nuget:
   project_feed: true
 before_build:
   - ps: gitversion /l console /output buildserver
-  - cmd: gitversion /updateprojectfiles 
+  - cmd: GitVersion help 
+  - cmd: GitVersion /updateprojectfiles 
 build:
   verbosity: detailed
 build_script:
