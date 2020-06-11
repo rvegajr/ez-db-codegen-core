@@ -25,6 +25,7 @@ using System.Xml.Linq;
 using System.Xml.XPath;
 using static Nuke.CodeGeneration.CodeGenerator;
 using static Nuke.Common.Tooling.ToolSettingsExtensions;
+using static Nuke.Common.Tools.GitVersion.GitVersionSettingsExtensions;
 
 
 [CheckBuildProjectConfigurations]
@@ -87,15 +88,16 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-
-            var dotnetPath = ToolPathResolver.GetPathExecutable("dotnet");
-
-            StartProcess("GitVersion", " " +
-                            "/updateprojectfiles ",
-            workingDirectory: RootDirectory)
-            // AssertWairForExit() instead of AssertZeroExitCode()
-            // because we want to continue all tests even if some fail
-            .AssertWaitForExit();
+            if (!IsLocalBuild) {
+                Console.WriteLine("Server Run will ignore GitVersion Tag Update Step");
+            } else {
+                StartProcess("GitVersion", " " +
+                                "/updateprojectfiles ",
+                workingDirectory: RootDirectory)
+                // AssertWairForExit() instead of AssertZeroExitCode()
+                // because we want to continue all tests even if some fail
+                .AssertWaitForExit();
+            }
         });
 
     Target Pack => _ => _
