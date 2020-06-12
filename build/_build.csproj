@@ -13,6 +13,7 @@
     <InformationalVersion>1.4.0--feature-UpdatedBuildAvoidServerGitVersion.2+Branch.-feature-UpdatedBuildAvoidServerGitVersion.Sha.1daefe139a521231fb4cfd64d5407a41dd50f556</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
     <PackageReference Include="Nuke.Common" Version="$(NukeVersion)" />
     <PackageReference Include="Nuke.CodeGeneration" Version="$(NukeVersion)" />
     <PackageDownload Include="GitVersion.Tool" Version="[5.1.1]" />
