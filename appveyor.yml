@@ -5,6 +5,21 @@ branches:
   only:
   - master
   - develop
+assembly_info:
+  patch: true
+  file: '**\AssemblyInfo.*'
+  assembly_version: '{version}'
+  assembly_file_version: '{version}'
+  assembly_informational_version: '{version}'
+dotnet_csproj:
+  patch: true
+  file: '**\*.csproj'
+  version: '{version}'
+  version_prefix: '{version}'
+  package_version: '{version}'
+  assembly_version: '{version}'
+  file_version: '{version}'
+  informational_version: '{version}'  
 environment:
   MyGetApiKey:
     secure: kDoo1IiHXI3ui641kE3luA3a2uic12F2AeHTOoOzs93zdcIn3A9fsYg3ka31nwnO
