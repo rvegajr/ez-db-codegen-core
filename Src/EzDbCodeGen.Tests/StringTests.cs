@@ -16,8 +16,6 @@ namespace EzDbCodeGen.Tests
             this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
         }
 
-
-
         internal void CaseTestPluralize(string singular, string plural)
         {
             Assert.True(singular.ToPlural().Equals(plural), string.Format("{0} plural should be {1}, it was {2}", singular, plural, singular.ToPlural()));

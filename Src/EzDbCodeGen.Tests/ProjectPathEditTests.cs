@@ -9,12 +9,13 @@ using EzDbCodeGen.Core.Classes;
 
 namespace EzDbCodeGen.Tests
 {
-    public class ProjectPathEditTests
+    public class ProjectPathEditTests : IClassFixture<DatabaseFixture>
     {
-        readonly string OldFormatProjectFileName = @"Json.Comparer.Tests.csprojsample";
-        readonly string NewFormatProjectFileName = @"Json.Comparer.csprojsample";
-        public ProjectPathEditTests()
+        string SchemaFileName = "";
+        DatabaseFixture fixture;
+        public ProjectPathEditTests(DatabaseFixture fixture)
         {
+            this.fixture = fixture;
             var TempPath = Path.GetTempPath();
             var OldFormatProjectFileNameOriginal = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + OldFormatProjectFileName).ResolvePathVars();
             var NewFormatProjectFileNameOriginal = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + NewFormatProjectFileName).ResolvePathVars();
@@ -28,22 +29,8 @@ namespace EzDbCodeGen.Tests
             File.Copy(NewFormatProjectFileNameOriginal, this.NewFormatProjectFileName);
         }
 
-        [Fact]
-        public void PathOffsetTests()
-        {
-            var projectPath = @"C:\Users\Ricardo Vega\Documents\GitHub\ez-db-codegen-core\Src\EzDbCodeGen.Cli\EzDbCodeGen.Cli.csproj";
-            Uri address1 = new Uri(projectPath);
-            Uri address2 = new Uri(@"C:\Users\Ricardo Vega\Documents\GitHub\ez-db-codegen-core\Src\EzDbCodeGen.Cli\Templates\");
-            var ret = (new Uri(@"C:\Users\Ricardo Vega\Documents\GitHub\ez-db-codegen-core\Src\EzDbCodeGen.Cli\EzDbCodeGen.Cli.csproj"))
-                .MakeRelativeUri(new Uri(@"C:\Users\Ricardo Vega\Documents\GitHub\ez-db-codegen-core\Src\EzDbCodeGen.Cli\Templates"))
-                .ToString()
-                .Replace('/', Path.DirectorySeparatorChar);
-            Assert.True(ret.Equals("C:\\Users\\Ricardo Vega\\AppData\\Local\\Temp\\..\\..\\"), string.Format("Directory of {0} was not expected", ret));
-
-            var str = @"C:\Users\Ricardo Vega\AppData\";
-            var ret2 = (str.PathEnds() + address2.MakeRelativeUri(address1).ToString().Replace('/', Path.DirectorySeparatorChar));
-            Assert.True(ret2.Equals("C:\\Users\\Ricardo Vega\\AppData\\Local\\Temp\\..\\..\\"), string.Format("Directory of {0} was not expected", ret2));
-        }
+        readonly string OldFormatProjectFileName = @"Json.Comparer.Tests.csprojsample";
+        readonly string NewFormatProjectFileName = @"Json.Comparer.csprojsample";
 
         [Fact]
         public void ChangeIncludedFilesTests()
@@ -60,8 +47,8 @@ namespace EzDbCodeGen.Tests
 
             var retDA3 = par.ModifyClassPath(this.OldFormatProjectFileName, @"TestObjects\SimpleObjectWithExtraProperty.cs");
             var newtext3 = File.ReadAllText(this.OldFormatProjectFileName);
-            Assert.True(newtext3.Contains(@"TestObjects\SimpleObjectWithExtraProperty.cs"), "Class name is not present");
-            Assert.False(retDA3, "Changes to the file should not have been made");
+            Assert.True(newtext3.Contains(@"TestObjects\SimpleObjectWithExtraProperty.cs"), "Class name SimpleObjectWithExtraProperty is not present");
+            Assert.True(retDA3, "Changes to the file should have been made");
 
             var retDA4 = par.ModifyClassPath(this.OldFormatProjectFileName, @"TestObjects\SimpleObjectWithExtraPropertyADDED.cs");
             var newtext4 = File.ReadAllText(this.OldFormatProjectFileName);

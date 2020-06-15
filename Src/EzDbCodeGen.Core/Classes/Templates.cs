@@ -227,6 +227,7 @@ namespace EzDbCodeGen.Core
         public string UserId { get; set; } = "";
         /// <summary></summary>
         public string Password { get; set; } = "";
+        public bool IsTrustedConnection { get; set; } = false;
 
         /// <summary>Rneder the connection string.  the Default format will be MSSQL</summary>
         public string AsConnectionString()
@@ -239,7 +240,10 @@ namespace EzDbCodeGen.Core
             switch (db)
             {
                 case DB_MSSQL:
-                    return string.Format("Server={0};Database={1};user id={2};password={3}", Server, Database, UserId, Password);
+                    if (IsTrustedConnection)
+                        return string.Format("Server={0};Database={1};Trusted_Connection=True;", Server, Database, UserId, Password);
+                    else
+                        return string.Format("Server={0};Database={1};user id={2};password={3}", Server, Database, UserId, Password);
                 case DB_ORACLE:
                     return string.Format("User Id={0};Password={1};Data Source={2};", UserId, Password, Server);
                 default:
@@ -260,6 +264,7 @@ namespace EzDbCodeGen.Core
                 this.Database = GetDatabaseName(connectionString);
                 this.UserId = GetUsername(connectionString);
                 this.Password = GetPassword(connectionString);
+                this.IsTrustedConnection = GetTrustedConnection(connectionString);
                 return true;
             }
             catch (Exception)
@@ -273,6 +278,7 @@ namespace EzDbCodeGen.Core
         private static readonly string[] databaseAliases = { "database", "initial catalog" };
         private static readonly string[] usernameAliases = { "user id", "uid", "username", "user name", "user" };
         private static readonly string[] passwordAliases = { "password", "pwd" };
+        private static readonly string[] trustedConnnectionAliases = { "Trusted_Connection", "Integrated Security" };
 
         private static string GetPassword(string connectionString)
         {
@@ -292,6 +298,12 @@ namespace EzDbCodeGen.Core
         private static string GetServerName(string connectionString)
         {
             return GetValue(connectionString, serverAliases);
+        }
+
+        private static bool GetTrustedConnection(string connectionString)
+        {
+            var val = GetValue(connectionString, trustedConnnectionAliases).ToUpper();
+            return (val == "TRUE") || ((val == "SSPI"));
         }
 
         private static string GetValue(string connectionString, params string[] keyAliases)

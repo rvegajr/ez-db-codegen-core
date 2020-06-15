@@ -7,11 +7,13 @@ using EzDbCodeGen.Core.Config;
 
 namespace EzDbCodeGen.Tests
 {
-    public class TemplateRenderTests 
+    public class TemplateRenderTests : IClassFixture<DatabaseFixture>
     {
         readonly string SchemaFileName = "";
-        public TemplateRenderTests()
+        DatabaseFixture fixture;
+        public TemplateRenderTests(DatabaseFixture fixture)
         {
+            this.fixture = fixture;
             this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
         }
 
@@ -40,7 +42,7 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=Northwind;user id=sa;password=sa");
+                ITemplateInput template = new TemplateInputDatabaseConnecton(fixture.ConnectionString);
                 var database = template.LoadSchema(Configuration.FromFile(@"C:\Temp\ezdbcodegen.config.json"));
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
@@ -59,7 +61,7 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
+                ITemplateInput template = new TemplateInputDatabaseConnecton(fixture.ConnectionString);
                 var database = template.LoadSchema(Configuration.FromFile(@"C:\Temp\ezdbcodegen.config.json"));
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);

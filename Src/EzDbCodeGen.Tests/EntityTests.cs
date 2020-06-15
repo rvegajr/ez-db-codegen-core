@@ -8,16 +8,27 @@ using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbCodeGen.Core.Compare;
 namespace EzDbCodeGen.Tests
 {
-    public class EntityTests 
+    public class EntityTests  : IClassFixture<DatabaseFixture>
     {
         string SchemaFileName = "";
-        public EntityTests()
+        DatabaseFixture fixture;
+        public EntityTests(DatabaseFixture fixture)
         {
+            this.fixture = fixture;
             this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
         }
+
+        [Fact]
+        public void ServerConnectionTest()
+        {
+            Console.WriteLine(string.Format("Database to connect to {0}", fixture.ServerName()));
+            Assert.True(fixture.ServerName()!="Unknown", "Database should not be 'Unknown'");
+        }
+
         [Fact]
         public void ConfigDb()
         {
+
 			ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
 			var database = template.LoadSchema(Internal.AppSettings.Instance.Configuration);
         }
