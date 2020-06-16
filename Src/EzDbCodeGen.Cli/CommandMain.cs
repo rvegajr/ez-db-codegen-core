@@ -151,11 +151,10 @@ namespace EzDbCodeGen.Cli
                         if (compareToSchemaFileNameOption.HasValue()) Console.WriteLine(pfx + "Compare To Schema File Name: " + compareToSchemaFileNameOption.Value());
                         if ((!compareToSchemaFileNameOption.HasValue()) && (compareToConnectionStringOption.HasValue())) Console.WriteLine(pfx + "Compare To Connection String: " + compareToConnectionStringOption.Value());
                     }
-                    var CodeGen = new CodeGenerator
+                    var CodeGen = new CodeGenerator(AppSettings.Instance.ConfigurationFileName)
                     {
                         SchemaName = schemaName,
                         VerboseMessages = AppSettings.Instance.VerboseMessages,
-                        ConfigurationFileName = AppSettings.Instance.ConfigurationFileName,
                         ProjectPath = ((projectFileToModifyOption.HasValue()) ? projectFileToModifyOption.Value() : ""),
                         TemplateFileNameFilter = ((templateFilterFileMasks.HasValue()) ? templateFilterFileMasks.Value() : "")
                     };

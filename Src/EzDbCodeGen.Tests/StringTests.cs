@@ -16,8 +16,6 @@ namespace EzDbCodeGen.Tests
             this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
         }
 
-
-
         internal void CaseTestPluralize(string singular, string plural)
         {
             Assert.True(singular.ToPlural().Equals(plural), string.Format("{0} plural should be {1}, it was {2}", singular, plural, singular.ToPlural()));
@@ -113,12 +111,12 @@ Rest of the code
         public void WlldCardSearchTest()
         {
             var db1 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Internal.AppSettings.Instance.Configuration);
-            var lst = db1.FindEntities("Integration.Trans*");
-            Assert.True(lst.Count==2, "Should be 2 entities that match the pattern 'Integration.Trans*'");
-            var lst2 = db1.FindEntities("Dimension.*");
-            Assert.True(lst2.Count == 8, "Should be 8 entities that match the pattern 'Dimension.*'");
-            var lst3 = db1.FindEntities("*Stock*");
-            Assert.True(lst3.Count == 4, "Should be 4 entities that match the pattern '*Stock*'");
+            var lst = db1.FindEntities("SalesLT.Product*");
+            Assert.True(lst.Count==5, "Should be 5 entities that match the pattern 'SalesLT.Product*'");
+            var lst2 = db1.FindEntities("SalesLT.*");
+            Assert.True(lst2.Count == 13, "Should be 13 entities that match the pattern 'SalesLT.*'");
+            var lst3 = db1.FindEntities("*Product*");
+            Assert.True(lst3.Count == 7, "Should be 7 entities that match the pattern '*Product*'");
         }
 
     }

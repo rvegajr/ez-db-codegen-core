@@ -10,9 +10,13 @@
     <InformationalVersion>1.4.0--feature-UpdatedBuildAvoidServerGitVersion.2+Branch.-feature-UpdatedBuildAvoidServerGitVersion.Sha.1daefe139a521231fb4cfd64d5407a41dd50f556</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Resources\AdventureWorksLT2008.bak" />
     <None Remove="Resources\MySchemaName.db.json" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\AdventureWorksLT2008.bak">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\MySchemaName.db.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
