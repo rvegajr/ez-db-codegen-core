@@ -25,7 +25,7 @@ namespace EzDbCodeGen.Tests
         {
             try
             {
-                var codeGenerator = new CodeGenerator();
+                var codeGenerator = new CodeGenerator(Internal.AppSettings.Instance.ConfigurationFileName);
                 ITemplateInput template = new TemplateInputDatabaseConnecton(fixture.ConnectionString);
                 var database = template.LoadSchema(Internal.AppSettings.Instance.Configuration);
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
@@ -47,7 +47,7 @@ namespace EzDbCodeGen.Tests
         {
             try
             {
-                var codeGenerator = new CodeGenerator();
+                var codeGenerator = new CodeGenerator(Internal.AppSettings.Instance.ConfigurationFileName);
                 ITemplateInput template = new TemplateInputDatabaseConnecton(fixture.ConnectionString);
                 //ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=WideWorldImportersDW;user id=User;password=Server@Database");
                 var database = template.LoadSchema(Internal.AppSettings.Instance.Configuration);

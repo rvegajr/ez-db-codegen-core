@@ -154,7 +154,7 @@ namespace EzDbCodeGen.Core
         {
             try
             { 
-                this.Schema = (IDatabase)JsonConvert.DeserializeObject<Config.Database>(File.ReadAllText(DatabaseSchemaDumpFileName),
+                this.Schema = (IDatabase)JsonConvert.DeserializeObject<EzDbSchema.MsSql.Database>(File.ReadAllText(DatabaseSchemaDumpFileName),
                     new JsonSerializerSettings {
                         PreserveReferencesHandling = PreserveReferencesHandling.All,
                         TypeNameHandling = TypeNameHandling.All

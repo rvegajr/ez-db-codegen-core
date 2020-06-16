@@ -22,8 +22,12 @@ namespace EzDbCodeGen.Tests
         stop
     }
     //https://www.dotnetcurry.com/visualstudio/1456/integration-testing-sqllocaldb Thanks! <3 
+    //https://docs.microsoft.com/en-us/ef/core/miscellaneous/testing/sharing-databases
     public class DatabaseFixture : IDisposable
     {
+        private static readonly object _lock = new object();
+        private static bool _databaseInitialized;
+
         public string LOCAL_SERVER = "logicbyter.lan";
         public string CI_SERVER = @"localhost\SQL2019";
         public string LOCAL_CONNECTION_STRING = @"";
@@ -136,17 +140,22 @@ namespace EzDbCodeGen.Tests
 
         public bool EnsureDatabaseExists()
         {
-            LocalDbActionExec(LocalDBAction.create);
-            var database = "AdventureWorksLT2008";
-            string filePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar + "Resources" + Path.DirectorySeparatorChar;
-            string bakFile = filePath + database + ".bak";
-            if (!File.Exists(bakFile)) throw new Exception(string.Format("Backup File {0} does not exist.", bakFile));
-            try
+
+            lock (_lock)
             {
-                //WriteLine("Attempting to connect to {0}", connectionString);
-                using (var cn = new SqlConnection(ConnectionString + ""))
+                if (!_databaseInitialized)
                 {
-                    var SQL = string.Format(@"
+                    LocalDbActionExec(LocalDBAction.create);
+                    var database = "AdventureWorksLT2008";
+                    string filePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar + "Resources" + Path.DirectorySeparatorChar;
+                    string bakFile = filePath + database + ".bak";
+                    if (!File.Exists(bakFile)) throw new Exception(string.Format("Backup File {0} does not exist.", bakFile));
+                    try
+                    {
+                        //WriteLine("Attempting to connect to {0}", connectionString);
+                        using (var cn = new SqlConnection(ConnectionString + ""))
+                        {
+                            var SQL = string.Format(@"
 DECLARE @dbname nvarchar(128);
 SET @dbname = N'{0}';
 
@@ -162,25 +171,30 @@ MOVE N'{0}_Log' TO N'{2}{0}_log.ldf',
 NOUNLOAD, REPLACE, STATS = 5;
 ", database, bakFile, filePath);
 
-                    WriteLine(string.Format("Restoring the database {0} from backup {1}", database, bakFile, filePath));
-                    var cmd = cn.CreateCommand();
-                    cn.InfoMessage += delegate (object sender, SqlInfoMessageEventArgs args)
+                            WriteLine(string.Format("Restoring the database {0} from backup {1}", database, bakFile, filePath));
+                            var cmd = cn.CreateCommand();
+                            cn.InfoMessage += delegate (object sender, SqlInfoMessageEventArgs args)
+                            {
+                                WriteLine(string.Format("{0}", args.Message));
+                                return;
+                            };
+                            cn.FireInfoMessageEventOnUserErrors = true;
+                            cmd.CommandText = SQL;
+                            cmd.CommandTimeout = 1800;
+                            cn.Open();
+                            cmd.ExecuteNonQuery();
+                            WriteLine(string.Format("Database restored!", database, bakFile));
+                            connectionString = connectionString.Replace("master", database);
+                        }
+                    }
+                    catch (Exception ex)
                     {
-                        WriteLine(string.Format("{0}", args.Message));
-                        return;
-                    };
-                    cn.FireInfoMessageEventOnUserErrors = true;
-                    cmd.CommandText = SQL;
-                    cmd.CommandTimeout = 1800;
-                    cn.Open();
-                    cmd.ExecuteNonQuery();
-                    WriteLine(string.Format("Database restored!", database, bakFile));
-                    connectionString = connectionString.Replace("master", database);
+                        WriteLine(string.Format("Failure: {0}", ex.Message));
+                    }
+
+                    _databaseInitialized = true;
+                    return true;
                 }
-            }
-            catch (Exception ex)
-            {
-                WriteLine(string.Format("Failure: {0}", ex.Message));
             }
             return true;
         }
