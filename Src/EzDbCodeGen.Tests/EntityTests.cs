@@ -8,7 +8,8 @@ using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbCodeGen.Core.Compare;
 namespace EzDbCodeGen.Tests
 {
-    public class EntityTests  : IClassFixture<DatabaseFixture>
+    [Collection("DatabaseTest")]
+    public class EntityTests
     {
         string SchemaFileName = "";
         DatabaseFixture fixture;

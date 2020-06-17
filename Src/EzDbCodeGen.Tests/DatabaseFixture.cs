@@ -12,6 +12,7 @@ using System.IO;
 using System.Globalization;
 using System.Diagnostics;
 using System.ComponentModel.DataAnnotations;
+using Xunit;
 
 namespace EzDbCodeGen.Tests
 {
@@ -130,9 +131,9 @@ namespace EzDbCodeGen.Tests
 
             var _exitCode = _process.ExitCode;
 
-            WriteLine("output>>" + (String.IsNullOrEmpty(_output) ? "(none)" : _output));
-            WriteLine("error>>" + (String.IsNullOrEmpty(_error) ? "(none)" : _error));
-            WriteLine("ExitCode: " + _exitCode.ToString());
+            WriteLine("output>>" + (String.IsNullOrEmpty(_output) ? "(none)" : _output).Trim());
+            WriteLine("error>>" + (String.IsNullOrEmpty(_error) ? "(none)" : _error).Trim());
+            WriteLine("ExitCode: " + _exitCode.ToString().Trim());
             connectionString = @"Data Source=(localdb)\localtestdb; Database=master; Trusted_Connection=True; MultipleActiveResultSets=true;";
             _process.Close();
         }
@@ -226,5 +227,13 @@ NOUNLOAD, REPLACE, STATS = 5;
             return serverName ?? "Unknown";
         }
 
+    }
+
+    [CollectionDefinition("DatabaseTest")]
+    public class DatabaseCollection : ICollectionFixture<DatabaseFixture>
+    {
+        // This class has no code, and is never created. Its purpose is simply
+        // to be the place to apply [CollectionDefinition] and all the
+        // ICollectionFixture<> interfaces.
     }
 }
