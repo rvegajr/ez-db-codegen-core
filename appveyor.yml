@@ -1,8 +1,6 @@
 ﻿version: 1.0.{build}
 pull_requests:
   do_not_increment_build_number: true
-init:
-  - net start MSSQL$SQL2019
 branches:
   only:
   - master
@@ -36,9 +34,7 @@ build:
   verbosity: detailed
 build_script:
   - ps: ./build.ps1
-test: off
 deploy_script:
-  - ps: ./build.ps1 Pack
   - ps: ./build.ps1 Push --NugetApiUrl "https://www.myget.org/F/noctusoft/api/v2/package" --NugetApiKey $env:MyGetApiKey
 notifications:
   - provider: Email
