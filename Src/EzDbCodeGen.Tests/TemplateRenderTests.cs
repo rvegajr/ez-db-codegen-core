@@ -7,7 +7,8 @@ using EzDbCodeGen.Core.Config;
 
 namespace EzDbCodeGen.Tests
 {
-    public class TemplateRenderTests : IClassFixture<DatabaseFixture>
+    [Collection("DatabaseTest")]
+    public class TemplateRenderTests
     {
         readonly string SchemaFileName = "";
         DatabaseFixture fixture;

@@ -9,9 +9,9 @@ using EzDbCodeGen.Core.Classes;
 
 namespace EzDbCodeGen.Tests
 {
-    public class ProjectPathEditTests : IClassFixture<DatabaseFixture>
+    [Collection("DatabaseTest")]
+    public class ProjectPathEditTests
     {
-        string SchemaFileName = "";
         DatabaseFixture fixture;
         public ProjectPathEditTests(DatabaseFixture fixture)
         {

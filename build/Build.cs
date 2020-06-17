@@ -26,7 +26,7 @@ using System.Xml.XPath;
 using static Nuke.CodeGeneration.CodeGenerator;
 using static Nuke.Common.Tooling.ToolSettingsExtensions;
 using static Nuke.Common.Tools.GitVersion.GitVersionSettingsExtensions;
-
+using Nuke.Common.Utilities;
 
 [CheckBuildProjectConfigurations]
 [UnsetVisualStudioEnvironmentVariables]
@@ -53,6 +53,7 @@ class Build : NukeBuild
     AbsolutePath ArtifactsDirectory => RootDirectory / "artifacts";
     AbsolutePath NugetDirectory => ArtifactsDirectory / "nuget";    
     AbsolutePath ChangeLogFile => RootDirectory / "CHANGELOG.md";
+    AbsolutePath NugetConfigFile => RootDirectory / "nuget.config.xml";
     Target Clean => _ => _
         .Before(Restore)
         .Executes(() =>
@@ -67,7 +68,9 @@ class Build : NukeBuild
         .Executes(() =>
         {
             DotNetRestore(s => s
-                .SetProjectFile(Solution));
+                .SetProjectFile(Solution)
+                .SetConfigFile(NugetConfigFile)
+            );
         });
 
     Target Compile => _ => _
@@ -84,8 +87,41 @@ class Build : NukeBuild
                 );
         });
 
-   Target GitVersionTagUpdate => _ => _
+
+    Target Test => _ => _
         .DependsOn(Compile)
+        .Executes(() =>
+        {
+            if (!IsLocalBuild)
+            {
+                Console.WriteLine("Server Run will ignore Test build step as there will be a task that is set up for this");
+            }
+            else
+            {
+                var testProjects = GlobFiles(SourceDirectory, "*.sln");
+                var testRun = 1;
+                foreach (var testProject in testProjects)
+                {
+                    var projectDirectory = Path.GetDirectoryName(testProject);
+                    Console.WriteLine("projectDirectory=" + projectDirectory);
+                    string testFile = ArtifactsDirectory / $"test_{testRun++}.testresults";
+                    // This is so that the global dotnet is used instead of the one that comes with NUKE
+                    var dotnetPath = ToolPathResolver.GetPathExecutable("dotnet");
+
+                    StartProcess(dotnetPath, @"test """ + testProject + @"""" +
+                                             @" --no-build -v n --collect ""Code Coverage""",
+                            workingDirectory: projectDirectory)
+                        // AssertWairForExit() instead of AssertZeroExitCode()
+                        // because we want to continue all tests even if some fail
+                        .AssertWaitForExit();
+                }
+
+                //PrependFrameworkToTestresults();
+            }
+        });
+
+    Target GitVersionTagUpdate => _ => _
+        .DependsOn(Test)
         .Executes(() =>
         {
             if (!IsLocalBuild) {
@@ -204,5 +240,35 @@ class Build : NukeBuild
 
             DeleteFile(_);
         });
-    }                
+    }
+    void PrependFrameworkToTestresults()
+    {
+        var testResults = GlobFiles(ArtifactsDirectory, "*.testresults");
+        foreach (var testResultFile in testResults)
+        {
+            var frameworkName = GetFrameworkNameFromFilename(testResultFile);
+            var xDoc = XDocument.Load(testResultFile);
+
+            foreach (var testType in ((IEnumerable)xDoc.XPathEvaluate("//test/@type")).OfType<XAttribute>())
+            {
+                testType.Value = frameworkName + "+" + testType.Value;
+            }
+
+            foreach (var testName in ((IEnumerable)xDoc.XPathEvaluate("//test/@name")).OfType<XAttribute>())
+            {
+                testName.Value = frameworkName + "+" + testName.Value;
+            }
+
+            xDoc.Save(testResultFile);
+        }
+    }
+
+    string GetFrameworkNameFromFilename(string filename)
+    {
+        var name = Path.GetFileName(filename);
+        name = name.Substring(0, name.Length - ".testresults".Length);
+        var startIndex = name.LastIndexOf('-');
+        name = name.Substring(startIndex + 1);
+        return name;
+    }
 }

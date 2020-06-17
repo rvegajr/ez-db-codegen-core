@@ -10,7 +10,8 @@ using EzDbSchema.Core.Objects;
 
 namespace EzDbCodeGen.Tests
 {
-    public class SchemaRenderTests : IClassFixture<DatabaseFixture>
+    [Collection("DatabaseTest")]
+    public class SchemaRenderTests
     {
         string SchemaFileName = "";
         DatabaseFixture fixture;
@@ -52,6 +53,7 @@ namespace EzDbCodeGen.Tests
                 //ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=WideWorldImportersDW;user id=User;password=Server@Database");
                 var database = template.LoadSchema(Internal.AppSettings.Instance.Configuration);
                 var str = ((EntityDictionary)database.Entities).ObjectPropertyAsString("#Name");
+                fixture.WriteLine("str=" + str);
                 var rel = (RelationshipList)database.Entities["SalesLT.Customer"].RelationshipGroups["FK_CustomerAddress_Customer_CustomerID"];
                 Assert.True(rel.Count>0, string.Format("Entity {0} should havd a relationship of {1} with a count greater than 0", "SalesLT.Customer", "FK_CustomerAddress_Customer_CustomerID"));
 
