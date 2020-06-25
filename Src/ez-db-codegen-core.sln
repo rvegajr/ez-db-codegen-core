@@ -9,8 +9,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EzDbCodeGen.Core", "EzDbCod
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EzDbCodeGen.Tests", "EzDbCodeGen.Tests\EzDbCodeGen.Tests.csproj", "{5B90786F-C7CF-4A50-B18C-90F306662927}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "..\build\_build.csproj", "{1BA716EE-FCE2-4D6E-9100-784AF3B3075D}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -29,8 +27,6 @@ Global
 		{5B90786F-C7CF-4A50-B18C-90F306662927}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5B90786F-C7CF-4A50-B18C-90F306662927}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5B90786F-C7CF-4A50-B18C-90F306662927}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1BA716EE-FCE2-4D6E-9100-784AF3B3075D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1BA716EE-FCE2-4D6E-9100-784AF3B3075D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
