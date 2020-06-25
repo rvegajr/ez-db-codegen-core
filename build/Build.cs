@@ -67,6 +67,7 @@ class Build : NukeBuild
         .Before(Compile)
         .Executes(() =>
         {
+            Console.WriteLine("NugetConfigFile=" + NugetConfigFile);
             DotNetRestore(s => s
                 .SetProjectFile(Solution)
                 .SetConfigFile(NugetConfigFile)
