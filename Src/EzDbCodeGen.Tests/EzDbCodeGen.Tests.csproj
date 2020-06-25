@@ -7,7 +7,7 @@
     <StartupObject />
     <AssemblyVersion>1.4.0.0</AssemblyVersion>
     <FileVersion>1.4.0.0</FileVersion>
-    <InformationalVersion>1.4.0--develop-mssql2019Test.23+Branch.-develop-mssql2019Test.Sha.daf712e44bac7336ca1757a6b33059f29a229234</InformationalVersion>
+    <InformationalVersion>1.4.0--develop-mssql2019Test.24+Branch.-develop-mssql2019Test.Sha.eadc358630910e0d93b5e8496a1497c5de8db592</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\AdventureWorksLT2008.bak" />
