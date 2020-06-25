@@ -31,8 +31,9 @@ nuget:
 before_build:
   - ps: gitversion /l console /output buildserver
 build:
-  project: /Src/
-  verbosity: normal
+  verbosity: detailed
+build_script:
+  - ps: ./build.ps1 Compile
 deploy_script:
   - ps: ./build.ps1 Push --NugetApiUrl "https://www.myget.org/F/noctusoft/api/v2/package" --NugetApiKey $env:MyGetApiKey
 notifications:
