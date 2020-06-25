@@ -10,7 +10,7 @@
     <NukeVersion>0.24.11</NukeVersion>
     <AssemblyVersion>1.4.0.0</AssemblyVersion>
     <FileVersion>1.4.0.0</FileVersion>
-    <InformationalVersion>1.4.0--develop-mssql2019Test.22+Branch.-develop-mssql2019Test.Sha.34e1a4249ef314b0dea933ad181889c088bab0a3</InformationalVersion>
+    <InformationalVersion>1.4.0--develop-mssql2019Test.23+Branch.-develop-mssql2019Test.Sha.daf712e44bac7336ca1757a6b33059f29a229234</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="JetBrains.Annotations" Version="2020.1.0" />
