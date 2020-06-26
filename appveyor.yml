@@ -32,8 +32,8 @@ cache:
   - packages -> **\packages.config  
 before_build:
   - ps: gitversion /l console /output buildserver
-  - cmd: appveyor-retry dotnet restore .\build\  --disable-parallel --configfile .\nuget.config.xml
-  - cmd: appveyor-retry dotnet restore .\Src\  --disable-parallel --configfile .\nuget.config.xml
+  - cmd: appveyor-retry dotnet restore .\build\  --disable-parallel --configfile .\nuget.config.xml --packages .\packages
+  - cmd: appveyor-retry dotnet restore .\Src\  --disable-parallel --configfile .\nuget.config.xml --packages .\packages
 build:
   verbosity: detailed
 build_script:
