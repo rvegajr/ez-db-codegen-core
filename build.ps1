@@ -64,5 +64,10 @@ else {
 }
 
 Write-Output "Microsoft (R) .NET Core SDK version $(& $env:DOTNET_EXE --version)"
+
+Write-Output "Restoring NUKE..."
+ExecSafe { & $env:DOTNET_EXE Module $BuildProjectFile --verbosity quiet}
+Write-Output "Building NUKE..."
 ExecSafe { & $env:DOTNET_EXE build $BuildProjectFile /nodeReuse:false -nologo -clp:NoSummary --verbosity quiet }
+Write-Output "Executing NUKE"
 ExecSafe { & $env:DOTNET_EXE run --project $BuildProjectFile --no-build -- $BuildArguments }
