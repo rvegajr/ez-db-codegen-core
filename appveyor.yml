@@ -38,6 +38,7 @@ build:
   verbosity: detailed
 build_script:
   - ps: ./build.ps1 Pack
+after_build:
   - cmd: cd .\Src\ && dotnet test -l "console;verbosity=detailed"  
 deploy_script:
   - ps: ./build.ps1 Push --NugetApiUrl "https://www.myget.org/F/noctusoft/api/v2/package" --NugetApiKey $env:MyGetApiKey
