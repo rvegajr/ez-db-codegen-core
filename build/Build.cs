@@ -93,12 +93,12 @@ class Build : NukeBuild
         .DependsOn(Compile)
         .Executes(() =>
         {
-            if (!IsLocalBuild)
-            {
-                Console.WriteLine("Server Run will ignore Test build step as there will be a task that is set up for this");
-            }
-            else
-            {
+            //if (!IsLocalBuild)
+            //{
+            //    Console.WriteLine("Server Run will ignore Test build step as there will be a task that is set up for this");
+            //}
+            //else
+            //{
                 var testProjects = GlobFiles(SourceDirectory, "*.sln");
                 var testRun = 1;
                 foreach (var testProject in testProjects)
@@ -118,7 +118,7 @@ class Build : NukeBuild
                 }
 
                 //PrependFrameworkToTestresults();
-            }
+            //}
         });
 
     Target GitVersionTagUpdate => _ => _
