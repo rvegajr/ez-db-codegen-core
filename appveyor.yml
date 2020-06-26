@@ -33,7 +33,7 @@ before_build:
 build:
   verbosity: detailed
 build_script:
-  - ps: ./build.ps1 Compile
+  - ps: ./build.ps1 Pack
 deploy_script:
   - ps: ./build.ps1 Push --NugetApiUrl "https://www.myget.org/F/noctusoft/api/v2/package" --NugetApiKey $env:MyGetApiKey
 notifications:
