@@ -1,6 +1,8 @@
 ﻿version: 1.0.{build}
 pull_requests:
   do_not_increment_build_number: true
+Install:
+appveyor DownloadFile https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
 branches:
   only:
   - master
@@ -28,8 +30,11 @@ environment:
 nuget:
   account_feed: true
   project_feed: true
+cache:
+  - packages -> **\packages.config  
 before_build:
   - ps: gitversion /l console /output buildserver
+  - cmd: appveyor-retry nuget restore -DisableParallelProcessing 
 build:
   verbosity: detailed
 build_script:
