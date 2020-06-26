@@ -32,7 +32,7 @@ cache:
   - packages -> **\packages.config  
 before_build:
   - ps: gitversion /l console /output buildserver
-  - cmd: appveyor-retry nuget restore .\Build\  -DisableParallelProcessing 
+  - cmd: appveyor-retry nuget restore .\build\  -DisableParallelProcessing 
   - cmd: appveyor-retry nuget restore .\Src\  -DisableParallelProcessing 
 build:
   verbosity: detailed
