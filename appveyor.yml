@@ -37,7 +37,7 @@ build:
   project: /Src/
   publish_core_console: true
   parallel: true
-  verbosity: detailed
+  verbosity: normal
 test_script:
 - cmd: cd .\Src\ && dotnet test -l "console"
 deploy_script:
