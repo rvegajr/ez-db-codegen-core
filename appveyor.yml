@@ -7,9 +7,9 @@ branches:
   - develop
 init:
 - ps: >-
-    (Get-Content GitVersion.yml) | Foreach-Object {$_ -replace 'next-version:.+','next-version: {version}'} | Set-Content GitVersion.yml
+    (Get-Content GitVersion.yml) | Foreach-Object {$_ -replace 'next-version:.+','next-version: $($env:APPVEYOR_BUILD_VERSION)'} | Set-Content GitVersion.yml
 
-    Write-Output "Setting GitVersion to {version}"
+    Write-Output "Setting GitVersion to $($env:APPVEYOR_BUILD_VERSION)"
 assembly_info:
   patch: true
   file: '**\AssemblyInfo.*'
