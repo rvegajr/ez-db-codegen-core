@@ -6,6 +6,7 @@ branches:
   - master
   - develop
 init:
+- ps: "Write-Host ""Setting GitVersion.yml next-version to {version}"""
 - ps: "(Get-Content GitVersion.yml) | Foreach-Object {$_ -replace 'next-version:.+','next-version: {version}'} | Set-Content GitVersion.yml"
 assembly_info:
   patch: true
