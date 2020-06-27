@@ -38,11 +38,10 @@ build:
   publish_core_console: true
   parallel: true
   verbosity: detailed
-after_build:
+test_script:
 - cmd: cd .\Src\ && dotnet test -l "console;verbosity=detailed"
-test: off
 deploy_script:
-- ps: ./build.ps1 Pack
+- cmd: dotnet pack ./EzDbCodeGen.Cli/ -o ../artifacts/ --version-suffix "ci-1234"
 notifications:
 - provider: Email
   to:
