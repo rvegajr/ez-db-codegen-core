@@ -6,7 +6,7 @@ branches:
   - master
   - develop
 init:
-- ps: "function gitVersion(){\n    write-host \"This gets the version nr from the end of the git release branch (e.g.: v1.4). And updates the appVersion build version with that (the build nr is appended).\"\n\n    $branch=$env:APPVEYOR_REPO_BRANCH\n\n    $posAfterVchar = $branch.LastIndexOf(\"v\") + 1\n    $versionLength = $branch.Length - $posAfterVchar\n    \n    $gitVersion=$branch.substring($posAfterVchar, $versionLength)\n    \n    $newVersion=\"$gitVersion.$env:APPVEYOR_BUILD_NUMBER\"\n    \n    write-host \"Update appveyor build version to:$newVersion\"\n    $env:appveyor_build_version=\"$newVersion\"\n    appveyor UpdateBuild -Version \"$newVersion\"\n}\ngitVersion"  
+- ps: "(Get-Content GitVersion.yml) | Foreach-Object {$_ -replace 'next-version:.+','next-version: {version}'} | Set-Content GitVersion.yml"
 assembly_info:
   patch: true
   file: '**\AssemblyInfo.*'
@@ -39,9 +39,9 @@ build:
   project: /Src/
   publish_core_console: true
   parallel: true
-  verbosity: normal
+  verbosity: detailed
 test_script:
-- cmd: cd .\Src\ && dotnet test -l "console"
+- cmd: cd .\Src\ && dotnet test -l "console;verbosity=detailed"
 deploy_script:
 - cmd: dotnet pack ./EzDbCodeGen.Cli/ -o ../artifacts/ --version-suffix "ci-1234"
 notifications:
@@ -52,3 +52,5 @@ notifications:
   on_build_success: true
   on_build_failure: true
   on_build_status_changed: false
+on_success:
+- cmd: ''

@@ -1,0 +1,1 @@
+(Get-Content GitVersion.yml) | Foreach-Object {$_ -replace 'next-version:.+','next-version: X.X.99'} | Set-Content GitVersion.yml
