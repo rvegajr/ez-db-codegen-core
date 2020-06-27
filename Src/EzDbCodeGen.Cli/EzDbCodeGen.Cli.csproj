@@ -8,6 +8,7 @@
     <AssemblyVersion>1.4.0.0</AssemblyVersion>
     <FileVersion>1.4.0.0</FileVersion>
     <InformationalVersion>1.4.0--develop-mssql2019Test.24+Branch.-develop-mssql2019Test.Sha.eadc358630910e0d93b5e8496a1497c5de8db592</InformationalVersion>
+	<VersionSuffix>$(VersionSuffix)</VersionSuffix>	
   </PropertyGroup>
   <ItemGroup>
     <None Remove="ezdbcodegen.config.json" />
