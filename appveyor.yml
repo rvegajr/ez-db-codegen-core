@@ -6,24 +6,7 @@ branches:
   - master
   - develop
 init:
-- ps: |
-  function gitVersion(){
-    write-host "This gets the version nr from the end of the git release branch (e.g.: v1.4). And updates the appVersion build version with that (the build nr is appended)."
-
-    $branch=$env:APPVEYOR_REPO_BRANCH
-
-    $posAfterVchar = $branch.LastIndexOf("v") + 1
-    $versionLength = $branch.Length - $posAfterVchar
-    
-    $gitVersion=$branch.substring($posAfterVchar, $versionLength)
-    
-    $newVersion="$gitVersion.$env:APPVEYOR_BUILD_NUMBER"
-    
-    write-host "Update appveyor build version to:$newVersion"
-    $env:appveyor_build_version="$newVersion"
-    appveyor UpdateBuild -Version "$newVersion"
-  }
-  gitVersion  
+- ps: "function gitVersion(){\n    write-host \"This gets the version nr from the end of the git release branch (e.g.: v1.4). And updates the appVersion build version with that (the build nr is appended).\"\n\n    $branch=$env:APPVEYOR_REPO_BRANCH\n\n    $posAfterVchar = $branch.LastIndexOf(\"v\") + 1\n    $versionLength = $branch.Length - $posAfterVchar\n    \n    $gitVersion=$branch.substring($posAfterVchar, $versionLength)\n    \n    $newVersion=\"$gitVersion.$env:APPVEYOR_BUILD_NUMBER\"\n    \n    write-host \"Update appveyor build version to:$newVersion\"\n    $env:appveyor_build_version=\"$newVersion\"\n    appveyor UpdateBuild -Version \"$newVersion\"\n}\ngitVersion"  
 assembly_info:
   patch: true
   file: '**\AssemblyInfo.*'
