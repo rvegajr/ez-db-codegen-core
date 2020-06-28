@@ -30,10 +30,7 @@ nuget:
   account_feed: true
   project_feed: true
 before_build:
-  - ps: >-
-    (Get-Content GitVersion.yml) | Foreach-Object {$_ -replace 'next-version:.+','next-version: $($env:APPVEYOR_BUILD_VERSION)'} | Set-Content GitVersion.yml
-
-    Write-Output "Setting GitVersion to $($env:APPVEYOR_BUILD_VERSION)"  
+  - ps: (Get-Content GitVersion.yml) | Foreach-Object {$_ -replace 'next-version:.+','next-version: $($env:APPVEYOR_BUILD_VERSION)'} | Set-Content GitVersion.yml
   - ps: gitversion /l console /output buildserver
   - cmd: appveyor-retry dotnet restore .\build\  --disable-parallel --configfile .\nuget.config.xml --packages .\packages
   - cmd: appveyor-retry dotnet restore .\Src\  --disable-parallel --configfile .\nuget.config.xml --packages .\packages
