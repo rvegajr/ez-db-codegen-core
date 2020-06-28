@@ -5,11 +5,6 @@ branches:
   only:
   - master
   - develop
-init:
-- ps: >-
-    (Get-Content GitVersion.yml) | Foreach-Object {$_ -replace 'next-version:.+','next-version: $($env:APPVEYOR_BUILD_VERSION)'} | Set-Content GitVersion.yml
-
-    Write-Output "Setting GitVersion to $($env:APPVEYOR_BUILD_VERSION)"
 assembly_info:
   patch: true
   file: '**\AssemblyInfo.*'
@@ -35,6 +30,10 @@ nuget:
   account_feed: true
   project_feed: true
 before_build:
+  - ps: >-
+    (Get-Content GitVersion.yml) | Foreach-Object {$_ -replace 'next-version:.+','next-version: $($env:APPVEYOR_BUILD_VERSION)'} | Set-Content GitVersion.yml
+
+    Write-Output "Setting GitVersion to $($env:APPVEYOR_BUILD_VERSION)"  
   - ps: gitversion /l console /output buildserver
   - cmd: appveyor-retry dotnet restore .\build\  --disable-parallel --configfile .\nuget.config.xml --packages .\packages
   - cmd: appveyor-retry dotnet restore .\Src\  --disable-parallel --configfile .\nuget.config.xml --packages .\packages
@@ -44,7 +43,7 @@ build:
   parallel: true
   verbosity: minimal
 test_script:
-- cmd: cd .\Src\ && dotnet test -l "console;verbosity=detailed"
+- cmd: cd .\Src\ && dotnet test -l "console;verbosity=minimal"
 deploy_script:
 - cmd: dotnet pack ./EzDbCodeGen.Cli/ -o ../artifacts/ --version-suffix "ci-1234"
 notifications:
