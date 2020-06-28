@@ -42,7 +42,7 @@ build:
   project: /Src/
   publish_core_console: true
   parallel: true
-  verbosity: detailed
+  verbosity: minimal
 test_script:
 - cmd: cd .\Src\ && dotnet test -l "console;verbosity=detailed"
 deploy_script:
