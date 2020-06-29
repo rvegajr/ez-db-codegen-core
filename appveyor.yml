@@ -35,7 +35,7 @@ build:
 test_script:
 - cmd: cd .\Src\ && dotnet test -l "console;verbosity=minimal"
 deploy_script:
-- cmd: dotnet pack ./EzDbCodeGen.Cli/ -o ../artifacts/ --version-suffix "ci-1234"
+- cmd: dotnet pack ./EzDbCodeGen.Cli/ -o ../artifacts/ --version-suffix "ci-1234" /p:Version=1.4.0
 notifications:
 - provider: Email
   to:
