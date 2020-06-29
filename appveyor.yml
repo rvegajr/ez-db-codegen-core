@@ -23,15 +23,12 @@ cache: packages -> **\packages.config
 nuget:
   account_feed: true
   project_feed: true
-before_build:
+build_script:
   - ps: gitversion /l console /output buildserver
   - cmd: appveyor-retry dotnet restore .\build\  --disable-parallel --configfile .\nuget.config.xml --packages .\packages
   - cmd: appveyor-retry dotnet restore .\Src\  --disable-parallel --configfile .\nuget.config.xml --packages .\packages
-build:
-  project: /Src/
-  publish_core_console: true
-  parallel: true
-  verbosity: minimal
+  - cmd: dotnet build .\Src\ --configuration Debug --no-restore 
+  - cmd: dotnet publish .\Src\ --output ../artifacts/publish --verbosity minimal  
 test_script:
 - cmd: cd .\Src\ && dotnet test -l "console;verbosity=minimal"
 deploy_script:
