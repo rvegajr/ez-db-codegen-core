@@ -25,10 +25,8 @@ nuget:
   project_feed: true
 build_script:
   - ps: gitversion /l console /output buildserver
-  - cmd: appveyor-retry dotnet restore .\build\  --disable-parallel --configfile .\nuget.config.xml --packages .\packages
   - cmd: appveyor-retry dotnet restore .\Src\  --disable-parallel --configfile .\nuget.config.xml --packages .\packages
   - cmd: dotnet build .\Src\ --configuration Debug --no-restore 
-  - cmd: dotnet publish .\Src\ --output ../artifacts/publish --verbosity minimal  
 test_script:
 - cmd: cd .\Src\ && dotnet test -l "console;verbosity=minimal"
 deploy_script:
