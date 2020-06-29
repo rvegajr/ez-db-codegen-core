@@ -1,7 +1,6 @@
  <Project>
   <PropertyGroup>
     <Id>EzDbCodeGen</Id>
-    <Version>1.2.23</Version>
     <MinClientVersion>5.0.2</MinClientVersion>
     <Title>EzDbCodeGen - Easy Database Code Generator</Title>
     <Authors>Ricardo Vega Jr.</Authors>
