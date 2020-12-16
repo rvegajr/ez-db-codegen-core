@@ -112,7 +112,7 @@ Rest of the code
         [Fact]
         public void WlldCardSearchTest()
         {
-            var db1 = new TemplateInputFileSource(SchemaFileName).LoadSchema();
+            var db1 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Internal.AppSettings.Instance.Configuration);
             var lst = db1.FindEntities("Integration.Trans*");
             Assert.True(lst.Count==2, "Should be 2 entities that match the pattern 'Integration.Trans*'");
             var lst2 = db1.FindEntities("Dimension.*");

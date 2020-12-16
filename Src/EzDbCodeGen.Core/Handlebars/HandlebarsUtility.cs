@@ -13,15 +13,18 @@ using Newtonsoft;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using EzDbSchema.Core.Enums;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {
-    public class HandlebarsBlockHelperHandler {
+    internal class HandlebarsBlockHelperHandler {
         public void HandlebarsBlockHelperIfCond(TextWriter writer, HelperOptions options, dynamic context, params object[] arguments) {
 
         }
     }
-    public static class HandlebarsUtility
+    internal static class HandlebarsUtility
     {
         public static void RegisterHelpers()
         {
@@ -705,8 +708,45 @@ namespace EzDbCodeGen.Core
                     ErrorList.Add(ex.StackTrace.ToString());
                 }
                 if (ErrorList.Count > 0) writer.Write(string.Format("{0} Errors: {1}", PROC_NAME, string.Join("", ErrorList.ToList())));
+            });
 
+            Handlebars.RegisterHelper("ifIsNotIgnored", (writer, options, context, arguments) =>
+            {
+                var ErrorList = new List<string>();
+                var PROC_NAME = "Handlebars.RegisterHelper('ifIsNotIgnored')";
+                IEntity entity;
+                IProperty property;
 
+                try
+                {
+                    var IsIgnored = false;
+                    var contextObject = (Object)context;
+
+                    if (contextObject.GetType().Name == "Property")
+                    {
+                        property = ((IProperty)context);
+                        if ((property.CustomAttributes != null) && (property.CustomAttributes.ContainsKey("IsIgnored"))) IsIgnored = property.CustomAttributes["IsIgnored"].AsBoolean();
+                    }
+                    else if (contextObject.GetType().Name == "Entity")
+                    {
+                        entity = ((IEntity)context);
+                        if ((entity.CustomAttributes != null) && entity.CustomAttributes.ContainsKey("IsIgnored")) IsIgnored = entity.CustomAttributes["IsIgnored"].AsBoolean();
+                    } 
+                    else
+                    {
+                        ErrorList.Add(string.Format("Could not render object with context of {0}", contextObject.GetType().Name));
+                    }
+
+                    if (!IsIgnored)
+                        options.Template(writer, (object)context);
+                    else
+                        options.Inverse(writer, (object)context);
+                }
+                catch (Exception ex)
+                {
+                    ErrorList.Add(ex.StackTrace.ToString());
+                }
+                if (ErrorList.Count > 0) writer.Write(string.Format("{0} Errors: {1}", PROC_NAME, string.Join("", ErrorList.ToList())));
             });
         }
     }

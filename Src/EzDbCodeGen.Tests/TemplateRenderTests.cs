@@ -22,7 +22,7 @@ namespace EzDbCodeGen.Tests
             {
                 var codeGenerator = new CodeGenerator();
                 ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
-                var database = template.LoadSchema().Filter();
+                var database = template.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
                 codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), template, OutputPath);
@@ -41,8 +41,7 @@ namespace EzDbCodeGen.Tests
             {
                 var codeGenerator = new CodeGenerator();
                 ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=Northwind;user id=sa;password=sa");
-                Configuration.ReloadInstance(@"C:\Temp\ezdbcodegen.config.json");
-                var database = template.LoadSchema().Filter();
+                var database = template.LoadSchema(Configuration.FromFile(@"C:\Temp\ezdbcodegen.config.json"));
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
                 codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), template, OutputPath);
@@ -61,8 +60,7 @@ namespace EzDbCodeGen.Tests
             {
                 var codeGenerator = new CodeGenerator();
                 ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
-                Configuration.ReloadInstance(@"C:\Temp\ezdbcodegen.config.json");
-                var database = template.LoadSchema().Filter();
+                var database = template.LoadSchema(Configuration.FromFile(@"C:\Temp\ezdbcodegen.config.json"));
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
                 codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), template, OutputPath);
@@ -81,7 +79,7 @@ namespace EzDbCodeGen.Tests
             {
                 var codeGenerator = new CodeGenerator();
                 ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
-                var database = template.LoadSchema().Filter();
+                var database = template.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
                 var OutputPath = System.IO.Path.GetTempPath() + "EzDbCodeGenTest" + Path.DirectorySeparatorChar;
                 if (Directory.Exists(OutputPath)) Directory.Delete(OutputPath, true);
                 codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRenderAsFiles.hbs").ResolvePathVars(), template, OutputPath);
@@ -100,7 +98,7 @@ namespace EzDbCodeGen.Tests
             {
                 var codeGenerator = new CodeGenerator();
                 ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
-                var database = template.LoadSchema().Filter();
+                var database = template.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
                 codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRenderAsFiles.hbs").ResolvePathVars(), template);
                 Assert.True(Directory.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output files in path {0} was not created", codeGenerator.OutputPath));
             }

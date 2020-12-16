@@ -8,11 +8,14 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using Pluralize.NET;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 //Thanks https://www.codeproject.com/tips/1081932/tosingular-toplural-string-extensions
 namespace EzDbCodeGen.Core.Extentions.Strings
 {
-	public static class StringExtensions
+	internal static class StringExtensions
     {
         private static Dictionary<string, string> sQLDataTypeToDotNetDataType = new Dictionary<string, string>();
         private static Dictionary<string, string> sQLDataTypeToJsDataType = new Dictionary<string, string>();

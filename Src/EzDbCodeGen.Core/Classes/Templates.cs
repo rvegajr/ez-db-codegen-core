@@ -7,6 +7,11 @@ using EzDbCodeGen.Core.Enums;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Objects;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using EzDbCodeGen.Core.Config;
+
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {
@@ -15,8 +20,8 @@ namespace EzDbCodeGen.Core
         bool VerboseMessages { get; set; }
         string SchemaName { get; set; }
         IDatabase Schema { get; set; }
-		IDatabase LoadSchema<T>() where T : new();
-        IDatabase LoadSchema();
+		IDatabase LoadSchema<T>(Configuration config) where T : new();
+        IDatabase LoadSchema(Configuration config);
     }
 
     /// <summary>
@@ -62,7 +67,7 @@ namespace EzDbCodeGen.Core
         ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string OutputPath);
     }
 
-    public class TemplateInputDirectObject : ITemplateInput
+    internal class TemplateInputDirectObject : ITemplateInput
     {
         public string SchemaName { get; set; }
         public bool VerboseMessages { get; set; } = true;
@@ -82,11 +87,11 @@ namespace EzDbCodeGen.Core
         /// Will Load the schema, however,  it is kind of pointless here since you are setting the schema directly.  This is mainly used to satisfy the interface.
         /// </summary>
         /// <returns>SchemaData - Loads the schema that was rendered if it completes</returns>
-        public IDatabase LoadSchema<T>() where T : new()
+        public IDatabase LoadSchema<T>(Configuration config) where T : new()
         {
             try
             {
-                return this.Schema.Filter();
+                return this.Schema.Filter(config);
             }
             catch (Exception ex)
             {
@@ -94,11 +99,11 @@ namespace EzDbCodeGen.Core
             }
         }
 
-        public IDatabase LoadSchema()
+        public IDatabase LoadSchema(Configuration config)
         {
             try
             {
-                return this.Schema.Filter();
+                return this.Schema.Filter(config);
             }
             catch (Exception ex)
             {
@@ -107,7 +112,7 @@ namespace EzDbCodeGen.Core
         }
     }
 
-    public class TemplateInputFileSource : ITemplateInput
+    internal class TemplateInputFileSource : ITemplateInput
     {
         public string SchemaName { get; set; }
         public bool VerboseMessages { get; set; } = true;
@@ -127,7 +132,7 @@ namespace EzDbCodeGen.Core
         /// Loads the schema filtered by Configuration 
         /// </summary>
         /// <returns>SchemaData - Loads the schema that was rendered if it completes</returns>
-        public IDatabase LoadSchema<T>() where T : new()
+        public IDatabase LoadSchema<T>(Configuration config) where T : new()
         {
             try
             {
@@ -137,7 +142,7 @@ namespace EzDbCodeGen.Core
                         PreserveReferencesHandling = PreserveReferencesHandling.All,
                         TypeNameHandling = TypeNameHandling.All
                     });
-                return this.Schema.Filter();
+                return this.Schema.Filter(config);
             }
             catch (Exception ex)
             {
@@ -145,16 +150,16 @@ namespace EzDbCodeGen.Core
             }
         }
 
-        public IDatabase LoadSchema()
+        public IDatabase LoadSchema(Configuration config)
         {
             try
             { 
-                this.Schema = (IDatabase)JsonConvert.DeserializeObject<Database>(File.ReadAllText(DatabaseSchemaDumpFileName),
+                this.Schema = (IDatabase)JsonConvert.DeserializeObject<Config.Database>(File.ReadAllText(DatabaseSchemaDumpFileName),
                     new JsonSerializerSettings {
                         PreserveReferencesHandling = PreserveReferencesHandling.All,
                         TypeNameHandling = TypeNameHandling.All
                     });
-                return this.Schema.Filter();
+                return this.Schema.Filter(config);
             }
             catch (Exception ex)
             {
@@ -195,14 +200,14 @@ namespace EzDbCodeGen.Core
         /// Loads the schema based on the connection string provided
         /// </summary>
         /// <returns><c>true</c>, if schema was loaded, <c>false</c> otherwise.</returns>
-		public IDatabase LoadSchema<T>() where T : new()
+		public IDatabase LoadSchema<T>(Configuration config) where T : new()
         {
             try
             {
                 this.Schema = (IDatabase)(new T());
                 this.Schema.ShowWarnings = this.VerboseMessages;
                 this.Schema.Render(this.SchemaName, this.AsConnectionString());
-                return this.Schema.Filter();
+                return this.Schema.Filter(config);
             }
             catch (Exception ex)
             {
@@ -237,6 +242,8 @@ namespace EzDbCodeGen.Core
                     return string.Format("Server={0};Database={1};user id={2};password={3}", Server, Database, UserId, Password);
                 case DB_ORACLE:
                     return string.Format("User Id={0};Password={1};Data Source={2};", UserId, Password, Server);
+                default:
+                    break;
             }
             return "";
         }
@@ -297,24 +304,49 @@ namespace EzDbCodeGen.Core
                                                               StringComparer.InvariantCultureIgnoreCase);
             foreach (var alias in keyAliases)
             {
-                string value;
-                if (keyValuePairs.TryGetValue(alias, out value))
+                if (keyValuePairs.TryGetValue(alias, out string value))
                     return value;
             }
             return string.Empty;
         }
 
+        /// <summary>
+        /// Load the Schema as specified in the template class 
+        /// </summary>
+        /// <param name="config">Configuration to Apply which will filter schema objects</param>
+        /// <returns></returns>
+        /*
         public IDatabase LoadSchema()
         {
             try
             {
                 this.Schema = (new EzDbSchema.MsSql.Database() { ShowWarnings = this.VerboseMessages }).Render(this.SchemaName, this.AsConnectionString());
-                return this.Schema.Filter();
+                return this.Schema;
             }
             catch (Exception ex)
             {
                 throw new Exception(string.Format("Could not load schema with connection string '{0}'.  " + ex.Message, this.AsConnectionString()), ex);
             }
         }
+        */
+
+        /// <summary>
+        /// Load the Schema as specified in the template class but will return the object fltered based on the config object passed
+        /// </summary>
+        /// <param name="config">Configuration to Apply which will filter schema objects</param>
+        /// <returns></returns>
+        public IDatabase LoadSchema(Configuration config)
+        {
+            try
+            {
+                this.Schema = (new EzDbSchema.MsSql.Database() { ShowWarnings = this.VerboseMessages }).Render(this.SchemaName, this.AsConnectionString());
+                return this.Schema.Filter(config);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(string.Format("Could not load schema with connection string '{0}'.  " + ex.Message, this.AsConnectionString()), ex);
+            }
+        }
+
     }
 }

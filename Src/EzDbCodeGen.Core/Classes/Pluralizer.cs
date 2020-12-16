@@ -1,10 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {
-    public class Pluralizer
+    internal class Pluralizer
     {
         public Dictionary<string, string> SingularToPlural = new Dictionary<string, string>();
         public Dictionary<string, string> PluralToSingular = new Dictionary<string, string>();

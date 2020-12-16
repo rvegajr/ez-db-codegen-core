@@ -1,35 +1,53 @@
-﻿using EzDbSchema.Core.Extentions.Json;
-using EzDbSchema.Core.Extentions.Strings;
+﻿using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbSchema.Core.Extentions.Json;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Json;
 using JsonPair = System.Collections.Generic.KeyValuePair<string, System.Json.JsonValue>;
-using JsonPairEnumerable = System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string, System.Json.JsonValue>>;
+using System.Runtime.CompilerServices;
+using EzDbCodeGen.Core.Config;
+
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Internal
 {
-	public class AppSettings 
+    internal class AppSettings 
     {
         /// <summary></summary>
         public string ConfigurationFileName { get; set; } = "";
-		/// <summary></summary>
-		public bool VerboseMessages { get; set; } = false;
+        private Configuration configuration;
+        public Configuration Configuration
+        {
+            get
+            {
+                if (configuration == null) configuration = EzDbCodeGen.Core.Config.Configuration.FromFile(ConfigurationFileName);
+                if (configuration.SourceFileName != this.ConfigurationFileName) configuration = EzDbCodeGen.Core.Config.Configuration.FromFile(ConfigurationFileName);
+                return configuration;
+            }
+            set 
+            {
+                configuration = value;
+            }
+        }
+
+        /// <summary></summary>
+        public bool VerboseMessages { get; set; } = false;
         public string ConnectionString { get; set; } = "";
         public string Version { get; set; } = "";
         private static AppSettings instance;
         
-		private AppSettings()
+		internal AppSettings()
         {
 			this.ConfigurationFileName = "{ASSEMBLY_PATH}ezdbcodegen.config.json".ResolvePathVars();
         }
 
-        private AppSettings(string configurationFileName)
+        internal AppSettings(string configurationFileName)
         {
             this.ConfigurationFileName = configurationFileName;
         }
 
-        public static AppSettings LoadFrom(string configurationFileName)
+        internal static AppSettings LoadFrom(string configurationFileName)
         {
             var appsettingsText = File.ReadAllText(configurationFileName);
             var items = JsonObject.Parse(appsettingsText);
@@ -42,7 +60,7 @@ namespace EzDbCodeGen.Internal
             return instance;
         }
 
-        public static AppSettings Instance
+        internal static AppSettings Instance
         {
             get
             {
@@ -74,7 +92,7 @@ namespace EzDbCodeGen.Internal
         /// </summary>
         /// <param name="VarName">the name of the variable to fetch</param>
         /// <returns></returns>
-        public static string Var(string VarName)
+        internal static string Var(string VarName)
         {
             if (VarName.Equals("ConnectionString"))
             {

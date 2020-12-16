@@ -2,10 +2,12 @@
 using System.IO;
 using Xunit;
 using EzDbCodeGen.Core;
-using EzDbCodeGen.Internal;
 using EzDbCodeGen.Core.Config;
 using EzDbCodeGen.Core.Extentions.Strings;
-using EzDbCodeGen.Core.Compare;
+using EzDbCodeGen.Core.Extentions;
+using EzDbSchema.Core.Interfaces;
+using EzDbSchema.Core.Objects;
+
 namespace EzDbCodeGen.Tests
 {
     public class SchemaRenderTests 
@@ -23,7 +25,7 @@ namespace EzDbCodeGen.Tests
                 var codeGenerator = new CodeGenerator();
                 ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
                 //ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=WideWorldImportersDW;user id=User;password=Server@Database");
-                var database = template.LoadSchema().Filter();
+                var database = template.LoadSchema(Internal.AppSettings.Instance.Configuration);
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
                 codeGenerator.TemplateFileNameFilter = "SchemaRenderAsFiles*";
@@ -39,19 +41,24 @@ namespace EzDbCodeGen.Tests
         }
 
         [Fact]
-        public void MyConnectionTest()
+        public void ArrayObjectPropertyAsStringTest()
         {
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=CPPE;user id=sa;password=sa");
-                Configuration.FromFile(@"C:\Dev\PXD\cem-rest-api\PLEXEzDbCodeGen\EzDbCodeGen\CppeDb.WebApi.config.json");
+                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
                 //ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=WideWorldImportersDW;user id=User;password=Server@Database");
-                var database = template.LoadSchema().Filter();
+                var database = template.LoadSchema(Internal.AppSettings.Instance.Configuration);
+                var str = ((EntityDictionary)database.Entities).ObjectPropertyAsString("#Name");
+                var rel = (RelationshipList)database.Entities["dbo.FactSurveyResponse"].RelationshipGroups["FK_FactSurveyResponse_CustomerKey"];
+                var relStr = rel.ObjectPropertyAsString("");
+
+                var st2 = ((PrimaryKeyProperties)database.Entities["dbo.FactAdditionalInternationalProductDescription"].PrimaryKeys).ObjectPropertyAsString(">Name");
+
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
-                if (File.Exists(OutputPath)) File.Delete(OutputPath);
-                codeGenerator.ConfigurationFileName = @"C:\Dev\PXD\cem-rest-api\PLEXEzDbCodeGen\EzDbCodeGen\CppeDb.WebApi.config.json";
-                codeGenerator.ProcessTemplate((@"C:\Dev\PXD\cem-rest-api\PLEXEzDbCodeGen\EzDbCodeGen\Templates\Ef6ModelsTemplate.hbs").ResolvePathVars(), template, OutputPath);
+                //var str = database.Entities[""];
+
+
                 Assert.True(File.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output file {0} was not created", codeGenerator.OutputPath));
             }
             catch (Exception ex)

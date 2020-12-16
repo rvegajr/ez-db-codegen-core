@@ -1,10 +1,13 @@
 ﻿using System;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Extentions;
+using System.Runtime.CompilerServices;
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core
 {
-    public class EntityFileDictionary : MultiKeyDictionary<FileName, EntityName, string>
+    internal class EntityFileDictionary : MultiKeyDictionary<FileName, EntityName, string>
     {
         public EntityFileDictionary()
         {
@@ -40,7 +43,7 @@ namespace EzDbCodeGen.Core
         }
     }
 
-    public class EntityName
+    internal class EntityName
     {
         readonly string _value;
         public EntityName(string value)

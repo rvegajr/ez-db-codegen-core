@@ -31,6 +31,10 @@ namespace EzDbCodeGen.Cli
                 "Will output more detailed message about what is happening during application processing.  This parm is optional and will override the value in appsettings.json.   ",
                 CommandOptionType.NoValue);
 
+            var versionOption = app.Option("-ver|--version",
+                "Will output the current version of the utility.",
+                CommandOptionType.NoValue);
+
             var templateFileNameOrDirectoryOption = app.Option("-t|--template <value>",
                 "The template file name or path that you wish to render.  If you choose aa path,  ",
                 CommandOptionType.SingleValue);
@@ -74,6 +78,16 @@ namespace EzDbCodeGen.Cli
             app.OnExecute(() =>
             {
                 var pfx = "Unknown: ";
+                if (versionOption.HasValue())
+                {
+                    var version_ = Assembly.GetAssembly(typeof(CodeGenerator)).GetName().Version;
+                    Console.WriteLine(version_);
+                    Environment.ExitCode = 0;
+                    Environment.Exit(Environment.ExitCode);
+                    return Environment.ExitCode;
+
+                }
+
                 if (verboseOption.HasValue()) AppSettings.Instance.VerboseMessages = verboseOption.HasValue();
                 try
                 {
