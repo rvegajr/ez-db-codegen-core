@@ -52,7 +52,12 @@ namespace EzDbCodeGen.Core
 
     }
 
-
+    public enum ObjectNameGeneratedFrom
+    {
+        JoinFromColumnName,
+        ToUniqueColumnName,
+        JoinToColumnName
+    }
 
     public class RelationshipSummary 
     {
@@ -90,6 +95,67 @@ namespace EzDbCodeGen.Core
     public static class EzDbSchemaRelationshipExtentions
     {
         /// <summary>
+        /// Starting from a relationship, function will figure out what the name of the object should be for a foriegn key, taking into account the potential names 
+        /// </summary>
+        /// <param name="entity">Entity So we know the perspective of the relationship</param>
+        /// <param name="FKName">String that is the name of the foriegn key we want to generated</param>
+        /// <returns></returns>
+        public static string GenerateObjectName(this IEntity entity, string FKName, ObjectNameGeneratedFrom generatedFrom)
+        {
+            var PROC_NAME = string.Format( "EzDbSchemaRelationshipExtentions.GenerateObjectName(entity='{0}', FKName='{1}')", entity.Name, FKName);
+
+            string FieldName = "";
+            try
+            {
+
+                var relationship = entity.RelationshipGroups[FKName];
+                var relGroupSummary = relationship.AsSummary();
+                var entityName = entity.Schema + "." + entity.Name;
+
+                int SameTableCount = 0;
+                foreach (var rg in entity.RelationshipGroups.Values)
+                    if (rg.AsSummary().ToTableName.Equals(relGroupSummary.ToTableName)) SameTableCount++;
+                string ToTableNameSingular = relGroupSummary.ToTableName.Replace(Config.Configuration.Instance.Database.DefaultSchema + ".", "").ToSingular();
+
+                var AltName = ToTableNameSingular;
+                if (relGroupSummary.FromTableName.Equals(relGroupSummary.ToTableName)) generatedFrom = ObjectNameGeneratedFrom.ToUniqueColumnName;
+                switch (generatedFrom)
+                {
+                    case ObjectNameGeneratedFrom.JoinFromColumnName:
+                        AltName = string.Join(",", relGroupSummary.FromColumnName);
+                        break;
+                    case ObjectNameGeneratedFrom.ToUniqueColumnName:
+                        AltName = relGroupSummary.ToUniqueColumnName(false);
+                        break;
+                    case ObjectNameGeneratedFrom.JoinToColumnName:
+                        AltName = string.Join(",", relGroupSummary.ToColumnName);
+                        break;
+                }
+
+                FieldName = (((entity.Properties.ContainsKey(ToTableNameSingular))
+                                     || (entityName == relGroupSummary.ToTableName)
+                                     || (SameTableCount > 1))
+                                        ? AltName : ToTableNameSingular);
+
+            } catch (Exception ex)
+            {
+                throw new Exception(PROC_NAME + ".  " + ex.Message);
+            }
+            return FieldName;
+        }
+        /// <summary>
+        /// Starting from a relationship, function will figure out what the name of the object should be for a foriegn key, taking into account the potential names 
+        /// </summary>
+        /// <param name="This">The FK to generate the object from</param>
+        /// <param name="entity">Entity So we know the perspective of the relationship</param>
+        /// <returns></returns>
+        public static string GenerateObjectName(this IRelationship This, IEntity entity, ObjectNameGeneratedFrom generatedFrom)
+        {
+            var FKName = This.Name;
+            return entity.GenerateObjectName(FKName, generatedFrom);
+
+        }
+        /// <summary>
         /// This will return the target column name.  this is important because we do not want to return the column name of the current table, but rather that 
         /// column it is pointing to 
         /// </summary>
@@ -106,19 +172,23 @@ namespace EzDbCodeGen.Core
             if (fromColumnNameCount == 1) return This.FromColumnName;
             throw new Exception(string.Format("EzDbSchemaRelationshipExtentions.ToUniqueColumnName: Could not find any unique column names to write to :( {0} or {1} for {2}", This.ToColumnName, This.FromColumnName, This.Name));
         }
-
+    
         /// <summary>
         /// This will return the target column name.  this is important because we do not want to return the column name of the current table, but rather that 
         /// column it is pointing to 
         /// </summary>
-        /// <param name="This">The Context Relationship</param>
-        /// <param name="ContextSchemaObjectName">The parent with the column name you don't want</param>
+        /// <param name="This"></param>
+        /// <param name="UseFromAsDefault">Use From Table name as an alias, otherwise use the ToTableAlias</param>
         /// <returns></returns>
-        public static string ToUniqueColumnName(this RelationshipSummary This)
+        public static string ToUniqueColumnName(this RelationshipSummary This, bool? UseFromAsDefault = null)
         {
             var targetColumnNameCount = 0;
             var fromColumnNameCount = 0;
-
+            if ((This.FromColumnName.Count==2) && (This.ToColumnName.Count == 2) && (This.FromTableName.Equals(This.ToTableName)))
+            {
+                //This relationship is self referencing,  I am sure this will cause an issue with compound self referencing keys,  lets cross the bridge when we get there 
+                return This.ToColumnName[0];
+            }
             //Try to see if a combination of names will match a column name that already exists
             foreach (var rel in This.Entity.Relationships) if (rel.ToColumnName == string.Join("", This.ToColumnName)) targetColumnNameCount++;
             foreach (var rel in This.Entity.Relationships) if (rel.FromColumnName == string.Join("", This.FromColumnName)) fromColumnNameCount++;
@@ -133,8 +203,9 @@ namespace EzDbCodeGen.Core
             foreach (var rel in This.Entity.Relationships) if (rel.FromColumnName == FromTableAlias) fromColumnNameCount++;
             if (targetColumnNameCount == 0) return ToTableAlias.Trim();
             if (fromColumnNameCount == 0) return FromTableAlias.Trim();
-
-            throw new Exception(string.Format("EzDbSchemaRelationshipExtentions.ToUniqueColumnName: Could not find any unique column names to write to :( {0} or {1} for {2}", This.ToColumnName, This.FromColumnName, This.Name));
+            if (!UseFromAsDefault.HasValue) throw new Exception(string.Format("EzDbSchemaRelationshipExtentions.ToUniqueColumnName: Could not find any unique column names to write to :( {0} or {1} for {2}", This.ToColumnName, This.FromColumnName, This.Name));
+            if (UseFromAsDefault.Value) return FromTableAlias.Trim();
+            return ToTableAlias.Trim();
         }
         /// <summary>
         /// Returns a list of Object names with counts to check and see if that object will exist
@@ -255,22 +326,22 @@ namespace EzDbCodeGen.Core
                 foreach (var relationshipGroup in entity.RelationshipGroups)
                 {
                     var relationship = relationshipGroup.Value.AsSummary();
-                    if (relationship.Name.StartsWith("FK_SaltWaterDisposalFacilities_Areas"))
-                    {
+                    if (relationship.Name.StartsWith("FK_FracFleets_FracFleets"))
                         relationship.Name += "";
-                    }
                     //Need to resolve the to table name to what the alias table name is
                     string ToTableName = entity.Parent.Entities[relationship.ToTableName].Alias;
-                    int SameTableCount = 0;
+                    int AdditionSameTableCount = 0; //If there is another foriegn key that targets entity,  then we will have colliding names,  lets try to get the name from the target column name so it is clearer
                     foreach (var regGroup in entity.RelationshipGroups)
                     {
-                        if ((regGroup.Key != relationship.Name) && (regGroup.Value.AsSummary()?.ToTableName == relationship.ToTableName)) SameTableCount++;
+                        if (regGroup.Key.StartsWith("FK_Wells_CompletionDesigns_CompletionDesignId"))
+                            relationship.Name += "";
+                        if ((regGroup.Key != relationship.Name) && (regGroup.Value.AsSummary()?.ToTableName == relationship.ToTableName)) AdditionSameTableCount++;
                     }
                     string ToTableNameSingular = ToTableName.ToSingular();
                     FieldName = ((PreviousFields.Contains(ToTableNameSingular)
                                          || (entity.Properties.ContainsKey(ToTableNameSingular))
                                          || (entityName == relationship.ToTableName)
-                                         || (SameTableCount > 1)) 
+                                         || (AdditionSameTableCount > 0)) 
                                             ? relationship.ToUniqueColumnName() : ToTableNameSingular).ToCsObjectName();
                     PreviousFields.Add(FieldName);
                     objectSuffix = Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix;
