@@ -724,12 +724,12 @@ namespace EzDbCodeGen.Core
 
                     if (contextObject.GetType().Name == "Property")
                     {
-                        property = ((IProperty)context);
+                        property = ((IProperty)context.Value);
                         if ((property.CustomAttributes != null) && (property.CustomAttributes.ContainsKey("IsIgnored"))) IsIgnored = property.CustomAttributes["IsIgnored"].AsBoolean();
                     }
                     else if (contextObject.GetType().Name == "Entity")
                     {
-                        entity = ((IEntity)context);
+                        entity = ((IEntity)context.Value);
                         if ((entity.CustomAttributes != null) && entity.CustomAttributes.ContainsKey("IsIgnored")) IsIgnored = entity.CustomAttributes["IsIgnored"].AsBoolean();
                     } 
                     else
@@ -738,9 +738,9 @@ namespace EzDbCodeGen.Core
                     }
 
                     if (!IsIgnored)
-                        options.Template(writer, (object)context);
+                        options.Template(writer, (object)context.Value);
                     else
-                        options.Inverse(writer, (object)context);
+                        options.Inverse(writer, (object)context.Value);
                 }
                 catch (Exception ex)
                 {

@@ -11,7 +11,7 @@ FilePath msBuildPathX64 = (vsLatest==null)
                             : vsLatest.CombineWithFilePath("./MSBuild/Current/bin/msbuild.exe");
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
-var framework = Argument("framework", "netcoreapp3.1");
+var framework = Argument("framework", "net5.0");
 var runtime = Argument("runtime", "Portable");
 
 var binDir = Directory("./bin") ;
@@ -110,7 +110,7 @@ Task("Publish")
     .IsDependentOn("Build")
     .Does(() =>
 {
-	 DoPackage("EzDbCodeGen.Cli", "netcoreapp3.1", NugetVersion, "portable");
+	 DoPackage("EzDbCodeGen.Cli", "net5.0", NugetVersion, "portable");
 });
 
 Task("Run-Unit-Tests")
@@ -126,63 +126,11 @@ Task("NuGet-Pack")
     .IsDependentOn("Run-Unit-Tests")
     .Does(() =>
 {
-
-   var CodeGenFiles = GetFiles(thisDir + "./**/Cake.*"); 
-   var nuGetPackSettings   = new NuGetPackSettings {
-		BasePath 				= thisDir,
-        Id                      = @"EzDbCodeGen",
-        Version                 = NugetVersion,
-        Title                   = @"EzDbCodeGen - Easy Database Code Generator",
-        Authors                 = new[] {"Ricardo Vega Jr."},
-        Owners                  = new[] {"Ricardo Vega Jr."},
-        Description             = @"This complete and self contained code generation utility will install in a sub directory EzDbCodeGen of a target project.  From this path, you can run a powershell script that will generate code based on the connection string.  Each template is a handlebars template that has tags that specify where you would like to output the generated code and if there is a vs project that you wish to update with the file list (old VS project formats only).",
-        Summary                 = @"A class library that will generate code based on a schema representation in a simple object hierarchy (given by EzDbSchema) and handlebars template(s).",
-        ProjectUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core"),
-        //IconUrl                 = new Uri(""),
-        LicenseUrl              = new Uri(@"https://github.com/rvegajr/ez-db-codegen-core/blob/master/LICENSE"),
-        Copyright               = @"Noctusoft 2018-2019",
-        ReleaseNotes            = NuGetReleaseNotes,
-        Tags                    = new [] {"Code Generation", "Code Generator", "Database", "Schema" },
-        RequireLicenseAcceptance= false,
-        Symbols                 = false,
-        NoPackageAnalysis       = false,
-        OutputDirectory         = thisDir + "artifacts/",
-		Properties = new Dictionary<string, string>
-		{
-			{ @"Configuration", @"Release" }
-		},
-			//new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/readme.txt", Target = "content" },
-		Files = new[] {
-
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net461/EzDbCodeGen.Core.dll", Target = "lib/net461" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net461/EzDbCodeGen.Core.pdb", Target = "lib/net461" },
-
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net472/EzDbCodeGen.Core.dll", Target = "lib/net472" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net472/EzDbCodeGen.Core.pdb", Target = "lib/net472" },
-
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net48/EzDbCodeGen.Core.dll", Target = "lib/net48" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/net48/EzDbCodeGen.Core.pdb", Target = "lib/net48" },
-
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netstandard2.0/EzDbCodeGen.Core.dll", Target = "lib/netstandard2.0" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netstandard2.0/EzDbCodeGen.Core.pdb", Target = "lib/netstandard2.0" },
-
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.2/EzDbCodeGen.Core.dll", Target = "lib/netcoreapp2.0" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp2.2/EzDbCodeGen.Core.pdb", Target = "lib/netcoreapp2.0" },
-			
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp3.1/EzDbCodeGen.Core.dll", Target = "lib/netcoreapp3.1" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Core/bin/Release/netcoreapp3.1/EzDbCodeGen.Core.pdb", Target = "lib/netcoreapp3.1" },
-
-			new NuSpecContent { Source = thisDir + @"nuget/init.ps1", Target = "tools" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.ps1", Target = "tools" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/ezdbcodegen.config.json", Target = "payload/EzDbCodeGen" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/readme.txt", Target = "payload/readme.txt" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRender.hbs", Target = "payload/EzDbCodeGen/Templates" },
-			new NuSpecContent { Source = thisDir + @"Src/EzDbCodeGen.Cli/Templates/SchemaRenderAsFiles.hbs", Target = "payload/EzDbCodeGen/Templates" },
-			new NuSpecContent { Source = deployPath + @"publish/EzDbCodeGen.Cli/netcoreapp3.1/portable/**.*", Target = "payload/EzDbCodeGen/bin" }
-		},
-		ArgumentCustomization = args => args.Append("")		
-    };
-    NuGetPack(thisDir + "nuget/EzDbCodeGen.nuspec", nuGetPackSettings);
+	DotNetCorePack(solutionFile, new DotNetCorePackSettings
+	{
+		Configuration = configuration,
+		OutputDirectory = "./artifacts/"
+	});
 });
 
 //////////////////////////////////////////////////////////////////////

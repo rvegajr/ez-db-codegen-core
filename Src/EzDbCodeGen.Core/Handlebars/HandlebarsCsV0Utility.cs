@@ -28,7 +28,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var property = (IProperty)context;
+                    var property = (IProperty)context.Value;
                     var entity = property.Parent;
                     entityName = entity.Schema + "." + entity.Name;
                     var decimalAttribute = "";
@@ -79,7 +79,7 @@ namespace EzDbCodeGen.Core
                                 if (relGroupSummary.ToColumnName.Count > 1)
                                 {
                                     ColumnOrder = string.Format(", Column(Order = {0})", relGroupSummary.ToColumnProperties.Where(p => p.Name.Equals(property.Name)).Select(p => p.KeyOrder).FirstOrDefault());
-                                    fkAttributes += string.Format("[ForeignKey(\"{0}\"){1}]", (FieldName.Replace(" ", "") + Config.Configuration.Instance.Database.InverseFKTargetNameCollisionSuffix).Trim(), ColumnOrder);
+                                    fkAttributes += string.Format("[ForeignKey(\"{0}\"){1}]", (FieldName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix).Trim(), ColumnOrder);
                                 }
                             }
                             if (fkAttributes.Length > 0) break;
