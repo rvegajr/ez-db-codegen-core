@@ -69,6 +69,16 @@ Task("SetVersion")
 		System.IO.File.WriteAllText(thisDir + "Src/VersionInfo.cs", VersionData);
 		UpdateVersionInProjectFile(cliProjectFile, AssemblyVersionAttribute);
 		UpdateVersionInProjectFile(coreProjectFile, AssemblyVersionAttribute);
+		
+		//AssemblyVersionNumber = GetVersionSettingInProjectFile(cliProjectFile, "AssemblyVersion");
+		UpdateVersionSettingInProjectFile(cliProjectFile, AssemblyVersionAttribute, "AssemblyVersion");
+		//FileVersionNumber = GetVersionSettingInProjectFile(cliProjectFile, "FileVersion");
+		UpdateVersionSettingInProjectFile(cliProjectFile, AssemblyVersionAttribute, "FileVersion");
+
+		//AssemblyVersionNumber = GetVersionSettingInProjectFile(coreProjectFile, "AssemblyVersion");
+		UpdateVersionSettingInProjectFile(coreProjectFile, AssemblyVersionAttribute, "AssemblyVersion");
+		//FileVersionNumber = GetVersionSettingInProjectFile(coreProjectFile, "FileVersion");
+		UpdateVersionSettingInProjectFile(coreProjectFile, AssemblyVersionAttribute, "FileVersion");
 });
 
 Task("Restore-NuGet-Packages")
@@ -208,7 +218,33 @@ public bool UpdateVersionInProjectFile(string projectFileName, string NewVersion
 	System.IO.File.WriteAllText(projectFileName, newText);	
 	return true;
 }
-  
+
+public string GetVersionSettingInProjectFile(string projectFileName, string Name) {
+	var _VersionInfoText = System.IO.File.ReadAllText(projectFileName);
+	var _AssemblyFileVersionAttribute = Pluck(_VersionInfoText, "<"+Name+">", "</"+Name+">");
+	return _AssemblyFileVersionAttribute;
+}
+
+public bool UpdateVersionSettingInProjectFile(string projectFileName, string NewVersion, string Name)
+{
+Information("projectFileName : {0}", projectFileName);
+
+	var _VersionInfoText = System.IO.File.ReadAllText(projectFileName);
+	var _AssemblyFileVersionAttribute = Pluck(_VersionInfoText, "<"+Name+">", "</"+Name+">");
+//Information("_AssemblyFileVersionAttribute : {0}", _AssemblyFileVersionAttribute);
+	var VersionPattern = "<"+Name+">{0}</"+Name+">";
+//Information("VersionPattern : {0}", VersionPattern);
+	var _AssemblyFileVersionAttributeTextOld = string.Format(VersionPattern, _AssemblyFileVersionAttribute);
+//Information("_AssemblyFileVersionAttributeTextOld : {0}", _AssemblyFileVersionAttributeTextOld);
+	var _AssemblyFileVersionAttributeTextNew = string.Format(VersionPattern, NewVersion);
+//Information("_AssemblyFileVersionAttributeTextNew : {0}", _AssemblyFileVersionAttributeTextNew);
+	var newText = _VersionInfoText.Replace(_AssemblyFileVersionAttributeTextOld, _AssemblyFileVersionAttributeTextNew);
+//Information("newText : {0}", newText);
+
+	System.IO.File.WriteAllText(projectFileName, newText);	
+	return true;
+}
+ 
 private void DoPackage(string project, string framework, string NugetVersion, string runtimeId = null)
 {
     var publishedTo = System.IO.Path.Combine(publishDir, project, framework);

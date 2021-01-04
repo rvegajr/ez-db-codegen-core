@@ -329,7 +329,7 @@ namespace EzDbCodeGen.Core.Extentions.Strings
         /// <returns></returns>
         public static string ResolvePathVars(this string PathToResolve, string rootFolderName)
         {
-            if ((PathToResolve.Contains("{SOLUTION_PATH}")) || (PathToResolve.Contains("{ASSEMBLY_PATH}")))
+            if ((PathToResolve.Contains("{SOLUTION_PATH}")) || (PathToResolve.Contains("{ASSEMBLY_PATH}") || (PathToResolve.Contains("%THIS%"))))
             {
                 var AssemblyPath = AppContext.BaseDirectory;
                 AssemblyPath += (AssemblyPath.EndsWith(Path.DirectorySeparatorChar.ToString()) ? "" : Path.DirectorySeparatorChar.ToString());
@@ -346,7 +346,7 @@ namespace EzDbCodeGen.Core.Extentions.Strings
                     }
                     di = di.Parent;
                 }
-				PathToResolve = PathToResolve.Replace("{SOLUTION_PATH}", SolutionPath).Replace("{ASSEMBLY_PATH}", AssemblyPath);
+				PathToResolve = PathToResolve.Replace("{SOLUTION_PATH}", SolutionPath).Replace("{ASSEMBLY_PATH}", AssemblyPath).Replace("%THIS%", AssemblyPath);
             }
 
             return PathToResolve;

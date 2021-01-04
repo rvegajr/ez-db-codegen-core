@@ -17,7 +17,7 @@
     <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\WebApiControllersTemplate.hbs" Link="EzDbCodeGen\Templates\WebApiControllersTemplate.hbs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="EzDbSchema" Version="1.1.4" />
+    <PackageReference Update="EzDbSchema" Version="1.1.8" />
     <PackageReference Update="Handlebars.Net" Version="2.0.3" />
     <PackageReference Update="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Update="System.Json" Version="4.7.1" />

@@ -1,33 +1,14 @@
 $confirmation = Read-Host "WARNING: This will possibly cause your project to reload as it may change your project file (caused by adding/removing files from path.. this is due to the possibility of project files bieng in older formats)\nIf you are unsure, save all your documents first before pressing 'y' and hitting enter:"
 if ($confirmation -eq 'y') {
 	$ConnectionString = 'Server=localhost;Database=WideWorldImportersDW;user id=sa;password=sa'
-	$path = [System.IO.Path]
 
-	$DllName = 'EzDbCodeGen.Cli.dll'
-	$BinPath = Join-Path $PSScriptRoot "appbin"
 	$TemplatePath = Join-Path $PSScriptRoot "Templates"
 	$ConfigFileName = Join-Path $PSScriptRoot "ezdbcodegen.config.json"
 
-	$dllLocation = (Get-ChildItem -Path $BinPath -Filter $DllName -Recurse -ErrorAction SilentlyContinue -Force).FullName
-	If (-NOT( $dllLocation ) ) {
-		$ErrorMessage = "Cli Application dll [" + $DllName + "] could not be found :(  Have you compiled the application yet?."
-		Write-Error -Message $ErrorMessage -ErrorAction Stop
-	}
-	foreach ($dll in $dllLocation)
-	{
-		$DllPath = Join-Path $path::GetDirectoryName($dll) ""
-		break
-	}
-
-	$folder = Get-ChildItem $DllPath -Directory -ErrorAction SilentlyContinue
-	If (-NOT( $Folder ) ) {
-		$ErrorMessage = "Cli Application dll [" + $DllPath + "] does not exist :(  Have you compiled the application yet?."
-		Write-Error -Message $ErrorMessage -ErrorAction Stop
-	}
-	Write-Output '       DllPath=' $DllPath
 	Write-Output 'ConfigFileName=' $ConfigFileName
+	Write-Output '  TemplatePath=' $TemplatePath
 
-	$FullCallArguments = 'dotnet ' + $DllName + ' -t "' + $TemplatePath + '" -sc "' + $ConnectionString + '" -cf "' + $ConfigFileName + '" -v ; pause'
+	$FullCallArguments = 'dotnet ezdbcg -t "' + $TemplatePath + '" -sc "' + $ConnectionString + '" -cf "' + $ConfigFileName + '" -v ; pause'
 	<# We have to double escape the string so the powershell invoke Start-Process arguements are properly escaped #>
-	Start-Process "powershell" -WorkingDirectory $DllPath -wait -ArgumentList $FullCallArguments.Replace('"','""').Replace('"','""')
+	Start-Process "powershell" -WorkingDirectory $PSScriptRoot -wait -ArgumentList $FullCallArguments.Replace('"','""').Replace('"','""')
 }
