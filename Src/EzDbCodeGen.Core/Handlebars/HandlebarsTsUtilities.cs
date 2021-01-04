@@ -21,7 +21,7 @@ namespace EzDbCodeGen.Core
         public static void RegisterHelpers()
         {
             Handlebars.RegisterHelper("AsTSContructorProperty", (writer, context, parameters) => {
-                var property = (Property)context;
+                var property = (Property)context.Value;
                 var prefix = parameters.AsString(0);
                 if (property.Type.ToJsType(false) == "Date")
                 {
@@ -38,7 +38,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
                     var entityName = entity.Name;
 
                     List<string> PreviousManyToOneFields = new List<string>();
@@ -83,7 +83,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-					var entity = (Entity)context;
+					var entity = (Entity)context.Value;
                     var entityName = entity.Name;
 
                     List<string> PreviousManyToOneFields = new List<string>();
@@ -129,7 +129,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
                     var entityName = entity.Name;
 
                     List<string> PreviousFieldCheck = new List<string>();
@@ -182,7 +182,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
                     var entityName = entity.Name;
 
                     List<string> PreviousManyToOneFields = new List<string>();
@@ -233,7 +233,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
                     var entityName = entity.Name;
 
                     var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);

@@ -51,23 +51,23 @@ namespace EzDbCodeGen.Core
 
                     if (contextObject.GetType().Name == "Relationship")
                     {
-                        relationship = ((IRelationship)context);
+                        relationship = ((IRelationship)context.Value);
                         entity = relationship.Parent;
-                        json = JsonConvert.SerializeObject((IRelationship)context, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
+                        json = JsonConvert.SerializeObject((IRelationship)context.Value, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
                                 {PreserveReferencesHandling = PreserveReferencesHandling.All});
                     }
                     else if (contextObject.GetType().Name == "Entity")
                     {
-                        entity = ((IEntity)context);
+                        entity = ((IEntity)context.Value);
                         json = JsonConvert.SerializeObject(entity, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
                         { PreserveReferencesHandling = PreserveReferencesHandling.All });
                     }
                     else if (contextObject.GetType().Name == "RelationshipList")
                     {
-                        relationshipList = ((IRelationshipList)context);
+                        relationshipList = ((IRelationshipList)context.Value);
                         relationshipListSummary = relationshipList.AsSummary();
                         entity = relationshipListSummary.Entity;
-                        json = JsonConvert.SerializeObject((IRelationshipList)context, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
+                        json = JsonConvert.SerializeObject((IRelationshipList)context.Value, Newtonsoft.Json.Formatting.Indented, new JsonSerializerSettings
                                 { PreserveReferencesHandling = PreserveReferencesHandling.All});
                     }
                     else
@@ -131,7 +131,7 @@ namespace EzDbCodeGen.Core
                 }
             });
             Handlebars.RegisterHelper("ToNetType", (writer, context, parameters) => {
-                var property = (IProperty)context;
+                var property = (IProperty)context.Value;
                 var isNullable = ((parameters.Count() >= 2) && (parameters[1].AsBoolean() != false)) || (property.IsNullable);
                 if (parameters.Count() >= 1)
                 {
@@ -153,7 +153,7 @@ namespace EzDbCodeGen.Core
                 }
             });
             Handlebars.RegisterHelper("ToJsType", (writer, context, parameters) => {
-				var property = (IProperty)context;
+				var property = (IProperty)context.Value;
                 var isNullable = ((parameters.Count() >= 2) && (parameters[1].AsBoolean() != false)) || (property.IsNullable);
                 if (parameters.Count() >= 1)
                 {
@@ -238,7 +238,7 @@ namespace EzDbCodeGen.Core
             });
 
             Handlebars.RegisterHelper("EntityCustomAttribute", (writer, context, parameters) => {
-                var entity = (IEntity)context;
+                var entity = (IEntity)context.Value;
                 var entityName = entity.Name;
                 var customAttributeToFind = parameters[0].ToSafeString();
                 if ((parameters.Count() >= 1) && (entity.CustomAttributes.ContainsKey(customAttributeToFind)))
@@ -262,16 +262,16 @@ namespace EzDbCodeGen.Core
                     return;
                 }
                 var PropertyToSearch = arguments.AsString(0);
-				var entity = (IEntity)context;
+				var entity = (IEntity)context.Value;
                 var entityName = entity.Name;
 
                 if (entity.Properties.ContainsKey(PropertyToSearch))
                 {
-                    options.Template(writer, (object)context);
+                    options.Template(writer, (object)context.Value);
                 }
                 else
                 {
-                    options.Inverse(writer, (object)context);
+                    options.Inverse(writer, (object)context.Value);
                 }
 
 
@@ -288,7 +288,7 @@ namespace EzDbCodeGen.Core
                     ErrorList.Add("args[1] is undefined. ");
 
                 var val2 = arguments.AsString(1).AsInt(0);
-				var entity = (IEntity)context;
+				var entity = (IEntity)context.Value;
                 var entityName = entity.Name;
 
                 var val1 = entity.Relationships.Count();
@@ -296,29 +296,29 @@ namespace EzDbCodeGen.Core
                 {
                     case ">":
                         if (val1 > val2)
-                            options.Template(writer, (object)context);
+                            options.Template(writer, (object)context.Value);
                         else
-                            options.Inverse(writer, (object)context);
+                            options.Inverse(writer, (object)context.Value);
                         break;
                     case "=":
                     case "==":
                         if (val1.Equals(val2))
-                            options.Template(writer, (object)context);
+                            options.Template(writer, (object)context.Value);
                         else
-                            options.Inverse(writer, (object)context);
+                            options.Inverse(writer, (object)context.Value);
                         break;
                     case "<":
                         if (val1 < val2)
-                            options.Template(writer, (object)context);
+                            options.Template(writer, (object)context.Value);
                         else
-                            options.Inverse(writer, (object)context);
+                            options.Inverse(writer, (object)context.Value);
                         break;
                     case "!=":
                     case "<>":
                         if (!val1.Equals(val2))
-                            options.Template(writer, (object)context);
+                            options.Template(writer, (object)context.Value);
                         else
-                            options.Inverse(writer, (object)context);
+                            options.Inverse(writer, (object)context.Value);
                         break;
                     default:
                        ErrorList.Add(string.Format("Operand of {0} is unknown.", arguments.AsString(0)));
@@ -338,11 +338,11 @@ namespace EzDbCodeGen.Core
 
                 var relationshipType = arguments.AsString(0);
                 var multiplicityType = RelationshipMultiplicityType.Unknown;
-                var contextObject = (Object)context;
+                var contextObject = (Object)context.Value;
                 if (contextObject.GetType().Name=="Relationship")
-                    multiplicityType = ((IRelationship)context).MultiplicityType;
+                    multiplicityType = ((IRelationship)context.Value).MultiplicityType;
                 else if (contextObject.GetType().Name == "RelationshipList")
-                    multiplicityType = ((IRelationshipList)context).AsSummary().MultiplicityType;
+                    multiplicityType = ((IRelationshipList)context.Value).AsSummary().MultiplicityType;
 
                 var isType = false;
                 if (relationshipType.ToLower().Equals("onetoone")) isType = (multiplicityType == RelationshipMultiplicityType.OneToOne);
@@ -362,9 +362,9 @@ namespace EzDbCodeGen.Core
                 if (relationshipType.ToLower().Equals("onetozerooroneonly")) isType = (multiplicityType == RelationshipMultiplicityType.OneToZeroOrOne);
 
                 if (isType)
-                    options.Template(writer, (object)context);
+                    options.Template(writer, (object)context.Value);
                 else
-                    options.Inverse(writer, (object)context);
+                    options.Inverse(writer, (object)context.Value);
 
                 if (ErrorList.Count > 0) writer.Write(string.Format("{0} Errors: {1}", PROC_NAME, string.Join("", ErrorList.ToList())));
             });
@@ -374,17 +374,17 @@ namespace EzDbCodeGen.Core
             Handlebars.RegisterHelper("ToTargetEntityAlias", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('ToTargetEntityAlias')";
                 var ErrorList = new List<string>();
-                var contextObject = (Object)context;
+                var contextObject = (Object)context.Value;
 
                 if (contextObject.GetType().Name == "Relationship")
                 {
-                    var relationship = ((IRelationship)context);
+                    var relationship = ((IRelationship)context.Value);
                     writer.WriteSafeString(relationship.Parent.Parent.Entities[relationship.ToTableName].Alias);
 
                 }
                 else if (contextObject.GetType().Name == "RelationshipList")
                 {
-                    var relationshipListSummary = ((IRelationshipList)context).AsSummary();
+                    var relationshipListSummary = ((IRelationshipList)context.Value).AsSummary();
                     writer.WriteSafeString(relationshipListSummary.Entity.Parent.Entities[relationshipListSummary.ToTableName].Alias);
                 }
                 else
@@ -400,10 +400,10 @@ namespace EzDbCodeGen.Core
                 var isPlural = ((parameters.Count() >= 1) && (parameters[0].ToString().ToLower().Equals("plural")));
                 if (parameters.Count() >= 1)
                 {
-                    var contextObject = (Object)context;
+                    var contextObject = (Object)context.Value;
                     if (contextObject.GetType().Name == "Relationship")
                     {
-                        var relationship = ((IRelationship)context);
+                        var relationship = ((IRelationship)context.Value);
                         if (isPlural)
                             writer.WriteSafeString(relationship.ToUniqueColumnName().ToPlural());
                         else
@@ -411,7 +411,7 @@ namespace EzDbCodeGen.Core
                     }
                     else if (contextObject.GetType().Name == "RelationshipList")
                     {
-                        var relationshipListSummary = ((IRelationshipList)context).AsSummary();
+                        var relationshipListSummary = ((IRelationshipList)context.Value).AsSummary();
                         if (isPlural)
                             writer.WriteSafeString(relationshipListSummary.ToUniqueColumnName().ToPlural());
                         else
@@ -427,7 +427,7 @@ namespace EzDbCodeGen.Core
             Handlebars.RegisterHelper("ifPropertyCustomAttributeCond", (writer, options, context, arguments) =>
             {
                 var PROC_NAME = "Handlebars.RegisterHelper('ifPropertyCustomAttributeCond')";
-                var property = (IProperty)context;
+                var property = (IProperty)context.Value;
                 var CustomAttributeName = arguments.AsString(0);
 
                 var ErrorList = new List<string>();
@@ -449,29 +449,29 @@ namespace EzDbCodeGen.Core
                 {
                     case ">":
                         if (val1.Length > val2.Length)
-                            options.Template(writer, (object)context);
+                            options.Template(writer, (object)context.Value);
                         else
-                            options.Inverse(writer, (object)context);
+                            options.Inverse(writer, (object)context.Value);
                         break;
                     case "=":
                     case "==":
                         if (val1.Equals(val2))
-                            options.Template(writer, (object)context);
+                            options.Template(writer, (object)context.Value);
                         else
-                            options.Inverse(writer, (object)context);
+                            options.Inverse(writer, (object)context.Value);
                         break;
                     case "<":
                         if (val1.Length < val2.Length)
-                            options.Template(writer, (object)context);
+                            options.Template(writer, (object)context.Value);
                         else
-                            options.Inverse(writer, (object)context);
+                            options.Inverse(writer, (object)context.Value);
                         break;
                     case "!=":
                     case "<>":
                         if (!val1.Equals(val2))
-                            options.Template(writer, (object)context);
+                            options.Template(writer, (object)context.Value);
                         else
-                            options.Inverse(writer, (object)context);
+                            options.Inverse(writer, (object)context.Value);
                         break;
                     default:
                         ErrorList.Add(string.Format("Operand of {0} is unknown.", arguments.AsString(1)));
@@ -504,13 +504,13 @@ namespace EzDbCodeGen.Core
                     i++;
                 }
                 if (listToCheck.Contains(val1))
-                    options.Inverse(writer, (object)context);
+                    options.Inverse(writer, (object)context.Value);
                 else
-                    options.Template(writer, (object)context);
+                    options.Template(writer, (object)context.Value);
                 if (ErrorList.Count > 0) writer.Write(string.Format("{0} Errors: {1}", PROC_NAME, string.Join("", ErrorList.ToList())));
 
             });
-            Handlebars.RegisterHelper("ifNot", (TextWriter writer, HelperOptions options, dynamic context, object[] arguments) =>
+            Handlebars.RegisterHelper("ifNot", (writer, options, context, arguments) =>
             {
                 if (arguments[0] == null || arguments[0].GetType().Name == "UndefinedBindingResult")
                 {
@@ -519,16 +519,16 @@ namespace EzDbCodeGen.Core
                 }
                 if (!arguments[0].AsBoolean())
                 {
-                    options.Template(writer, (object)context);
+                    options.Template(writer, (object)context.Value);
                 }
                 else
                 {
-                    options.Inverse(writer, (object)context);
+                    options.Inverse(writer, (object)context.Value);
                 }
 
             });
 
-            Handlebars.RegisterHelper("ifCond", (TextWriter writer, HelperOptions options, dynamic context, object[] arguments) =>
+            Handlebars.RegisterHelper("ifCond", (writer, options, context, arguments) =>
             {
                 if (arguments[0] == null || arguments[0].GetType().Name == "UndefinedBindingResult")
                 {
@@ -558,43 +558,43 @@ namespace EzDbCodeGen.Core
                             case ">":
                                 if (val1.Length > val2.Length)
                                 {
-                                    options.Template(writer, (object)context);
+                                    options.Template(writer, (object)context.Value);
                                 }
                                 else
                                 {
-                                    options.Inverse(writer, (object)context);
+                                    options.Inverse(writer, (object)context.Value);
                                 }
                                 break;
                             case "=":
                             case "==":
                                 if (val1 == val2)
                                 {
-                                    options.Template(writer, (object)context);
+                                    options.Template(writer, (object)context.Value);
                                 }
                                 else
                                 {
-                                    options.Inverse(writer, (object)context);
+                                    options.Inverse(writer, (object)context.Value);
                                 }
                                 break;
                             case "<":
                                 if (val1.Length < val2.Length)
                                 {
-                                    options.Template(writer, (object)context);
+                                    options.Template(writer, (object)context.Value);
                                 }
                                 else
                                 {
-                                    options.Inverse(writer, (object)context);
+                                    options.Inverse(writer, (object)context.Value);
                                 }
                                 break;
                             case "!=":
                             case "<>":
                                 if (val1 != val2)
                                 {
-                                    options.Template(writer, (object)context);
+                                    options.Template(writer, (object)context.Value);
                                 }
                                 else
                                 {
-                                    options.Inverse(writer, (object)context);
+                                    options.Inverse(writer, (object)context.Value);
                                 }
                                 break;
                         }
@@ -609,43 +609,43 @@ namespace EzDbCodeGen.Core
                             case ">":
                                 if (val1 > val2)
                                 {
-                                    options.Template(writer, (object)context);
+                                    options.Template(writer, (object)context.Value);
                                 }
                                 else
                                 {
-                                    options.Inverse(writer, (object)context);
+                                    options.Inverse(writer, (object)context.Value);
                                 }
                                 break;
                             case "=":
                             case "==":
                                 if (val1.Equals(val2))
                                 {
-                                    options.Template(writer, (object)context);
+                                    options.Template(writer, (object)context.Value);
                                 }
                                 else
                                 {
-                                    options.Inverse(writer, (object)context);
+                                    options.Inverse(writer, (object)context.Value);
                                 }
                                 break;
                             case "<":
                                 if (val1 < val2)
                                 {
-                                    options.Template(writer, (object)context);
+                                    options.Template(writer, (object)context.Value);
                                 }
                                 else
                                 {
-                                    options.Inverse(writer, (object)context);
+                                    options.Inverse(writer, (object)context.Value);
                                 }
                                 break;
                             case "!=":
                             case "<>":
                                 if (!val1.Equals(val2))
                                 {
-                                    options.Template(writer, (object)context);
+                                    options.Template(writer, (object)context.Value);
                                 }
                                 else
                                 {
-                                    options.Inverse(writer, (object)context);
+                                    options.Inverse(writer, (object)context.Value);
                                 }
                                 break;
                         }
@@ -655,11 +655,11 @@ namespace EzDbCodeGen.Core
                 {
                     if (arguments[0].AsBoolean())
                     {
-                        options.Template(writer, (object)context);
+                        options.Template(writer, (object)context.Value);
                     }
                     else
                     {
-                        options.Inverse(writer, (object)context);
+                        options.Inverse(writer, (object)context.Value);
                     }
                 }
                 else
@@ -674,13 +674,13 @@ namespace EzDbCodeGen.Core
                 var ErrorList = new List<string>();
                 try
                 {
-                    var p = (IProperty)context;
+                    var p = (IProperty)context.Value;
                     var entityName = p.Parent.Name;
 
                     if ((p.Parent.IsAuditable()) && (p.Parent.isAuditablePropertyName(p.Name)))
-                        options.Inverse(writer, (object)context);
+                        options.Inverse(writer, (object)context.Value);
                     else
-                        options.Template(writer, (object)context);
+                        options.Template(writer, (object)context.Value);
                 }
                 catch (Exception ex)
                 {
@@ -697,11 +697,11 @@ namespace EzDbCodeGen.Core
                 var ErrorList = new List<string>();
                 try
                 {
-                    var e = (IEntity)context;
+                    var e = (IEntity)context.Value;
                     if (e.IsAuditable())
-                        options.Template(writer, (object)context);
+                        options.Template(writer, (object)context.Value);
                     else
-                        options.Inverse(writer, (object)context);
+                        options.Inverse(writer, (object)context.Value);
                 }
                 catch (Exception ex)
                 {
@@ -724,12 +724,12 @@ namespace EzDbCodeGen.Core
 
                     if (contextObject.GetType().Name == "Property")
                     {
-                        property = ((IProperty)context);
+                        property = ((IProperty)context.Value);
                         if ((property.CustomAttributes != null) && (property.CustomAttributes.ContainsKey("IsIgnored"))) IsIgnored = property.CustomAttributes["IsIgnored"].AsBoolean();
                     }
                     else if (contextObject.GetType().Name == "Entity")
                     {
-                        entity = ((IEntity)context);
+                        entity = ((IEntity)context.Value);
                         if ((entity.CustomAttributes != null) && entity.CustomAttributes.ContainsKey("IsIgnored")) IsIgnored = entity.CustomAttributes["IsIgnored"].AsBoolean();
                     } 
                     else
@@ -738,9 +738,9 @@ namespace EzDbCodeGen.Core
                     }
 
                     if (!IsIgnored)
-                        options.Template(writer, (object)context);
+                        options.Template(writer, (object)context.Value);
                     else
-                        options.Inverse(writer, (object)context);
+                        options.Inverse(writer, (object)context.Value);
                 }
                 catch (Exception ex)
                 {
