@@ -67,7 +67,7 @@ namespace EzDbCodeGen.Core
         ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string OutputPath);
     }
 
-    internal class TemplateInputDirectObject : ITemplateInput
+    public class TemplateInputDirectObject : ITemplateInput
     {
         public string SchemaName { get; set; }
         public bool VerboseMessages { get; set; } = true;
@@ -112,7 +112,7 @@ namespace EzDbCodeGen.Core
         }
     }
 
-    internal class TemplateInputFileSource : ITemplateInput
+    public class TemplateInputFileSource : ITemplateInput
     {
         public string SchemaName { get; set; }
         public bool VerboseMessages { get; set; } = true;
