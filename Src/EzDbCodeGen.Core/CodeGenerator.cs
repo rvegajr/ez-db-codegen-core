@@ -4,9 +4,8 @@ namespace EzDbCodeGen.Core
 {
     public class CodeGenerator : CodeGenBase, ITemplateRenderer
     {
-        public CodeGenerator(string configurationFileName) : base()
+        public CodeGenerator() : base()
         {
-            this.ConfigurationFileName = configurationFileName;
         }
     }
 }

@@ -28,7 +28,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var property = (IProperty)context;
+                    var property = (IProperty)context.Value;
                     var entity = property.Parent;
                     entityName = entity.Schema + "." + entity.Name;
                     var decimalAttribute = "";
@@ -36,9 +36,9 @@ namespace EzDbCodeGen.Core
                     var fkAttributes = "";
                     var identityAttribute = "";
 
-                    if ((entityName.Contains("dbo.WellStickSurveys")) && (property.Name.Contains("AreaTypeId")))
+                    if ((entityName.Contains("dbo.AreaTargetFormations")) && (property.Name.Contains("AreaTypeId")))
                         entityName = (entityName + " ").Trim();
-                    if (entityName.Equals("dbo.Scenarios")) //&& (property.Name.Contains("")))
+                    if (entityName.Contains("dbo.Scenarios")) //&& (property.Name.Contains("")))
                         entityName = (entityName + " ").Trim();
                     if (property.Type == "decimal")
                     {
@@ -58,34 +58,46 @@ namespace EzDbCodeGen.Core
                         {
                             keyAttribute = "[Key" + identityAttribute + "]";
                         }
-
-                        foreach (var fkRelatedTo in property.RelatedTo)
+                    }
+                    if (property.RelatedTo.Count > 0)
+                    {
+                        foreach (var FKKeyValue in property.RelatedTo.GroupByFKName())
                         {
-                            var oneToOneCount = property.RelatedTo.Where(r => r.MultiplicityType == RelationshipMultiplicityType.OneToOne).Count();
-                            var toProperty = ((EzDbSchema.Core.Objects.Relationship)fkRelatedTo).ToProperty;
-                            if ((fkRelatedTo.MultiplicityType == RelationshipMultiplicityType.OneToOne) && (toProperty.IsKey) && (oneToOneCount==1))
+                            if (FKKeyValue.Key.Equals("FK_FracFleets_FracFleets"))
+                                entityName = (entityName + " ").Trim();
+                            var relGroupSummary = entity.RelationshipGroups[FKKeyValue.Key].AsSummary();
+                            int SameTableCount = 0;
+                            foreach (var rg in entity.RelationshipGroups.Values)
+                                if (rg.AsSummary().ToTableName.Equals(relGroupSummary.ToTableName)) SameTableCount++;
+
+                            var FieldName = entity.GenerateObjectName(FKKeyValue.Key, ObjectNameGeneratedFrom.JoinFromColumnName);
+                            //We only will write the ForeignKey if we compound FKs or multiple columns with references to the same table
+                            //if ((SameTableCount>1) || (relGroupSummary.ToColumnName.Count>1))
+                            if (((relGroupSummary.ToColumnName.Count > 1) && (!relGroupSummary.FromTableName.Equals(relGroupSummary.ToTableName))) || (relGroupSummary.MultiplicityType == RelationshipMultiplicityType.OneToOne) || (relGroupSummary.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToOne))
                             {
-                                //var toFieldName = (fkRelatedTo.ToColumnName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix).Trim();
-                                string FKToObjectName = entity.GenerateObjectName(fkRelatedTo.Name, ObjectNameGeneratedFrom.JoinFromColumnName);
-                                //if ((toFieldName.Equals(entity.Alias)) || (!entity.Properties.ContainsKey(toFieldName))) toFieldName = fkRelatedTo.EndAsObjectPropertyName();
-                                fkAttributes += "[ForeignKey(\"" + FKToObjectName + "\")]";
+                                var ColumnOrder = "";
+                                if (relGroupSummary.ToColumnName.Count > 1)
+                                {
+                                    ColumnOrder = string.Format(", Column(Order = {0})", relGroupSummary.ToColumnProperties.Where(p => p.Name.Equals(property.Name)).Select(p => p.KeyOrder).FirstOrDefault());
+                                    fkAttributes += string.Format("[ForeignKey(\"{0}\"){1}]", (FieldName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix).Trim(), ColumnOrder);
+                                }
                             }
+                            if (fkAttributes.Length > 0) break;
+
                         }
                     }
 
-                    var OutputAttributeString = new StringBuilder();
-                    if (keyAttribute.Length > 0) OutputAttributeString.Append(keyAttribute);
-                    if (fkAttributes.Length > 0) OutputAttributeString.Append(fkAttributes);
-                    if (property.Get("Computed", false)) OutputAttributeString.Append("[DatabaseGenerated(DatabaseGeneratedOption.Computed)]");
-                    if (property.Get("NotMapped", false)) OutputAttributeString.Append("[NotMapped]");
-                    if (decimalAttribute.Length > 0) OutputAttributeString.Append(decimalAttribute);
-                    if (OutputAttributeString.Length > 0) writer.WriteSafeString(prefix + OutputAttributeString.ToString() + @"" + prefix);
+                    if (keyAttribute.Length > 0) writer.WriteSafeString(keyAttribute);
+                    if (fkAttributes.Length > 0) writer.WriteSafeString(fkAttributes);
+                    if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime")) writer.WriteSafeString("[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
+                    if (decimalAttribute.Length > 0) writer.WriteSafeString(decimalAttribute);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message + " in entity " + entityName);
+                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
+
             });
 
             Handlebars.RegisterHelper("POCOModelFKConstructorInitV0", (writer, context, parameters) => {
@@ -93,7 +105,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
                     var PreviousOneToManyFields = new List<string>();
 
                     var FKToUse = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany).Select(s => s.Name).ToList();
@@ -127,7 +139,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
                     List<string> PreviousOneToManyFields = new List<string>();
                     PreviousOneToManyFields.Clear();
 
@@ -184,7 +196,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
                     var entityName = entity.Schema + "." + entity.Name;
 
                     List<string> PreviousManyToOneFields = new List<string>();
@@ -231,7 +243,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
                     var entityName = entity.Schema + "." + entity.Name;
 
                     var PreviousOneToOneFields = new List<string>();
@@ -276,10 +288,11 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
                     var entityName = entity.Schema + "." + entity.Name;
 
-                    if (entityName.Equals("dbo.Area"))
+
+                    if (entityName.Equals("dbo.Areas"))
                     {
                         entityName = (entityName + " ").Trim();
                     }
@@ -370,7 +383,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
                     var entityName = entity.Schema + "." + entity.Name;
 
                     var PreviousManyToOneFields = new List<string>();

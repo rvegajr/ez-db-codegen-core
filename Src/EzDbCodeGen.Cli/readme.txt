@@ -1,7 +1,5 @@
 Hi! Thanks for installing EzDbCodeGen!
 
-This app uses dotnet core 3.1,  please make sure this is installed where you are running this application 
-
 Lets assume this app is called "SuperApp"
 
 *** WHAT YOU NEED TO DO
@@ -10,7 +8,7 @@ What you will need to do is change the connection string:
 
 2. Start powershell and navigate to the path the script is located in, this should be 
 Navigate to %PSPATH%
-execute it by typing ./NugetCommandTest.codegen.ps1
+execute it by typing ./SuperApp.codegen.ps1
 
 When you make updates to the nuget package,  the script will backup existing ezdbcodegen config and ps1 files to %TEMP% path (open cmd and type echo %TEMP%), 
 but will ignore project specific config and script files.
@@ -33,7 +31,6 @@ of important files. For example, lets say your app is called 'SuperApp', the scr
 4. Rename 'ezdbcodegen.config.json' to 'SuperApp.config.json'
 
 5. Rename 'ezdbcodegen.ps1' to 'SuperApp.codegen.ps1'
-
 
 Visit the project at https://github.com/rvegajr/ez-db-codegen-core!
 Email me directly at ez@noctusoft.com!

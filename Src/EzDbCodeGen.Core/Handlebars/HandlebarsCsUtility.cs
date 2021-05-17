@@ -23,7 +23,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var property = (IProperty)context;
+                    var property = (IProperty)context.Value;
                     var entity = property.Parent;
                     var database = entity.Parent;
                     var entityName = entity.Name;
@@ -124,10 +124,10 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    if (((Object)context).GetType().Name == "Property")
-                        writer.WriteSafeString(((IProperty)context).AsObjectPropertyName());
+                    if (((Object)context.Value).GetType().Name == "Property")
+                        writer.WriteSafeString(((IProperty)context.Value).AsObjectPropertyName());
                     else
-                        throw new Exception(string.Format("Context cannot be of type {0}.", ((Object)context).GetType().Name));
+                        throw new Exception(string.Format("Context cannot be of type {0}.", ((Object)context.Value).GetType().Name));
                 }
                 catch (Exception ex)
                 {
@@ -142,7 +142,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
                     if (entity.Name.Contains("Relationship"))
                     {
                         entity.Name += "";
@@ -178,7 +178,7 @@ namespace EzDbCodeGen.Core
             });
 
             Handlebars.RegisterHelper("POCOModelFKProperties", (writer, context, parameters) => {
-                var entity = (IEntity)context;
+                var entity = (IEntity)context.Value;
                 var PROC_NAME = string.Format("Handlebars.RegisterHelper('POCOModelFKProperties', Entity='{0}')", entity.Name);
 
                 try
@@ -234,12 +234,12 @@ namespace EzDbCodeGen.Core
                     var fieldName = parameters.AsString(0);
 
                     var stringModInstructions = parameters.AsString(1);
-                    var contextObject = (Object)context;
+                    var contextObject = (Object)context.Value;
                     IRelationshipList relationshipList = null;
                     IDatabase database = null;
                     if (contextObject.GetType().Name == "RelationshipList")
                     {
-                        relationshipList = ((IRelationshipList)context);
+                        relationshipList = ((IRelationshipList)context.Value);
                         database = relationshipList.FirstOrDefault().Parent.Parent;
                     }
                     else
@@ -285,14 +285,14 @@ namespace EzDbCodeGen.Core
                 var PROC_NAME = "Handlebars.RegisterHelper('POCOModelFKManyToZeroToOne')";
                 try
                 {
-                    var contextObject = (Object)context;
+                    var contextObject = (Object)context.Value;
                     IEntity entity = null;
                     if (contextObject.GetType().Name == "Relationship")
-                        entity = ((IRelationship)context).Parent;
+                        entity = ((IRelationship)context.Value).Parent;
                     else if (contextObject.GetType().Name == "RelationshipList")
-                        entity = ((IRelationshipList)context).FirstOrDefault().Parent;
+                        entity = ((IRelationshipList)context.Value).FirstOrDefault().Parent;
                     else if (contextObject.GetType().Name == "Entity")
-                        entity = ((IEntity)context);
+                        entity = ((IEntity)context.Value);
 
                     var entityName = entity.Name;
 
@@ -377,14 +377,14 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var contextObject = (Object)context;
+                    var contextObject = (Object)context.Value;
                     IEntity entity = null;
                     if (contextObject.GetType().Name == "Relationship")
-                        entity = ((IRelationship)context).Parent;
+                        entity = ((IRelationship)context.Value).Parent;
                     else if (contextObject.GetType().Name == "RelationshipList")
-                        entity = ((IRelationshipList)context).FirstOrDefault().Parent;
+                        entity = ((IRelationshipList)context.Value).FirstOrDefault().Parent;
                     else if (contextObject.GetType().Name == "Entity")
-                        entity = ((IEntity)context);
+                        entity = ((IEntity)context.Value);
 
                     var entityName = entity.Name;
                     var fkNametoSelect = "";
@@ -454,7 +454,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var prefix = parameters.AsString(0);
-                    var entity = (IEntity)context;
+                    var entity = (IEntity)context.Value;
 
                     foreach (var relationshipGroupKV in entity.RelationshipGroups)
                     {
@@ -479,7 +479,7 @@ namespace EzDbCodeGen.Core
                 var PROC_NAME = "Handlebars.RegisterHelper('EntityPrimaryKeysAsParmString')";
                 try
                 {
-                    writer.WriteSafeString(((IEntity)context).PrimaryKeys.AsParmString().Trim());
+                    writer.WriteSafeString(((IEntity)context.Value).PrimaryKeys.AsParmString().Trim());
                 }
                 catch (Exception ex)
                 {
@@ -493,7 +493,7 @@ namespace EzDbCodeGen.Core
                 try
                 {
                     var outputText = parameters.AsString(0);
-                    writer.WriteSafeString(((IEntity)context).IsAuditable() ? outputText : "");
+                    writer.WriteSafeString(((IEntity)context.Value).IsAuditable() ? outputText : "");
                 }
                 catch (Exception ex)
                 {
@@ -509,13 +509,13 @@ namespace EzDbCodeGen.Core
                 {
                     var prefix = parameters.AsString(0);
                     var prefixSetter = ((parameters.Count() > 1) ? parameters.AsString(1) : "");
-                    var entityName = ((IEntity)context).Name;
+                    var entityName = ((IEntity)context.Value).Name;
                     if (entityName.Contains("ZipCode"))
                     {
                         entityName += "  ";
                         entityName = entityName.Trim();
                     }
-                    writer.WriteSafeString(((IEntity)context).PrimaryKeys.AsLinqEquationString(prefix, " && ", "==", prefixSetter).Trim());
+                    writer.WriteSafeString(((IEntity)context.Value).PrimaryKeys.AsLinqEquationString(prefix, " && ", "==", prefixSetter).Trim());
                 }
                 catch (Exception ex)
                 {
@@ -528,7 +528,7 @@ namespace EzDbCodeGen.Core
                 var PROC_NAME = "Handlebars.RegisterHelper('EntityPrimaryKeysAsODataRouteString')";
                 try
                 {
-                    writer.WriteSafeString(((IEntity)context).PrimaryKeys.AsODataRouteString().Trim());
+                    writer.WriteSafeString(((IEntity)context.Value).PrimaryKeys.AsODataRouteString().Trim());
                 }
                 catch (Exception ex)
                 {
@@ -548,7 +548,7 @@ namespace EzDbCodeGen.Core
                         useObjectPropertyName = parameters.AsString(1).StartsWith("O");
                     }
 
-                    writer.WriteSafeString(((IEntity)context).PrimaryKeys.AsCsvString(prefix, useObjectPropertyName).Trim());
+                    writer.WriteSafeString(((IEntity)context.Value).PrimaryKeys.AsCsvString(prefix, useObjectPropertyName).Trim());
                 }
                 catch (Exception ex)
                 {
@@ -564,7 +564,7 @@ namespace EzDbCodeGen.Core
                     var Op = parameters.AsString(1);
                     if (Op.Length == 0) Op = "==";
 
-                    writer.WriteSafeString(((IEntity)context).PrimaryKeys.AsParmBooleanCheck(prefix, Op).Trim());
+                    writer.WriteSafeString(((IEntity)context.Value).PrimaryKeys.AsParmBooleanCheck(prefix, Op).Trim());
                 }
                 catch (Exception ex)
                 {
@@ -581,7 +581,7 @@ namespace EzDbCodeGen.Core
                     var Op = parameters.AsString(1);
                     if (Op.Length == 0) Op = "==";
 
-                    writer.WriteSafeString(((IEntity)context).PrimaryKeys.AsParmBooleanCheck(prefix, Op).Trim());
+                    writer.WriteSafeString(((IEntity)context.Value).PrimaryKeys.AsParmBooleanCheck(prefix, Op).Trim());
                 }
                 catch (Exception ex)
                 {

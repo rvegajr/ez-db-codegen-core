@@ -7,14 +7,11 @@ using EzDbCodeGen.Core.Config;
 
 namespace EzDbCodeGen.Tests
 {
-    [Collection("DatabaseTest")]
-    public class TemplateRenderTests
+    public class TemplateRenderTests 
     {
         readonly string SchemaFileName = "";
-        DatabaseFixture fixture;
-        public TemplateRenderTests(DatabaseFixture fixture)
+        public TemplateRenderTests()
         {
-            this.fixture = fixture;
             this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
         }
 
@@ -23,12 +20,12 @@ namespace EzDbCodeGen.Tests
         {
             try
             {
-                var codeGenerator = new CodeGenerator(Internal.AppSettings.Instance.ConfigurationFileName);
-                ITemplateInput inputSource = new TemplateInputFileSource(SchemaFileName);
-                var database = inputSource.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
+                var codeGenerator = new CodeGenerator();
+                ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
+                var database = template.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
-                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), inputSource, OutputPath);
+                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), template, OutputPath);
                 Assert.True(File.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output file {0} was not created.", codeGenerator.OutputPath));
             }
             catch (Exception ex)
@@ -42,13 +39,12 @@ namespace EzDbCodeGen.Tests
         {
             try
             {
-                var codeGenerator = new CodeGenerator(Internal.AppSettings.Instance.ConfigurationFileName);
-                ITemplateInput inputSource = new TemplateInputDatabaseConnecton(fixture.ConnectionString);
-                var database = inputSource.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
-                //database.ToJsonFile(@"C:\Dev\Noctusoft\ez-db-codegen-core\Src\EzDbCodeGen.Tests\Resources\MySchemaName.db.json");
+                var codeGenerator = new CodeGenerator();
+                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=Northwind;user id=sa;password=sa");
+                var database = template.LoadSchema(Configuration.FromFile(@"C:\Temp\ezdbcodegen.config.json"));
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
-                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), inputSource, OutputPath);
+                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), template, OutputPath);
                 Assert.True(File.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output file {0} was not created", codeGenerator.OutputPath));
             }
             catch (Exception ex)
@@ -62,12 +58,12 @@ namespace EzDbCodeGen.Tests
         {
             try
             {
-                var codeGenerator = new CodeGenerator(Internal.AppSettings.Instance.ConfigurationFileName);
-                ITemplateInput inputSource = new TemplateInputDatabaseConnecton(fixture.ConnectionString);
-                var database = inputSource.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
+                var codeGenerator = new CodeGenerator();
+                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
+                var database = template.LoadSchema(Configuration.FromFile(@"C:\Temp\ezdbcodegen.config.json"));
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
-                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), inputSource, OutputPath);
+                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), template, OutputPath);
                 Assert.True(File.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output file {0} was not created", codeGenerator.OutputPath));
             }
             catch (Exception ex)
@@ -81,12 +77,12 @@ namespace EzDbCodeGen.Tests
         {
             try
             {
-                var codeGenerator = new CodeGenerator(Internal.AppSettings.Instance.ConfigurationFileName);
-                ITemplateInput inputSource = new TemplateInputFileSource(SchemaFileName);
-                var database = inputSource.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
+                var codeGenerator = new CodeGenerator();
+                ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
+                var database = template.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
                 var OutputPath = System.IO.Path.GetTempPath() + "EzDbCodeGenTest" + Path.DirectorySeparatorChar;
                 if (Directory.Exists(OutputPath)) Directory.Delete(OutputPath, true);
-                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRenderAsFiles.hbs").ResolvePathVars(), inputSource, OutputPath);
+                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRenderAsFiles.hbs").ResolvePathVars(), template, OutputPath);
                 Assert.True(Directory.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output files in path {0} was not created", codeGenerator.OutputPath));
             }
             catch (Exception ex)
@@ -100,10 +96,10 @@ namespace EzDbCodeGen.Tests
         {
             try
             {
-                var codeGenerator = new CodeGenerator(Internal.AppSettings.Instance.ConfigurationFileName);
-                ITemplateInput inputSource = new TemplateInputFileSource(SchemaFileName);
-                var database = inputSource.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
-                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRenderAsFiles.hbs").ResolvePathVars(), inputSource);
+                var codeGenerator = new CodeGenerator();
+                ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
+                var database = template.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
+                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRenderAsFiles.hbs").ResolvePathVars(), template);
                 Assert.True(Directory.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output files in path {0} was not created", codeGenerator.OutputPath));
             }
             catch (Exception ex)

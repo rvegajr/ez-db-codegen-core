@@ -27,6 +27,14 @@ namespace EzDbCodeGen.Cli
 
             app.HelpOption("-?|-h|--help");
 
+            var sampleFilesOption = app.Option("-i|--init-files <path>",
+                "This option will download the template files and required powerscript to the [path] directory, renaming assets using the value sent through -a/--app-name ",
+                CommandOptionType.SingleValue);
+
+            var appNameOption = app.Option("-a|--app-name <appame>",
+                "This option will be used to customize the name and files on --init-files,  this default value will be MyApp",
+                CommandOptionType.SingleValue);
+
             var verboseOption = app.Option("-v|--verbose",
                 "Will output more detailed message about what is happening during application processing.  This parm is optional and will override the value in appsettings.json.   ",
                 CommandOptionType.NoValue);
@@ -39,7 +47,7 @@ namespace EzDbCodeGen.Cli
                 "The template file name or path that you wish to render.  If you choose aa path,  ",
                 CommandOptionType.SingleValue);
 
-            var pathNameOption = app.Option("-p|--ouputpath <value>",
+            var pathNameOption = app.Option("-p|--outpath <value>",
                 "The template that you wish to render.  This is required uniless you use the <OUTPUT_PATH> specifier in the template file.",
                 CommandOptionType.SingleValue);
 
@@ -77,7 +85,7 @@ namespace EzDbCodeGen.Cli
 
             app.OnExecute(() =>
             {
-                var pfx = "Unknown: ";
+                var pfx = "EzDbCodeGen: ";
                 if (versionOption.HasValue())
                 {
                     var version_ = Assembly.GetAssembly(typeof(CodeGenerator)).GetName().Version;
@@ -91,7 +99,37 @@ namespace EzDbCodeGen.Cli
                 if (verboseOption.HasValue()) AppSettings.Instance.VerboseMessages = verboseOption.HasValue();
                 try
                 {
+                    var sampleFilesPath = (sampleFilesOption.HasValue() ? sampleFilesOption.Value().ResolvePathVars() : "%THIS%".ResolvePathVars());
+                    if (!sampleFilesPath.EndsWith(Path.DirectorySeparatorChar)) sampleFilesPath += Path.DirectorySeparatorChar;
+                    if (sampleFilesOption.HasValue())
+                    {
+                        var workPath = Path.GetTempPath() + @"EzDbCodeGen\";
+                        var appName = (appNameOption.HasValue() ? appNameOption.Value() : "MyApp");
+                        Directory.Delete(workPath, true);
+                        Console.WriteLine(pfx + "Sample Files to be downloaded from https://github.com/rvegajr/ez-db-codegen-core to " + workPath);
+                        WebFileHelper.CurlGitRepoZip(workPath);
+                        if (Directory.Exists(workPath))
+                        {
+                            var rootPath = workPath + @"ez-db-codegen-core-master\Src\EzDbCodeGen.Cli\";
+                            WebFileHelper.CopyTo(@"Templates\SchemaRender.hbs", rootPath, sampleFilesPath);
+                            WebFileHelper.CopyTo(@"Templates\SchemaRenderAsFiles.hbs", rootPath, sampleFilesPath);
+                            WebFileHelper.CopyTo(@"Templates\SchemaRenderAsFilesNoOutput.hbs", rootPath, sampleFilesPath);
+                            WebFileHelper.CopyTo(@"ezdbcodegen.config.json", rootPath, sampleFilesPath);
+                            WebFileHelper.CopyTo(@"ezdbcodegen.ps1", rootPath, sampleFilesPath);
+
+                            WebFileHelper.CopyTo(@"ezdbcodegen.config.json", rootPath, sampleFilesPath, appName+".config.json")
+                                .ReplaceAll("MyEntities", appName+"Entities");
+                            WebFileHelper.CopyTo(@"ezdbcodegen.ps1", rootPath, sampleFilesPath, appName + ".codegen.ps1")
+                                .ReplaceAll("ezdbcodegen", appName); ;
+                            WebFileHelper.CopyTo(@"readme.txt", rootPath, sampleFilesPath)
+                                .ReplaceAll("SuperApp", appName)
+                                .ReplaceAll("%PSPATH%", sampleFilesPath)
+                            ;
+                        }
+                    }
+
                     var schemaName = "MySchema";
+
                     if (schemaNameOption.HasValue()) schemaName = schemaNameOption.Value();
                     if (sourceConnectionStringOption.HasValue())
                     {
@@ -110,6 +148,13 @@ namespace EzDbCodeGen.Cli
                         Errors.AppendLine(string.Format("Schema file '{0}' was does not exists! ", sourceSchemaFileNameOption.Value()));
                     if (Errors.Length > 0)
                     {
+                        if (sampleFilesOption.HasValue())
+                        {
+                            Console.WriteLine("Sample files where generated... exiting");
+                            Environment.ExitCode = 0;
+                            Environment.Exit(Environment.ExitCode);
+                            return Environment.ExitCode;
+                        }
                         throw new Exception(Errors.ToString());
                     }
 
@@ -151,10 +196,11 @@ namespace EzDbCodeGen.Cli
                         if (compareToSchemaFileNameOption.HasValue()) Console.WriteLine(pfx + "Compare To Schema File Name: " + compareToSchemaFileNameOption.Value());
                         if ((!compareToSchemaFileNameOption.HasValue()) && (compareToConnectionStringOption.HasValue())) Console.WriteLine(pfx + "Compare To Connection String: " + compareToConnectionStringOption.Value());
                     }
-                    var CodeGen = new CodeGenerator(AppSettings.Instance.ConfigurationFileName)
+                    var CodeGen = new CodeGenerator
                     {
                         SchemaName = schemaName,
                         VerboseMessages = AppSettings.Instance.VerboseMessages,
+                        ConfigurationFileName = AppSettings.Instance.ConfigurationFileName,
                         ProjectPath = ((projectFileToModifyOption.HasValue()) ? projectFileToModifyOption.Value() : ""),
                         TemplateFileNameFilter = ((templateFilterFileMasks.HasValue()) ? templateFilterFileMasks.Value() : "")
                     };

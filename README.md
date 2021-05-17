@@ -1,12 +1,14 @@
 # ez-db-codegen-core
-Easy code generation based on a database schema given by [EZDbSchema](https://github.com/rvegajr/ez-db-schema-core).  The template language this application uses is HandleBars. 
+
+EzDbCodeGen now works as a local tool.  
+Easy code generation based on a database schema given by [EZDbSchema](https://github.com/rvegajr/ez-db-schema-core).  The template language this application uses is HandleBars.   T
 
 ## Getting Started
 
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system. This nuget package will dump the published cli package for code generation and a powershell script to run it.  The nuget package will dump everything you need for code generation into the project you have selected under the EzDbCodeGen folder.    
 
 ### Prerequisites
-* [DotNetCore 3.1+] (https://www.microsoft.com/net/learn/get-started) - You will get everything you need except the sdk!  please download the latest version of this before trying to run the powershell script
+* [Net 5.0+] (https://www.microsoft.com/net/learn/get-started) - You will get everything you need except the sdk!  please download the latest version of this before trying to run the powershell script
 * You will need MSSQL with some database installed.  If you need a sample database,  feel free to look for the [World Wide Importers](https://github.com/Microsoft/sql-server-samples/releases/tag/wide-world-importers-v1.0) samples.
 
 NOTE:  If you have not set your powershell execution remote policy first,  you will need to do this as noted in [Powershell Execution Policy](https://www.pdq.com/blog/powershell-how-to-write-your-first-powershell-script/)
@@ -14,6 +16,14 @@ NOTE:  If you have not set your powershell execution remote policy first,  you w
 Set-ExecutionPolicy RemoteSigned
 
 ### Using this project:
+
+1. Using the command line: `dotnet new tool-manifest`
+2. Once this has completed:  
+ `dotnet tool install EzDbCodeGen.Cli --interactive`  
+(or to update: `dotnet tool update EzDbCodeGen.Cli --interactive`)
+3. `dotnet ezdbcg -i "%cd%" -a "MyAppName"` 
+
+
 
 Lets go through a test run of how to use this before we get into the nitty gritty:
 ####  From NuGet (or use the nuget package manager)
