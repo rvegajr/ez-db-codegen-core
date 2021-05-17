@@ -1,36 +1,25 @@
-﻿version: 1.4.{build}
+﻿version: 1.0.{build}
 pull_requests:
   do_not_increment_build_number: true
 branches:
   only:
   - master
   - develop
-dotnet_csproj:
-  patch: true
-  file: '**\*.csproj'
-  version: '{version}'
-  version_prefix: '{version}'
-  package_version: '{version}'
-  assembly_version: '{version}'
-  file_version: '{version}'
-  informational_version: '{version}'
 environment:
   MyGetApiKey:
     secure: kDoo1IiHXI3ui641kE3luA3a2uic12F2AeHTOoOzs93zdcIn3A9fsYg3ka31nwnO
   NugetApiKey:
     secure: G5HVnr8m/5cnqGweoUslJ2cY5b+KjZ1t0Cz3WUlIMV8ZiUhaNmWbdfPUFG5kXBWR
-cache: packages -> **\packages.config
+services: mssql2017
 nuget:
   account_feed: true
   project_feed: true
 build_script:
-  - ps: gitversion /l console /output buildserver
-  - cmd: appveyor-retry dotnet restore .\Src\  --disable-parallel --configfile .\Src\nuget.config.xml --packages .\packages
-  - cmd: dotnet build .\Src\ --configuration Release --source ..\..\packages
-test_script:
-- cmd: cd .\Src\ && dotnet test -l "console;verbosity=minimal"
+- ps: ./build.ps1
+test: off
 deploy_script:
-- cmd: dotnet pack ./EzDbCodeGen.Cli/ -o ../artifacts/ --version-suffix "ci-1234" /p:Version=1.4.0
+- ps: ./build.ps1 Pack
+- ps: ./build.ps1 Push --NugetApiUrl "https://www.myget.org/F/noctusoft/api/v2/package" --NugetApiKey $env:MyGetApiKey
 notifications:
 - provider: Email
   to:

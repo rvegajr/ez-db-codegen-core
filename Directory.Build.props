@@ -1,6 +1,7 @@
  <Project>
   <PropertyGroup>
     <Id>EzDbCodeGen</Id>
+    <Version>1.2.23</Version>
     <MinClientVersion>5.0.2</MinClientVersion>
     <Title>EzDbCodeGen - Easy Database Code Generator</Title>
     <Authors>Ricardo Vega Jr.</Authors>
@@ -8,19 +9,19 @@
     <PackageLicense>https://github.com/rvegajr/ez-db-codegen-core/blob/master/LICENSE</PackageLicense>
     <PackageProjectUrl>https://github.com/rvegajr/ez-db-codegen-core</PackageProjectUrl>
     <RepositoryUrl>https://github.com/rvegajr/ez-db-codegen-core</RepositoryUrl>
-    <Description>This complete and self contained code generation utility will install in a sub directory EzDbCodeGen of a target project.  From this path, you can run a powershell script that will generate code based on the connection string.  Each template is a handlebars template that has tags that specify where you would like to output the generated code and if there is a vs project that you wish to update with the file list (old VS project formats only).</Description>
+    <Description>This will install a local cli tool.  From this path, you can run a powershell script that will generate code based on the connection string.  Each template is a handlebars template that has tags that specify where you would like to output the generated code and if there is a vs project that you wish to update with the file list (old VS project formats only).</Description>
     <Tags>Code-Generation Code-Generator Database Schema</Tags>
     <Summary>A class library that will generate code based on a schema representation in a simple object hierarchy (given by EzDbSchema) and handlebars template(s).</Summary>
-    <Copyright>Noctusoft 2018-2020</Copyright>	
+    <Copyright>Noctusoft 2018-2021</Copyright>	
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="1.0.53" />
-    <PackageReference Include="FastMember" Version="1.5.0" />
-    <PackageReference Include="Handlebars.Net" Version="1.10.1" />
+    <PackageReference Include="EzDbSchema" Version="1.1.8" />
+    <PackageReference Include="Handlebars.Net" Version="2.0.3" />
     <PackageReference Include="Json.Comparer.Core" Version="0.6.9" />
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Pluralize.NET" Version="1.0.2" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
-    <PackageReference Include="System.Json" Version="4.7.0" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+    <PackageReference Include="System.Json" Version="4.7.1" />
+    <PackageReference Include="FastMember" Version="1.5.0" />
   </ItemGroup>  
 </Project>
