@@ -142,7 +142,7 @@ namespace EzDbCodeGen.Core
         /// <param name="config">Configuration file</param>
         public static IDatabase Filter(this IDatabase database, Configuration config)
         {
-            if (config.SourceFileName != AppSettings.Instance.ConfigurationFileName) AppSettings.Instance.ConfigurationFileName = config.SourceFileName;
+            if ((config?.SourceFileName != null) && (config.SourceFileName != AppSettings.Instance.ConfigurationFileName)) AppSettings.Instance.ConfigurationFileName = config.SourceFileName;
             //Use config settings to remove those entities we want out filtered out,  the wild card can affect these selections
             var DeleteList = new List<string>();
             foreach (var entityKey in database.Entities.Keys)

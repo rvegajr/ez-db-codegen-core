@@ -9,8 +9,4 @@ namespace EzDbCodeGen.NuGet.TestTarget
             Console.WriteLine("Hello World!");
         }
     }
-    public class EzdbCodeGenerator : Core.CodeGenerator
-    {
-
-    }
 }

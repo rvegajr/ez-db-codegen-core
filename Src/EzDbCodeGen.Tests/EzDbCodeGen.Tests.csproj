@@ -10,16 +10,37 @@
     <InformationalVersion>1.3.0+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
+    <None Remove="Resources\AdventureWorksLT2008.zip" />
+    <None Remove="Resources\AWLT2008.config.json" />
     <None Remove="Resources\MySchemaName.db.json" />
+    <None Remove="Resources\Templates\SchemaRender.hbs" />
+    <None Remove="Resources\Templates\SchemaRenderAsFiles.hbs" />
+    <None Remove="Resources\Templates\SchemaRenderAsFilesNoOutput.hbs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Resources\AdventureWorksLT2008.zip">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\AWLT2008.config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="Resources\MySchemaName.db.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Templates\SchemaRender.hbs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Templates\SchemaRenderAsFiles.hbs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="Resources\Templates\SchemaRenderAsFilesNoOutput.hbs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="1.1.8" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.8.3" />
+    <PackageReference Include="EzDbSchema" Version="1.1.10" />
+    <PackageReference Include="MartinCostello.SqlLocalDb" Version="3.0.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <PrivateAssets>all</PrivateAssets>
@@ -31,6 +52,9 @@
     <ProjectReference Include="..\EzDbCodeGen.Core\EzDbCodeGen.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Update="Resources\AdventureWorksLT2012.zip">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\hostappsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -45,7 +69,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="Handlebars.Net" Version="2.0.3" />
+    <PackageReference Update="Handlebars.Net" Version="2.0.7" />
+    <PackageReference Update="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Update="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Update="System.Json" Version="4.7.1" />
   </ItemGroup>

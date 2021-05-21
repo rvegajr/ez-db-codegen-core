@@ -15,10 +15,10 @@
     <Copyright>Noctusoft 2018-2021</Copyright>	
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="1.1.8" />
-    <PackageReference Include="Handlebars.Net" Version="2.0.3" />
+    <PackageReference Include="EzDbSchema" Version="1.1.10" />
+    <PackageReference Include="Handlebars.Net" Version="2.0.7" />
     <PackageReference Include="Json.Comparer.Core" Version="0.6.9" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Pluralize.NET" Version="1.0.2" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Include="System.Json" Version="4.7.1" />

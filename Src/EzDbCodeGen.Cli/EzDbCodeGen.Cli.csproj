@@ -11,7 +11,15 @@
     <InformationalVersion>1.3.0+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.0.0" />
+    <None Remove="ezdbcodegen.config.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="ezdbcodegen.config.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.1.0" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EzDbCodeGen.Core\EzDbCodeGen.Core.csproj" />
@@ -20,9 +28,6 @@
     <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="ezdbcodegen.config.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Templates\SchemaRender.hbs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -34,8 +39,9 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="EzDbSchema" Version="1.1.8" />
-    <PackageReference Update="Handlebars.Net" Version="2.0.3" />
+    <PackageReference Update="EzDbSchema" Version="1.1.10" />
+    <PackageReference Update="Handlebars.Net" Version="2.0.7" />
+    <PackageReference Update="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Update="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Update="System.Json" Version="4.7.1" />
   </ItemGroup>

@@ -226,6 +226,8 @@ namespace EzDbCodeGen.Core
 			var returnCode = ReturnCode.OkNoAddDels;
 			try
 			{
+                if (string.IsNullOrEmpty(ConfigurationFileName)) ConfigurationFileName = Internal.AppSettings.Instance?.Configuration?.SourceFileName;
+                if (string.IsNullOrEmpty(ConfigurationFileName)) throw new ArgumentNullException("Copuld not figure out a ConfigurationFileName.  Make sure you have it passed to the code generator object");
                 CurrentTask = string.Format("Trying to find Config file at {0}", ConfigurationFileName);
                 if (File.Exists(ConfigurationFileName))
                 {

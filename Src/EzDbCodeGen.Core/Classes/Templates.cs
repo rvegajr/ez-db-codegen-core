@@ -239,7 +239,10 @@ namespace EzDbCodeGen.Core
             switch (db)
             {
                 case DB_MSSQL:
-                    return string.Format("Server={0};Database={1};user id={2};password={3}", Server, Database, UserId, Password);
+                    if (string.IsNullOrEmpty(UserId) && string.IsNullOrEmpty(Password)) 
+                        return string.Format("Server={0};Database={1};Trusted_Connection = Yes", Server, Database);
+                    else
+                        return string.Format("Server={0};Database={1};user id={2};password={3}", Server, Database, UserId, Password);
                 case DB_ORACLE:
                     return string.Format("User Id={0};Password={1};Data Source={2};", UserId, Password, Server);
                 default:

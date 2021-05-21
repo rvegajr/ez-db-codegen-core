@@ -10,26 +10,38 @@ using EzDbSchema.Core.Objects;
 
 namespace EzDbCodeGen.Tests
 {
+    [Collection("DatabaseCollection")]
+
     public class SchemaRenderTests 
     {
+
+        DatabaseFixture fixture;
         string SchemaFileName = "";
-        public SchemaRenderTests()
+        string ConfigFileName = "";
+        string TemplatePath = "";
+        public SchemaRenderTests(DatabaseFixture _fixture)
         {
+            this.fixture = _fixture;
             this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
+            this.ConfigFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"AWLT2008.config.json").ResolvePathVars();
+            this.TemplatePath = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"Templates" + Path.DirectorySeparatorChar + @"").ResolvePathVars();
         }
+
         [Fact]
         public void RenderDatbaseConnectionTest()
         {
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
+                ITemplateInput template = new TemplateInputDatabaseConnecton(fixture.ConnectionString);
                 //ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=WideWorldImportersDW;user id=User;password=Server@Database");
-                var database = template.LoadSchema(Internal.AppSettings.Instance.Configuration);
+                var ConfigFile = EzDbCodeGen.Core.Config.Configuration.FromFile(this.ConfigFileName);
+
+                var database = template.LoadSchema(ConfigFile);
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
                 codeGenerator.TemplateFileNameFilter = "SchemaRenderAsFiles*";
-                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"").ResolvePathVars(), template, OutputPath);
+                codeGenerator.ProcessTemplate(this.TemplatePath, template, OutputPath);
                 //codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), template, OutputPath);
                 Assert.True(File.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output file {0} was not created", codeGenerator.OutputPath));
             }
