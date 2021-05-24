@@ -34,14 +34,14 @@ namespace EzDbCodeGen.Core
         public static string VAR_THIS_PATH = "$THIS_PATH$";
         public static string VAR_TEMP_PATH = "$TEMP$";
 
-        public virtual string TemplatePath { get; set; } = "";
+        public virtual string templateDataInput { get; set; } = "";
         public virtual string OutputPath { get; set; } = "";
         public virtual string ProjectPath { get; set; } = "";
         public virtual string ConnectionString { get; set; } = "";
         public virtual string ConfigurationFileName { get; set; } = "";
         public virtual string TemplateFileNameFilter { get; set; } = "";  //"FileName*,SampleFile*"
 
-        public TemplatePathOption TemplatePathOption { get; set; } = TemplatePathOption.Auto;
+        public TemplatePathOption templateDataInputOption { get; set; } = TemplatePathOption.Auto;
         public virtual bool VerboseMessages { get; set; } = true;
         public virtual string SchemaName { get; set; } = "MyEzSchema";
         public IDatabase Schema { get; set; }
@@ -56,9 +56,9 @@ namespace EzDbCodeGen.Core
 
         }
 
-        public CodeGenBase(string connectionString, string templatePath, string outputPath)
+        public CodeGenBase(string connectionString, string templateDataInput, string outputPath)
         {
-            this.TemplatePath = templatePath;
+            this.templateDataInput = templateDataInput;
             this.OutputPath = outputPath;
             this.ConnectionString = connectionString;
         }
@@ -98,11 +98,11 @@ namespace EzDbCodeGen.Core
         /// in order to specify and output target (which will override the the path passed through this paramter)</param>
         /// <returns>A return code </returns>
         /// <exception cref="Exception"></exception>
-        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput templateInput, string outputPath)
+        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateDataInput templateDataInput, string outputPath)
         {
             try
             {
-                return ProcessTemplate(TemplateFileNameOrPath, templateInput, null, outputPath);
+                return ProcessTemplate(TemplateFileNameOrPath, templateDataInput, null, outputPath);
             }
             catch (Exception ex)
             {
@@ -121,7 +121,7 @@ namespace EzDbCodeGen.Core
         /// if there is a file specifier,  then it will write to the file resolved between the FILE tags.  Note that you can specify and OUTPUT_PATH xml tag
         /// in order to specify and output target (which will override the the path passed through this paramter)</param>
         /// <returns>A return code </returns>
-        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
+        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateDataInput originalTemplateInputSource, ITemplateDataInput compareToTemplateInputSource, string outputPath)
         {
             if (!(
                 (File.Exists(TemplateFileNameOrPath)) || 
@@ -147,7 +147,7 @@ namespace EzDbCodeGen.Core
         /// <param name="originalTemplateInputSource">The template input class,  could be an object of type IDatabase or if type schema</param>
         /// <param name="compareToTemplateInputSource">The template input class to compare to,  will only change the difference</param>
         /// <returns>A return code </returns>
-        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource)
+        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateDataInput originalTemplateInputSource, ITemplateDataInput compareToTemplateInputSource)
         {
             return ProcessTemplate(TemplateFileNameOrPath, originalTemplateInputSource, compareToTemplateInputSource, "");
         }
@@ -160,12 +160,12 @@ namespace EzDbCodeGen.Core
         /// <param name="originalTemplateInputSource">The template input class,  could be an object of type IDatabase or if type schema</param>
         /// <param name="compareToTemplateInputSource">The template input class to compare to,  will only change the difference</param>
         /// <returns>A return code </returns>
-        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource)
+        public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateDataInput originalTemplateInputSource)
         {
             return ProcessTemplate(TemplateFileNameOrPath, originalTemplateInputSource, null, "");
         }
 
-        protected ReturnCodes ProcessTemplate(DirectoryName pathName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
+        protected ReturnCodes ProcessTemplate(DirectoryName pathName, ITemplateDataInput originalTemplateInputSource, ITemplateDataInput compareToTemplateInputSource, string outputPath)
         {
             var filesEndingInHbs = Directory.EnumerateFiles(pathName).Where(f => f.EndsWith("hbs", StringComparison.InvariantCulture)).ToList();
             var returnCodeList = new ReturnCodes();
@@ -182,6 +182,10 @@ namespace EzDbCodeGen.Core
             }
             return returnCodeList;
         }
+        private ITemplateDataInput originalTemplateDataInputSource;
+        public ITemplateDataInput OriginalTemplateDataInputSource { get => originalTemplateDataInputSource; set=> originalTemplateDataInputSource = value; }
+        private ITemplateDataInput compareToTemplateDataInputSource;
+        public ITemplateDataInput CompareToTemplateDataInputSource { get => compareToTemplateDataInputSource; set => compareToTemplateDataInputSource = value; }
         public event EventHandler<StatusChangeEventArgs> OnStatusChangeEventArgs;
         private string _currentTemplateName = "";
         private string _currentTask = "";
@@ -210,14 +214,21 @@ namespace EzDbCodeGen.Core
         /// </summary>
         /// <returns><c>true</c>, if template was processed, <c>false</c> otherwise.</returns>
         /// <param name="templateFileName">File name of an existing handlebars template file name</param>
-        /// <param name="originalTemplateInputSource">Original template input source.  Pass the input to here if you want to generate using only 1 schema</param>
-        /// <param name="compareToTemplateInputSource">Optional - Compare to template input source.  This will process only the differences. </param>
+        /// <param name="originalTemplateDataInputSource">Original template input source.  Pass the input to here if you want to generate using only 1 schema</param>
+        /// <param name="compareToTemplateDataInputSource">Optional - Compare to template input source.  This will process only the differences. </param>
         /// <param name="outputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  if there is a file specifier,  then it will write to the file resolved between the FILE tags</param>
-        protected ReturnCodes ProcessTemplate(FileName _templateFileName, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string outputPath)
+        public ReturnCodes ProcessTemplate(FileName _templateFileName, ITemplateDataInput originalTemplateDataInputSource, ITemplateDataInput compareToTemplateDataInputSource, string outputPath)
+        {
+            this.OriginalTemplateDataInputSource = originalTemplateDataInputSource;
+            this.CompareToTemplateDataInputSource = compareToTemplateDataInputSource;
+            this.OutputPath = outputPath;
+            return ProcessTemplate(_templateFileName);
+        }
+        public ReturnCodes ProcessTemplate(FileName _templateFileName)
 		{
             FileActions.Clear();
             Configuration EzDbConfig = null;
-            this.OutputPath = outputPath;
+            if (string.IsNullOrEmpty(this.OutputPath)) throw new ArgumentNullException("this.OutputPath is not defined.  Make sure you have set it before calling Process Template");
             string templateFileName = _templateFileName;
             _currentTemplateName = Path.GetFileNameWithoutExtension(templateFileName);
 
@@ -247,9 +258,9 @@ namespace EzDbCodeGen.Core
                 }
 
                 CurrentTask = "Performing Validations";
-				if (originalTemplateInputSource == null) throw new Exception(@"There must be an Template Source passed through originalTemplateInputSource!");
+				if (originalTemplateDataInputSource == null) throw new Exception(@"There must be an Template Source passed through originalTemplateInputSource!");
 				CurrentTask = "Loading Source Schema";
-				IDatabase schema = originalTemplateInputSource.LoadSchema(EzDbConfig);
+				IDatabase schema = originalTemplateDataInputSource.LoadSchema(EzDbConfig);
                 schema.Name = this.SchemaName;
 
                 if (schema == null) throw new Exception(@"originalTemplateInputSource is not a valid template");
@@ -388,14 +399,14 @@ namespace EzDbCodeGen.Core
 					}
 
 					CurrentTask = string.Format("Handling the output file");
-					var EffectivePathOption = this.TemplatePathOption;
+					var EffectivePathOption = this.templateDataInputOption;
 					IDatabase schemaToCompareTo = null;
 					if (EffectivePathOption == TemplatePathOption.Auto)
 					{
 						EffectivePathOption = TemplatePathOption.Clear;
-						if ((compareToTemplateInputSource != null) && (hasEntityKeySpecifier))
+						if ((compareToTemplateDataInputSource != null) && (hasEntityKeySpecifier))
 						{
-							schemaToCompareTo = compareToTemplateInputSource.LoadSchema(EzDbConfig);
+							schemaToCompareTo = compareToTemplateDataInputSource.LoadSchema(EzDbConfig);
 							if (schemaToCompareTo == null) throw new Exception(@"schemaToCompareTo is not a valid template");
 							EffectivePathOption = TemplatePathOption.SyncDiff;
 						}
@@ -559,7 +570,7 @@ namespace EzDbCodeGen.Core
 			}
 		}
 
-		private static void HandlePath(string Path, TemplatePathOption option, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource)
+		private static void HandlePath(string Path, TemplatePathOption option, ITemplateDataInput originalTemplateInputSource, ITemplateDataInput compareToTemplateInputSource)
 		{
 			try
 			{
@@ -576,5 +587,25 @@ namespace EzDbCodeGen.Core
     {
         public StatusChangeEventArgs(string message) { Message = message; }
         public string Message { get; set; }
+    }
+
+    public static class CodeGenBaseExtentions
+    {
+        public static CodeGenBase WithTemplate(this CodeGenBase codeGenBase, ITemplateDataInput templateInputToUse)
+        {
+            return codeGenBase;
+        }
+        public static CodeGenBase WithConfiguration(this CodeGenBase codeGenBase, Configuration configuration)
+        {
+            return codeGenBase;
+        }
+        public static CodeGenBase WithConfiguration(this CodeGenBase codeGenBase, string configurationFileName)
+        {
+            return codeGenBase;
+        }
+        public static CodeGenBase WithOutputPath(this CodeGenBase codeGenBase, string outputPath)
+        {
+            return codeGenBase;
+        }
     }
 }

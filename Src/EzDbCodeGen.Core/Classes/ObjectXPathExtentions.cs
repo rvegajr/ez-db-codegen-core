@@ -23,14 +23,14 @@ namespace EzDbCodeGen.Core.Extentions
     {
         /// <summary>
         /// Will return a formatted string that is based on Xpath query but adds a couple of extra commands to interrogate different properties of the XmlNode object.  This function is most useful if you want to return
-        /// a string list from an array of objects.  This function works by first turning it into a JSON object and then turning it into an XML object. I chose this because XPATH has a richer ad more well known syntax
+        /// a string list from an array of objects.  This function works by first turning it into a JSON object and then turning it into an XML object. I chose this because XPATH has a richer and more well known syntax
         /// than JsonPath.
         /// </summary>
         /// <typeparam name="T">This allows this to be used with an object passed to it</typeparam>
         /// <param name="_item">The object you want to search and stringify</param>
         /// <param name="xpathPathQueryString">The XPath query that will be used to query the object.  You can end this with a custom Hash string of 1 of 4 values: #Name, #Value, #InnerXml, #InnerText. 
         /// The function will obtain the value from this property of the XmlNode Object and format based on the pattern.  The default property will be InnerText.
-        /// If you just include one of the 4 hast parms, then xpathPathQueryString will automatically prepend a "/*/*" which will search only all direct child nodes
+        /// If you just include one of the 4 hash parms, then xpathPathQueryString will automatically prepend a "/*/*" which will search only all direct child nodes
         /// If the first character of this string is ">", then it will substitute "/*/*| " which means direct child node
         /// You can chain an xpath to take affect after a selection by using the | operator... so you can do this > | /Name#InnerText will select all child nodes and then get all Name elements and get the InnerText from each child
         /// </param>

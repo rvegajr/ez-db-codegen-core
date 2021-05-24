@@ -327,6 +327,5 @@ namespace EzDbCodeGen.Core
             }
             return listOfMatchedEntites;
         }
-
     }
 }

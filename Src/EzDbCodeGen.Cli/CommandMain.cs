@@ -211,13 +211,13 @@ namespace EzDbCodeGen.Cli
                     CodeGen.OnStatusChangeEventArgs += StatusChangeEventHandler;
 
                     var returnCode = new ReturnCodes();
-                    ITemplateInput Source = null;
+                    ITemplateDataInput Source = null;
                     if (sourceSchemaFileNameOption.HasValue())
                         Source = new TemplateInputFileSource(sourceSchemaFileNameOption.Value());
                     else
                         Source = new TemplateInputDatabaseConnecton(AppSettings.Instance.ConnectionString);
 
-                    ITemplateInput CompareTo = null;
+                    ITemplateDataInput CompareTo = null;
                     if (compareToSchemaFileNameOption.HasValue())
                         CompareTo = new TemplateInputFileSource(compareToSchemaFileNameOption.Value());
                     else if (compareToConnectionStringOption.HasValue())

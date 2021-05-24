@@ -12,19 +12,13 @@ namespace EzDbCodeGen.Tests
 {
     [Collection("DatabaseCollection")]
 
-    public class SchemaRenderTests 
+    public class SchemaRenderTests : TestBase
     {
 
         DatabaseFixture fixture;
-        string SchemaFileName = "";
-        string ConfigFileName = "";
-        string TemplatePath = "";
-        public SchemaRenderTests(DatabaseFixture _fixture)
+        public SchemaRenderTests(DatabaseFixture _fixture) : base()
         {
             this.fixture = _fixture;
-            this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
-            this.ConfigFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"AWLT2008.config.json").ResolvePathVars();
-            this.TemplatePath = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"Templates" + Path.DirectorySeparatorChar + @"").ResolvePathVars();
         }
 
         [Fact]
@@ -33,11 +27,9 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(fixture.ConnectionString);
+                ITemplateDataInput template = new TemplateInputDatabaseConnecton(fixture.ConnectionString);
                 //ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=WideWorldImportersDW;user id=User;password=Server@Database");
-                var ConfigFile = EzDbCodeGen.Core.Config.Configuration.FromFile(this.ConfigFileName);
-
-                var database = template.LoadSchema(ConfigFile);
+                var database = template.LoadSchema(EzDbCodeGen.Core.Config.Configuration.FromFile(this.ConfigFileName));
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
                 codeGenerator.TemplateFileNameFilter = "SchemaRenderAsFiles*";
@@ -49,7 +41,6 @@ namespace EzDbCodeGen.Tests
             {
                 Assert.True(false, ex.Message);
             }
-            
         }
 
         [Fact]
@@ -58,20 +49,20 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
+                ITemplateDataInput template = new TemplateInputDatabaseConnecton(fixture.ConnectionString);
                 //ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=WideWorldImportersDW;user id=User;password=Server@Database");
-                var database = template.LoadSchema(Internal.AppSettings.Instance.Configuration);
+                var database = template.LoadSchema(EzDbCodeGen.Core.Config.Configuration.FromFile(this.ConfigFileName));
                 var str = ((EntityDictionary)database.Entities).ObjectPropertyAsString("#Name");
-                var rel = (RelationshipList)database.Entities["dbo.FactSurveyResponse"].RelationshipGroups["FK_FactSurveyResponse_CustomerKey"];
-                var relStr = rel.ObjectPropertyAsString("");
+                Assert.True(str.Length>0, "Entities Name should be returned");
 
-                var st2 = ((PrimaryKeyProperties)database.Entities["dbo.FactAdditionalInternationalProductDescription"].PrimaryKeys).ObjectPropertyAsString(">Name");
+                var rel = (RelationshipList)database.Entities["SalesLT.Customer"].RelationshipGroups["FK_CustomerAddress_Customer_CustomerID"];
+                Assert.True(rel.Count == 1, "Relationship should return 1 item");
 
-                var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
-                //var str = database.Entities[""];
+                var relStr = rel.ObjectPropertyAsString(">Name");
+                Assert.True(relStr.Equals("FK_CustomerAddress_Customer_CustomerID"), "Relationship Name should be 'FK_CustomerAddress_Customer_CustomerID'");
 
-
-                Assert.True(File.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output file {0} was not created", codeGenerator.OutputPath));
+                var st2 = ((PrimaryKeyProperties)database.Entities["SalesLT.Product"].PrimaryKeys).ObjectPropertyAsString(">Name");
+                Assert.True(st2.Equals("ProductID"), "SalesLT.Product should have returned ProductID");
             }
             catch (Exception ex)
             {

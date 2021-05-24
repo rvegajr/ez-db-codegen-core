@@ -6,6 +6,8 @@ using System.IO;
 using Microsoft.Data.SqlClient;
 using Xunit;
 using MartinCostello.SqlLocalDb;
+using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbCodeGen.Core.Config;
 
 namespace EzDbCodeGen.Tests
 {
@@ -20,6 +22,13 @@ namespace EzDbCodeGen.Tests
         public DatabaseFixture()
         {
             this.localDB = new SqlLocalDbApi();
+            instance = localDB.GetOrCreateInstance(DatabaseFixture.LOCALDB_NAME);
+            manager = instance.Manage();
+            if (localDB.InstanceExists(DatabaseFixture.LOCALDB_NAME))
+            {
+                if (instance.IsRunning) manager.Stop();
+                localDB.DeleteInstance(DatabaseFixture.LOCALDB_NAME);
+            }
             instance = localDB.GetOrCreateInstance(DatabaseFixture.LOCALDB_NAME);
             manager = instance.Manage();
             if (instance.IsRunning) manager.Stop();
@@ -114,5 +123,36 @@ WITH REPLACE,RECOVERY,
         // to be the place to apply [CollectionDefinition] and all the
         // ICollectionFixture<> interfaces.
     }
+
+    public class TestBase 
+    {
+        protected string SchemaFileName = "";
+        protected string ConfigFileName = "";
+        protected string TemplatePath = "";
+        protected Configuration AWLT2008Configuration;
+        public TestBase()
+        {
+            this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
+            this.ConfigFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"AWLT2008.config.json").ResolvePathVars();
+            this.TemplatePath = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"Templates" + Path.DirectorySeparatorChar + @"").ResolvePathVars();
+            this.AWLT2008Configuration = EzDbCodeGen.Core.Config.Configuration.FromFile(this.ConfigFileName);
+        }
+
+        protected string CreateTempFile(string extention = ".schema.json")
+        {
+            try
+            {
+
+                string fileName = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + extention;
+                return fileName;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+    }
+
 }
 

@@ -15,7 +15,7 @@ using EzDbCodeGen.Core.Config;
 
 namespace EzDbCodeGen.Core
 {
-    public interface ITemplateInput
+    public interface ITemplateDataInput
     {
         bool VerboseMessages { get; set; }
         string SchemaName { get; set; }
@@ -61,13 +61,13 @@ namespace EzDbCodeGen.Core
     {
         TemplatePathOption TemplatePathOption { get; set; }
         bool VerboseMessages { get; set; }
-        ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput templateInput);
-        ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput templateInput, string OutputPath);
-        ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource);
-        ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateInput originalTemplateInputSource, ITemplateInput compareToTemplateInputSource, string OutputPath);
+        ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateDataInput templateInput);
+        ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateDataInput templateInput, string OutputPath);
+        ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateDataInput originalTemplateInputSource, ITemplateDataInput compareToTemplateInputSource);
+        ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateDataInput originalTemplateInputSource, ITemplateDataInput compareToTemplateInputSource, string OutputPath);
     }
 
-    internal class TemplateInputDirectObject : ITemplateInput
+    internal class TemplateInputDirectObject : ITemplateDataInput
     {
         public string SchemaName { get; set; }
         public bool VerboseMessages { get; set; } = true;
@@ -112,7 +112,7 @@ namespace EzDbCodeGen.Core
         }
     }
 
-    internal class TemplateInputFileSource : ITemplateInput
+    internal class TemplateInputFileSource : ITemplateDataInput
     {
         public string SchemaName { get; set; }
         public bool VerboseMessages { get; set; } = true;
@@ -171,7 +171,7 @@ namespace EzDbCodeGen.Core
     /// <summary>
     /// A database connection type of Database Input
     /// </summary>
-	public class TemplateInputDatabaseConnecton : ITemplateInput
+	public class TemplateInputDatabaseConnecton : ITemplateDataInput
     {
         public string SchemaName { get; set; }
         public bool VerboseMessages { get; set; } = true;
