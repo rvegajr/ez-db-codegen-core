@@ -41,7 +41,7 @@ namespace EzDbCodeGen.Core
         public virtual string ConfigurationFileName { get; set; } = "";
         public virtual string TemplateFileNameFilter { get; set; } = "";  //"FileName*,SampleFile*"
 
-        public TemplatePathOption templateDataInputOption { get; set; } = TemplatePathOption.Auto;
+        public TemplatePathOption TemplatePathOption { get; set; } = TemplatePathOption.Auto;
         public virtual bool VerboseMessages { get; set; } = true;
         public virtual string SchemaName { get; set; } = "MyEzSchema";
         public IDatabase Schema { get; set; }
@@ -399,7 +399,7 @@ namespace EzDbCodeGen.Core
 					}
 
 					CurrentTask = string.Format("Handling the output file");
-					var EffectivePathOption = this.templateDataInputOption;
+					var EffectivePathOption = this.TemplatePathOption;
 					IDatabase schemaToCompareTo = null;
 					if (EffectivePathOption == TemplatePathOption.Auto)
 					{
