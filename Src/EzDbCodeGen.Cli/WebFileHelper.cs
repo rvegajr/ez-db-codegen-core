@@ -25,10 +25,10 @@ namespace EzDbCodeGen.Cli
         public static string CopyToPath(string FileToCopy, string sourcePath, string targetPath, string FileToRenameTo="")
         {
             if (FileToRenameTo.Length == 0) FileToRenameTo = FileToCopy;
-            var targetFileName = string.Format(@"{0}{1}", targetPath, FileToRenameTo);
+            var targetFileName = $"{targetPath}{FileToRenameTo}";
             System.IO.Directory.CreateDirectory(Path.GetDirectoryName(targetFileName));
-            File.Copy(string.Format(@"{0}{1}", sourcePath, FileToCopy), targetFileName, true);
-            System.Console.WriteLine(string.Format("Copying {0} into {1}", FileToCopy, targetFileName));
+            File.Copy($"{sourcePath}{FileToCopy}", targetFileName, true);
+            System.Console.WriteLine($"Copying {FileToCopy} into {targetFileName}", FileToCopy, targetFileName);
             return targetFileName;
         }
 

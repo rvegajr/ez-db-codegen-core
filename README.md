@@ -21,7 +21,7 @@ Set-ExecutionPolicy RemoteSigned
 2. Once this has completed:  
  `dotnet tool install EzDbCodeGen.Cli --interactive`  
 (or to update: `dotnet tool update EzDbCodeGen.Cli --interactive`)
-3. `dotnet ezdbcg -i "%cd%" -a "MyAppName"` 
+3. `dotnet ezdbcg -i "." -a "MyAppName"` 
 
 
 
