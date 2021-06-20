@@ -7,12 +7,15 @@ using EzDbCodeGen.Core.Config;
 
 namespace EzDbCodeGen.Tests
 {
-    public class TemplateRenderTests 
+    [Collection("DatabaseCollection")]
+
+    public class TemplateRenderTests : TestBase
     {
-        readonly string SchemaFileName = "";
-        public TemplateRenderTests()
+
+        DatabaseFixture fixture;
+        public TemplateRenderTests(DatabaseFixture _fixture) : base()
         {
-            this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
+            this.fixture = _fixture;
         }
 
         [Fact]
@@ -21,7 +24,7 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
+                ITemplateDataInput template = new TemplateInputFileSource(SchemaFileName);
                 var database = template.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
@@ -40,11 +43,15 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=Northwind;user id=sa;password=sa");
-                var database = template.LoadSchema(Configuration.FromFile(@"C:\Temp\ezdbcodegen.config.json"));
+                var database = new TemplateInputDatabaseConnecton(fixture.ConnectionString).LoadSchema(AWLT2008Configuration);
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
-                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), template, OutputPath);
+                var rc = codeGenerator
+                    .WithTemplate(new TemplateInputDatabaseConnecton(fixture.ConnectionString))
+                    .WithConfiguration(AWLT2008Configuration)
+                    .WithOutputPath(OutputPath)
+                    .ProcessTemplate((@"Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs"));
+
                 Assert.True(File.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output file {0} was not created", codeGenerator.OutputPath));
             }
             catch (Exception ex)
@@ -59,11 +66,14 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputDatabaseConnecton(@"Server=localhost;Database=AdventureWorksDW2017;user id=sa;password=sa");
-                var database = template.LoadSchema(Configuration.FromFile(@"C:\Temp\ezdbcodegen.config.json"));
+                var database = new TemplateInputDatabaseConnecton(fixture.ConnectionString).LoadSchema(AWLT2008Configuration);
                 var OutputPath = System.IO.Path.GetTempPath() + "MySchemaNameRender.txt";
                 if (File.Exists(OutputPath)) File.Delete(OutputPath);
-                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs").ResolvePathVars(), template, OutputPath);
+                var rc = codeGenerator
+                    .WithTemplate(new TemplateInputDatabaseConnecton(fixture.ConnectionString))
+                    .WithConfiguration(AWLT2008Configuration)
+                    .WithOutputPath(OutputPath)
+                    .ProcessTemplate((@"Templates" + Path.DirectorySeparatorChar + @"SchemaRender.hbs"));
                 Assert.True(File.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output file {0} was not created", codeGenerator.OutputPath));
             }
             catch (Exception ex)
@@ -78,11 +88,14 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
-                var database = template.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
+                var database = new TemplateInputDatabaseConnecton(fixture.ConnectionString).LoadSchema(AWLT2008Configuration);
                 var OutputPath = System.IO.Path.GetTempPath() + "EzDbCodeGenTest" + Path.DirectorySeparatorChar;
                 if (Directory.Exists(OutputPath)) Directory.Delete(OutputPath, true);
-                codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRenderAsFiles.hbs").ResolvePathVars(), template, OutputPath);
+                var rc = codeGenerator
+                    .WithTemplate(new TemplateInputDatabaseConnecton(fixture.ConnectionString))
+                    .WithConfiguration(AWLT2008Configuration)
+                    .WithOutputPath(OutputPath)
+                    .ProcessTemplate((@"Templates" + Path.DirectorySeparatorChar + @"SchemaRenderAsFiles.hbs"));
                 Assert.True(Directory.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output files in path {0} was not created", codeGenerator.OutputPath));
             }
             catch (Exception ex)
@@ -97,7 +110,7 @@ namespace EzDbCodeGen.Tests
             try
             {
                 var codeGenerator = new CodeGenerator();
-                ITemplateInput template = new TemplateInputFileSource(SchemaFileName);
+                ITemplateDataInput template = new TemplateInputFileSource(SchemaFileName);
                 var database = template.LoadSchema(Configuration.FromFile("ezdbcodegen.config.json"));
                 codeGenerator.ProcessTemplate((@"{ASSEMBLY_PATH}Templates" + Path.DirectorySeparatorChar + @"SchemaRenderAsFiles.hbs").ResolvePathVars(), template);
                 Assert.True(Directory.Exists(codeGenerator.OutputPath), string.Format("Template Rendered Output files in path {0} was not created", codeGenerator.OutputPath));

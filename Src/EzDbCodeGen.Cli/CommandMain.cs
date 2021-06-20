@@ -10,6 +10,8 @@ using EzDbCodeGen.Core;
 using EzDbCodeGen.Core.Enums;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbCodeGen.Core.Classes;
+using Newtonsoft.Json;
+using EzDbSchema.Core.Interfaces;
 
 namespace EzDbCodeGen.Cli
 {
@@ -19,16 +21,195 @@ namespace EzDbCodeGen.Cli
         {
             Console.WriteLine(e.Message);
         }
+
+        internal static Settings Settings { get; set; } = new Settings();
+        public static string SampleFilesPath { get; set; }
+        public static string AppName { get; set; }
+
+        public static string SchemaName { get; set; }
+
+        public static string TemplateFileNameOrPath { get; set; }
+        public static string pfx { get; set; } = "EzDbCodeGen: ";
+
+
+        static void InteractiveConnectionString()
+        {
+            var iLoopCount = 0;
+            bool questionLoop = true;
+            Console.ResetColor();
+            var defaultConnectionString = "Server=localhost;Database=YourDatabaseName;Trusted_Connection=True;";
+            IConnectionParameters connparm = new EzDbSchema.MsSql.ConnectionParameters();
+            connparm.ConnectionString = (string.IsNullOrEmpty(Settings.ConnectionString) ? defaultConnectionString : Settings.ConnectionString);
+
+            var ConnectionStringLocal = "";
+            if (!connparm.Database.Equals("YourDatabaseName"))
+            {
+                var ConnectionStringPromptMessage = $"Use this connection string '{connparm.ConnectionString}' [Y] (Type [N] to build a new one)";
+                if (Prompt.GetYesNo(ConnectionStringPromptMessage, true, promptColor: ConsoleColor.Gray))
+                {
+                    ConnectionStringLocal = Prompt.GetString("What connection string would you like to use (just press enter to build it)?", promptColor: ConsoleColor.Green);
+                }
+            } else
+            {
+                ConnectionStringLocal = Prompt.GetString("Enter in the connection string you would like to use (or leave blank to build it)?", defaultValue: "", promptColor: ConsoleColor.Green);
+            }
+
+            if ((ConnectionStringLocal ?? "") == "")
+            {
+                while (questionLoop)
+                {
+                    iLoopCount++;
+                    connparm.Server = Prompt.GetString("What is the database server?", defaultValue: connparm.Server, promptColor: ConsoleColor.Green);
+                    connparm.Database = Prompt.GetString("What is the database table?", defaultValue: connparm.Database, promptColor: ConsoleColor.Green);
+                    connparm.UserName = Prompt.GetString("What is the username to access the database?", defaultValue: (connparm.Trusted ?  "TRUSTED" : connparm.UserName), promptColor: ConsoleColor.Green);
+                    connparm.Trusted = connparm.UserName.Equals("TRUSTED");
+                    var password = "";
+                    if (!connparm.Trusted)
+                    {
+                        password = Prompt.GetString("What is the password to access the database?", defaultValue: connparm.Password, promptColor: ConsoleColor.Green);
+                    } 
+                    if (Prompt.GetYesNo("Does this connection string look right: " + connparm.ConnectionString, true, promptColor: ConsoleColor.Green))
+                    {
+                        Settings.ConnectionString = connparm.ConnectionString;
+                        AppSettings.Instance.ConnectionString = Settings.ConnectionString;
+                        try
+                        {
+                            Console.WriteLine("Testing connection to the database");
+                            if (connparm.IsValid())
+                            {
+                                Settings.ConnectionString = connparm.ConnectionString;
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("Connection OK!");
+                                break;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine($"Connection Failed :( {ex.Message}");
+                            if (!Prompt.GetYesNo("Would you like to try build the connection string again?", true, promptColor: ConsoleColor.Red))
+                            {
+                                Console.ForegroundColor = ConsoleColor.White;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } else
+            {
+                Settings.ConnectionString = connparm.ConnectionString;
+            }
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="templateFileOrPath"></param>
+        /// <returns>If the tmeplate was changed,  then this function will rrturn true</returns>
+        static bool InteractiveTemplatePath(string templateFileOrPath)
+        {
+            List<string> templateFileList = new List<string>();
+            if (File.Exists(templateFileOrPath) && Path.GetExtension(templateFileOrPath).ToLower().Equals("hbs"))
+            {
+                templateFileList.Add(templateFileOrPath);
+            } else if (Directory.Exists(templateFileOrPath))
+            {
+                templateFileList = Directory.GetFiles(templateFileOrPath, "*.hbs").ToList();
+            }
+            if (templateFileList.Count==0)
+            {
+                if (Prompt.GetYesNo($"No templates founds in '{templateFileOrPath}', shall we initilize this directory with sample templates from the git repo?", true, promptColor: ConsoleColor.Cyan))
+                {
+                    return SampleFileDownload(SampleFilesPath, AppName);
+                }
+            }
+            return false;
+        }
+
+        public static bool SampleFileDownload(string sampleFilesPath, string appName)
+        {
+            Console.WriteLine($"{pfx}: Downloading sample files for '{appName}' into '{sampleFilesPath}'...");
+            //sampleFilesPath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, sampleFilesPath));
+            if (!sampleFilesPath.EndsWith(Path.DirectorySeparatorChar)) sampleFilesPath += Path.DirectorySeparatorChar;
+
+            var workPath = Path.GetTempPath() + @"EzDbCodeGen\";
+            var InTestMode = false; //Uncomment so the work path will be deleted so we can test downlading the sample path
+            if (!InTestMode)
+            {
+                if (Directory.Exists(workPath)) Directory.Delete(workPath, true);
+                Console.WriteLine(pfx + "Sample Files to be downloaded from https://github.com/rvegajr/ez-db-codegen-core to " + workPath);
+                WebFileHelper.CurlGitRepoZip(workPath);
+            }
+            if (Directory.Exists(workPath))
+            {
+                var rootPath = workPath + @"ez-db-codegen-core-master\Src\EzDbCodeGen.Cli\";
+                WebFileHelper.CopyTo(@"Templates\SchemaRender.hbs", rootPath, sampleFilesPath);
+                WebFileHelper.CopyTo(@"Templates\SchemaRenderAsFiles.hbs", rootPath, sampleFilesPath);
+                WebFileHelper.CopyTo(@"Templates\SchemaRenderAsFilesNoOutput.hbs", rootPath, sampleFilesPath);
+                WebFileHelper.CopyTo(@"ezdbcodegen.config.json", rootPath, sampleFilesPath);
+                WebFileHelper.CopyTo(@"ezdbcodegen.ps1", rootPath, sampleFilesPath);
+
+                WebFileHelper.CopyTo(@"ezdbcodegen.config.json", rootPath, sampleFilesPath, appName + ".config.json")
+                    .ReplaceAll("MyEntities", appName + "Entities");
+                WebFileHelper.CopyTo(@"ezdbcodegen.ps1", rootPath, sampleFilesPath, appName + ".codegen.ps1")
+                    .ReplaceAll("ezdbcodegen", appName)
+                    .ReplaceAll("Server=localhost;Database=WideWorldImportersDW;user id=sa;password=sa", AppSettings.Instance.ConnectionString)
+                    ; 
+                WebFileHelper.CopyTo(@"readme.txt", rootPath, sampleFilesPath)
+                    .ReplaceAll("SuperApp", appName)
+                    .ReplaceAll("%PSPATH%", sampleFilesPath)
+                ;
+                Console.WriteLine($" ");
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine($"Code Generator is ready to run, open powershell and execute:");
+                Console.WriteLine($" ");
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine($"./{Path.GetFullPath(Path.Combine(sampleFilesPath, appName + ".codegen.ps1"))}");
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine($" ");
+                //changed the Setings Template path to the samples templates
+                Settings.TemplateFileNameOrPath = Path.Combine(sampleFilesPath, "Templates").PathEnds();
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Sampel call is
+        ///    return Exit("Message here");
+        /// </summary>
+        /// <param name="ExitMessage"></param>
+        /// <param name="ReturnCode"></param>
+        /// <returns></returns>
+        public static int Exit(string ExitMessage = "Application Completed Seccuessfully", int ReturnCode = 0)
+        {
+            if (ReturnCode == 0) Console.ForegroundColor = ConsoleColor.Green;
+            if ((ReturnCode > 0) && (ReturnCode < 10)) Console.ForegroundColor = ConsoleColor.Yellow;
+            if (ReturnCode > 10) Console.ForegroundColor = ConsoleColor.Red;
+
+            Console.WriteLine(ExitMessage);
+            Environment.ExitCode = ReturnCode;
+            Environment.Exit(Environment.ExitCode);
+            return Environment.ExitCode;
+        }
+        
         public static void Enable(CommandLineApplication app) {
             app.Name = "ezdb.codegen.cli";
             app.Description = "EzDbCodeGen - Code Generation Utility";
-            app.ExtendedHelpText = "This application will allow you to trigger code generation based on a template file or a list of template files."
-                + Environment.NewLine + "";
+            app.ExtendedHelpText = @"This application will allow you to trigger code generation based on a template file or a list of template files.
+
+To use this application with sample templates (assuming you installed the application locally), navigate to the path you wish to install the templates :
+1. dotnet ezdbcg -i ""."" -a ""MyAppName""
+2. dotnet ezdbcg
+
+Notes: step 1 will download the sample templates to this path, step 2 will start an interactive session and save the last values you entered for when executed in this path again
+
+";
 
             app.HelpOption("-?|-h|--help");
 
             var sampleFilesOption = app.Option("-i|--init-files <path>",
-                "This option will download the template files and required powerscript to the [path] directory, renaming assets using the value sent through -a/--app-name ",
+                "This option will download the template files and required powerscript to the [path] directory (send '.' for current path), renaming assets using the value sent through -a/--app-name ",
                 CommandOptionType.SingleValue);
 
             var appNameOption = app.Option("-a|--app-name <appame>",
@@ -85,52 +266,39 @@ namespace EzDbCodeGen.Cli
 
             app.OnExecute(() =>
             {
-                var pfx = "EzDbCodeGen: ";
+                var version_ = Assembly.GetAssembly(typeof(CodeGenerator)).GetName().Version;
                 if (versionOption.HasValue())
                 {
-                    var version_ = Assembly.GetAssembly(typeof(CodeGenerator)).GetName().Version;
-                    Console.WriteLine(version_);
-                    Environment.ExitCode = 0;
-                    Environment.Exit(Environment.ExitCode);
-                    return Environment.ExitCode;
-
+                    return Exit(version_.ToString());
                 }
 
                 if (verboseOption.HasValue()) AppSettings.Instance.VerboseMessages = verboseOption.HasValue();
                 try
                 {
-                    var sampleFilesPath = (sampleFilesOption.HasValue() ? sampleFilesOption.Value().ResolvePathVars() : "%THIS%".ResolvePathVars());
-                    if (!sampleFilesPath.EndsWith(Path.DirectorySeparatorChar)) sampleFilesPath += Path.DirectorySeparatorChar;
-                    if (sampleFilesOption.HasValue())
+                    AppName = "MyApp";
+                    SchemaName = "MySchema";
+                    var PathConfigFileName = Path.Combine(Environment.CurrentDirectory, "").PathEnds() + ".ezdbcodegen.config";
+                    if (File.Exists(PathConfigFileName))
                     {
-                        var workPath = Path.GetTempPath() + @"EzDbCodeGen\";
-                        var appName = (appNameOption.HasValue() ? appNameOption.Value() : "MyApp");
-                        Directory.Delete(workPath, true);
-                        Console.WriteLine(pfx + "Sample Files to be downloaded from https://github.com/rvegajr/ez-db-codegen-core to " + workPath);
-                        WebFileHelper.CurlGitRepoZip(workPath);
-                        if (Directory.Exists(workPath))
-                        {
-                            var rootPath = workPath + @"ez-db-codegen-core-master\Src\EzDbCodeGen.Cli\";
-                            WebFileHelper.CopyTo(@"Templates\SchemaRender.hbs", rootPath, sampleFilesPath);
-                            WebFileHelper.CopyTo(@"Templates\SchemaRenderAsFiles.hbs", rootPath, sampleFilesPath);
-                            WebFileHelper.CopyTo(@"Templates\SchemaRenderAsFilesNoOutput.hbs", rootPath, sampleFilesPath);
-                            WebFileHelper.CopyTo(@"ezdbcodegen.config.json", rootPath, sampleFilesPath);
-                            WebFileHelper.CopyTo(@"ezdbcodegen.ps1", rootPath, sampleFilesPath);
-
-                            WebFileHelper.CopyTo(@"ezdbcodegen.config.json", rootPath, sampleFilesPath, appName+".config.json")
-                                .ReplaceAll("MyEntities", appName+"Entities");
-                            WebFileHelper.CopyTo(@"ezdbcodegen.ps1", rootPath, sampleFilesPath, appName + ".codegen.ps1")
-                                .ReplaceAll("ezdbcodegen", appName); ;
-                            WebFileHelper.CopyTo(@"readme.txt", rootPath, sampleFilesPath)
-                                .ReplaceAll("SuperApp", appName)
-                                .ReplaceAll("%PSPATH%", sampleFilesPath)
-                            ;
-                        }
+                        Settings = JsonConvert.DeserializeObject<Settings>(File.ReadAllText(PathConfigFileName));
                     }
+                    if (Settings.AutoRun)
+                    {
+                        Console.WriteLine("A previous run in this path asked to reuse the latest settings,  reading from '.ezdbcodegen.config' and usine these settings for this run");
+                        AppSettings.Instance.ConnectionString = Settings.ConnectionString;
+                        TemplateFileNameOrPath = Settings.TemplateFileNameOrPath;
+                        AppName = Settings.AppName;
+                        SchemaName = Settings.SchemaName;
+                    }
+                    Console.WriteLine($"EzDbCodeGen Tool Version {version_.ToString()}");
+                    SampleFilesPath = (sampleFilesOption.HasValue() 
+                        ? sampleFilesOption.Value().ResolvePathVars() 
+                        : Path.Combine(Environment.CurrentDirectory, "Sample").PathEnds()
+                       );
+                    if (appNameOption.HasValue()) AppName=appNameOption.Value();
+                    if (sampleFilesOption.HasValue()) SampleFileDownload(SampleFilesPath, AppName);
 
-                    var schemaName = "MySchema";
-
-                    if (schemaNameOption.HasValue()) schemaName = schemaNameOption.Value();
+                    if (schemaNameOption.HasValue()) SchemaName = schemaNameOption.Value();
                     if (sourceConnectionStringOption.HasValue())
                     {
                         AppSettings.Instance.ConnectionString = sourceConnectionStringOption.Value().SettingResolution();
@@ -140,36 +308,70 @@ namespace EzDbCodeGen.Cli
 
                     var Errors = new StringBuilder();
                     var OutputPath = string.Empty;
-                    if ((!templateFileNameOrDirectoryOption.HasValue()) || (templateFileNameOrDirectoryOption.Value().Length == 0)) Errors.AppendLine("TemplateName is missing or empty. ");
                     if ((pathNameOption.HasValue()) && (pathNameOption.Value().Length > 0)) OutputPath = pathNameOption.Value();
+                    if (OutputPath == string.Empty) OutputPath = Environment.CurrentDirectory.PathEnds();
+                    if ((!sourceSchemaFileNameOption.HasValue()) && (AppSettings.Instance.ConnectionString.Length == 0))
+                    {
+                        InteractiveConnectionString();
+                    }
                     if ((!sourceSchemaFileNameOption.HasValue()) && (AppSettings.Instance.ConnectionString.Length == 0))
                         Errors.AppendLine("ConnectionString and schemaFileName are both missing or empty. ");
                     if ((sourceSchemaFileNameOption.HasValue()) && (!File.Exists(sourceSchemaFileNameOption.Value())))
-                        Errors.AppendLine(string.Format("Schema file '{0}' was does not exists! ", sourceSchemaFileNameOption.Value()));
-                    if (Errors.Length > 0)
-                    {
-                        if (sampleFilesOption.HasValue())
-                        {
-                            Console.WriteLine("Sample files where generated... exiting");
-                            Environment.ExitCode = 0;
-                            Environment.Exit(Environment.ExitCode);
-                            return Environment.ExitCode;
-                        }
-                        throw new Exception(Errors.ToString());
-                    }
+                        Errors.AppendLine($"Schema file '{sourceSchemaFileNameOption.Value()}' was does not exists! ");
 
-                    var TemplateFileNameOrPath = templateFileNameOrDirectoryOption.Value();
-                    if (Path.GetPathRoot(TemplateFileNameOrPath).Length==0)
+                    if ((templateFileNameOrDirectoryOption.HasValue()) && (templateFileNameOrDirectoryOption.Value().Length > 0))
+                        TemplateFileNameOrPath = templateFileNameOrDirectoryOption.Value();
+                    //If we didn't get the template name through the command ling
+                    if ((TemplateFileNameOrPath == null) || (Path.GetPathRoot(TemplateFileNameOrPath).Length==0))
                     {
-                        TemplateFileNameOrPath = ("{ASSEMBLY_PATH}" + TemplateFileNameOrPath).ResolvePathVars();
+                        //TemplateFileNameOrPath = ("{ASSEMBLY_PATH}" + TemplateFileNameOrPath).ResolvePathVars();
+                        //Default to path where dot net tool us executed 
+                        TemplateFileNameOrPath = Path.Combine(SampleFilesPath, "Templates").PathEnds();
                     }
                     if (!(
                         (File.Exists(TemplateFileNameOrPath)) ||
                         (Directory.Exists(TemplateFileNameOrPath)
-                       ))) TemplateFileNameOrPath = ("{ASSEMBLY_PATH}" + TemplateFileNameOrPath).ResolvePathVars();
-                    if (!((File.Exists(TemplateFileNameOrPath)) || (Directory.Exists(TemplateFileNameOrPath))))
-                        throw new Exception(string.Format("Template not found in path {0}", TemplateFileNameOrPath));
+                       ))) TemplateFileNameOrPath = Environment.CurrentDirectory.PathEnds();
 
+                    if (InteractiveTemplatePath(TemplateFileNameOrPath)) TemplateFileNameOrPath = Settings.TemplateFileNameOrPath;
+
+                    if (!Settings.AutoRun)
+                    {
+                        Settings.AutoRun = Prompt.GetYesNo("Would you like to use this configuration everytime you run in this path?", true);
+                    }
+                    File.WriteAllText(PathConfigFileName, JsonConvert.SerializeObject(Settings));
+
+
+                    if (!((File.Exists(TemplateFileNameOrPath)) || (Directory.Exists(TemplateFileNameOrPath))))
+                    {
+                        //If we find not tmeplate files or path,  then lets see if we should show the help dump
+                        if (Environment.GetCommandLineArgs().Count() == 1)
+                        {
+                            app.ExtendedHelpText = app.ExtendedHelpText
+                                + Environment.NewLine + "BaseDirectory=" + AppContext.BaseDirectory
+                                + Environment.NewLine + "CurrentDirectory=" + Environment.CurrentDirectory
+                                + Environment.NewLine + "GetCurrentDirectory=" + System.IO.Directory.GetCurrentDirectory()
+                                + Environment.NewLine + "GetCommandLineArgs=" + System.IO.Path.GetDirectoryName(Environment.GetCommandLineArgs()[0])
+                            ;
+                            app.ShowHelp();
+                            return Exit("");
+                        } 
+                        else
+                        {
+                            Errors.AppendLine($"Template not found in path {TemplateFileNameOrPath}");
+                        }
+                    }
+
+                    if (Errors.Length > 0)
+                    {
+                        if (sampleFilesOption.HasValue())
+                        {
+                            return Exit("Sample files where generated... exiting");
+                        }
+                        throw new Exception(Errors.ToString());
+                    }
+
+                    Console.ResetColor();
                     // get the file attributes for file or directory
                     FileAttributes attr = File.GetAttributes(TemplateFileNameOrPath);
 
@@ -198,7 +400,7 @@ namespace EzDbCodeGen.Cli
                     }
                     var CodeGen = new CodeGenerator
                     {
-                        SchemaName = schemaName,
+                        SchemaName = Settings.SchemaName,
                         VerboseMessages = AppSettings.Instance.VerboseMessages,
                         ConfigurationFileName = AppSettings.Instance.ConfigurationFileName,
                         ProjectPath = ((projectFileToModifyOption.HasValue()) ? projectFileToModifyOption.Value() : ""),
@@ -211,13 +413,13 @@ namespace EzDbCodeGen.Cli
                     CodeGen.OnStatusChangeEventArgs += StatusChangeEventHandler;
 
                     var returnCode = new ReturnCodes();
-                    ITemplateInput Source = null;
+                    ITemplateDataInput Source = null;
                     if (sourceSchemaFileNameOption.HasValue())
                         Source = new TemplateInputFileSource(sourceSchemaFileNameOption.Value());
                     else
                         Source = new TemplateInputDatabaseConnecton(AppSettings.Instance.ConnectionString);
 
-                    ITemplateInput CompareTo = null;
+                    ITemplateDataInput CompareTo = null;
                     if (compareToSchemaFileNameOption.HasValue())
                         CompareTo = new TemplateInputFileSource(compareToSchemaFileNameOption.Value());
                     else if (compareToConnectionStringOption.HasValue())
@@ -235,19 +437,13 @@ namespace EzDbCodeGen.Cli
                         returnCode = CodeGen.ProcessTemplate(TemplateFileNameOrPath, Source, CompareTo, OutputPath);
                     }
 
-                    Console.WriteLine("Render of template " + templateFileNameOrDirectoryOption.Value() + " Completed!");
-                    Environment.ExitCode = (int)returnCode.Result;
-                    Environment.Exit(Environment.ExitCode);
-                    return Environment.ExitCode;
+                    return Exit("Render of template " + templateFileNameOrDirectoryOption.Value() + " Completed!");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Could not render template. " + ex.Message);
+                     Console.WriteLine("Could not render template. " + ex.Message);
                     Console.WriteLine("Stack Trace:");
-                    Console.WriteLine(ex.StackTrace);
-                    Environment.ExitCode = (int)ReturnCode.Error;
-                    Environment.Exit(Environment.ExitCode);
-                    return Environment.ExitCode;
+                    return Exit(ex.StackTrace, 100);
                 }
 
             });

@@ -8,15 +8,15 @@ using EzDbCodeGen.Core.Config;
 
 namespace EzDbCodeGen.Tests
 {
-    public class StringTests
+    [Collection("DatabaseCollection")]
+    public class StringTests : TestBase
     {
-        readonly string SchemaFileName = "";
-        public StringTests()
+
+        DatabaseFixture fixture;
+        public StringTests(DatabaseFixture _fixture) : base()
         {
-            this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
+            this.fixture = _fixture;
         }
-
-
 
         internal void CaseTestPluralize(string singular, string plural)
         {
@@ -112,13 +112,19 @@ Rest of the code
         [Fact]
         public void WlldCardSearchTest()
         {
-            var db1 = new TemplateInputFileSource(SchemaFileName).LoadSchema(Internal.AppSettings.Instance.Configuration);
-            var lst = db1.FindEntities("Integration.Trans*");
-            Assert.True(lst.Count==2, "Should be 2 entities that match the pattern 'Integration.Trans*'");
-            var lst2 = db1.FindEntities("Dimension.*");
-            Assert.True(lst2.Count == 8, "Should be 8 entities that match the pattern 'Dimension.*'");
-            var lst3 = db1.FindEntities("*Stock*");
-            Assert.True(lst3.Count == 4, "Should be 4 entities that match the pattern '*Stock*'");
+            var db1 = (new TemplateInputDatabaseConnecton(fixture.ConnectionString)).LoadSchema(EzDbCodeGen.Core.Config.Configuration.FromFile(this.ConfigFileName));
+            var lst = db1.FindEntities("SalesLT.Custom*");
+            Assert.True(lst.Count==2, "Should be 2 entities that match the pattern 'SalesLT.Custom*'");
+            var lst1 = db1.FindEntities("dbo.Custom*");
+            Assert.True(lst1.Count == 0, "Should be 0 entities that match the pattern 'dbo.Custom*'");
+            var lst2 = db1.FindEntities("SalesLT.*");
+            Assert.True(lst2.Count == 13, "Should be 13 entities that match the pattern 'SalesLT.*'");
+            var lstTables = lst2.FindAll(e => e.Type.Equals("TABLE"));
+            Assert.True(lstTables.Count == 10, "Should be 10 entities that match the pattern 'SalesLT.*' and are tables");
+            var lstViews = lst2.FindAll(e => e.Type.Equals("VIEW"));
+            Assert.True(lstViews.Count == 3, "Should be 10 entities that match the pattern 'SalesLT.*'");
+            var lst3 = db1.FindEntities("*Product*");
+            Assert.True(lst3.Count == 7, "Should be 7 entities that match the pattern '*Product*'");
         }
 
     }

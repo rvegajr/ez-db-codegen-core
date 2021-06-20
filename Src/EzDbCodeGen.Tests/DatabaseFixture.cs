@@ -1,239 +1,158 @@
-﻿using EzDbCodeGen.Core;
+﻿
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Configuration;
-using System.Net.Sockets;
-using System.Data.SqlClient;
 using System.Threading.Tasks;
-using EzDbCodeGen.Internal;
-using System.Reflection;
-using System.IO;
-using System.Globalization;
 using System.Diagnostics;
-using System.ComponentModel.DataAnnotations;
+using System.IO;
+using Microsoft.Data.SqlClient;
 using Xunit;
+using MartinCostello.SqlLocalDb;
+using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbCodeGen.Core.Config;
 
 namespace EzDbCodeGen.Tests
 {
-    public enum LocalDBAction {
-        create,
-        delete,
-        start,
-        stop
-    }
-    //https://www.dotnetcurry.com/visualstudio/1456/integration-testing-sqllocaldb Thanks! <3 
-    //https://docs.microsoft.com/en-us/ef/core/miscellaneous/testing/sharing-databases
     public class DatabaseFixture : IDisposable
     {
-        private static readonly object _lock = new object();
-        private static bool _databaseInitialized;
 
-        public string LOCAL_SERVER = "logicbyter.lan";
-        public string CI_SERVER = @"localhost\SQL2019";
-        public string LOCAL_CONNECTION_STRING = @"";
-        public string APPVOYER_CONNECTION_STRING = @"";
-        private string connectionString = "";
-        private SqlConnection connection = null;
+        private SqlLocalDbApi localDB;
+        private ISqlLocalDbInstanceInfo instance;
+        private ISqlLocalDbInstanceManager manager;
+        private static string LOCALDB_NAME = "EzDbCodeGenTestDB";
+        private static string DATABASE_NAME = "AdventureWorksLT2008";
         public DatabaseFixture()
         {
-            LOCAL_CONNECTION_STRING = @"Server=" + LOCAL_SERVER + @";Database=master;User ID=sa;Password=Password12!;";
-            APPVOYER_CONNECTION_STRING = @"Server=" + CI_SERVER + @";Database=master;User ID=sa;Password=Password12!;";
-            //figure out which connection string we use
-            WriteLine("Connection String=" + ConnectionString);
-            EnsureDatabaseExists();
-        }
-
-        public SqlConnection Connection
-        {
-            get
+            this.localDB = new SqlLocalDbApi();
+            instance = localDB.GetOrCreateInstance(DatabaseFixture.LOCALDB_NAME);
+            manager = instance.Manage();
+            if (localDB.InstanceExists(DatabaseFixture.LOCALDB_NAME))
             {
-                if (connection == null) {
-                    connection = new SqlConnection();
-                    connection.ConnectionString = ConnectionString;
-                    connection.Open();
-                    AppSettings.Instance.ConnectionString = connection.ConnectionString;
-                }
-                return connection;
+                if (instance.IsRunning) manager.Stop();
+                localDB.DeleteInstance(DatabaseFixture.LOCALDB_NAME);
             }
-            set
-            {
-                connection = value;
-            }
-        }
-        public void WriteLine(string lineToWrite)
-        {
-            Console.WriteLine(lineToWrite);
-            System.Diagnostics.Debug.WriteLine(lineToWrite);
-        }
-        public bool IsLocalServer { get; set; } = false;
-        public string ConnectionString {
-            get
-            {
-                if (connectionString.Length==0)
-                {
-                    IsLocalServer = CanConnect(LOCAL_CONNECTION_STRING);
-                    if (IsLocalServer) 
-                        connectionString = LOCAL_CONNECTION_STRING;
-                    else
-                    {
-                        var IsCIServer = CanConnect(APPVOYER_CONNECTION_STRING);
-                        if (IsCIServer) connectionString = APPVOYER_CONNECTION_STRING;
-                    }
-                }
-                return connectionString;
-            }
-            set
-            {
-                connectionString = value;
-            }
+            instance = localDB.GetOrCreateInstance(DatabaseFixture.LOCALDB_NAME);
+            manager = instance.Manage();
+            if (instance.IsRunning) manager.Stop();
+            manager.Start();
+            RestoreBackup().GetAwaiter().GetResult();
         }
 
         public void Dispose()
         {
-            if ((connection!= null) && (connection.State == System.Data.ConnectionState.Open))
+            manager.Stop();
+        }
+
+        public string ConnectionString
+        {
+            get
             {
-                connection.Close();
+                return string.Format(@"Server=(localdb)\{0};Integrated Security=true;Database={1};", DatabaseFixture.LOCALDB_NAME, DatabaseFixture.DATABASE_NAME);
             }
-            LocalDbActionExec(LocalDBAction.stop);
-            LocalDbActionExec(LocalDBAction.delete);
         }
-
-        public bool CanConnect(string connectionString)
+        
+        public async Task RestoreBackup()
         {
-            return ServerName(connectionString) != "Unknown"; 
-        }
-
-        /// <summary>
-        /// Action can 
-        /// </summary>
-        public void LocalDbActionExec(LocalDBAction action)
-        {
-            var dbcmd = "create localtestdb -s";
-            if (action == LocalDBAction.delete) dbcmd = "delete localtestdb";
-            if (action == LocalDBAction.start) dbcmd = "start localtestdb";
-            if (action == LocalDBAction.stop) dbcmd = "stop localtestdb";
-            // Use a ProcessStartInfo object to provide a simple solution to create a new LocalDbInstance
-            var _processInfo =
-            new ProcessStartInfo("cmd.exe", "/c " + string.Format("sqllocaldb.exe {0}", dbcmd))
+            using (SqlConnection connection = new SqlConnection(instance.GetConnectionString()))
             {
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true
-            };
-
-            var _process = Process.Start(_processInfo);
-            _process.WaitForExit();
-
-            string _output = _process.StandardOutput.ReadToEnd();
-            string _error = _process.StandardError.ReadToEnd();
-
-            var _exitCode = _process.ExitCode;
-
-            WriteLine("output>>" + (String.IsNullOrEmpty(_output) ? "(none)" : _output).Trim());
-            WriteLine("error>>" + (String.IsNullOrEmpty(_error) ? "(none)" : _error).Trim());
-            WriteLine("ExitCode: " + _exitCode.ToString().Trim());
-            connectionString = @"Data Source=(localdb)\localtestdb; Database=master; Trusted_Connection=True; MultipleActiveResultSets=true;";
-            _process.Close();
-        }
-
-
-        public bool EnsureDatabaseExists()
-        {
-
-            lock (_lock)
-            {
-                if (!_databaseInitialized)
+                try
                 {
-                    LocalDbActionExec(LocalDBAction.create);
-                    var database = "AdventureWorksLT2008";
-                    string filePath = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + Path.DirectorySeparatorChar + "Resources" + Path.DirectorySeparatorChar;
-                    string bakFile = filePath + database + ".bak";
-                    if (!File.Exists(bakFile)) throw new Exception(string.Format("Backup File {0} does not exist.", bakFile));
-                    try
-                    {
-                        //WriteLine("Attempting to connect to {0}", connectionString);
-                        using (var cn = new SqlConnection(ConnectionString + ""))
-                        {
-                            var SQL = string.Format(@"
-DECLARE @dbname nvarchar(128);
-SET @dbname = N'{0}';
+                    await connection.OpenAsync();
+                    var command = connection.CreateCommand();
+                    var DBPath = Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + Path.DirectorySeparatorChar;
+                    var UserPath = Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile) + Path.DirectorySeparatorChar;
+                    var DatabaseBackupZip = DBPath + "Resources" + Path.DirectorySeparatorChar + DatabaseFixture.DATABASE_NAME + ".zip";
+                    var DatabaseBackup = DBPath + "Resources" + Path.DirectorySeparatorChar + DatabaseFixture.DATABASE_NAME + ".bak";
 
-IF (EXISTS (SELECT name FROM master.dbo.sysdatabases WHERE ('[' + name + ']' = @dbname OR name = @dbname)))
-DROP DATABASE {0};
+                    if (File.Exists(DatabaseBackup)) File.Delete(DatabaseBackup);
+                    if (!File.Exists(DatabaseBackupZip))
+                        throw new Exception("File " + DatabaseBackupZip + " does not exist.");
+                    System.IO.Compression.ZipFile.ExtractToDirectory(DatabaseBackupZip, DBPath + "Resources" + Path.DirectorySeparatorChar);
+                    if (!File.Exists(DatabaseBackup))
+                        throw new Exception("File " + DatabaseBackup + " does not exist.");
 
+                    if (File.Exists(string.Format("{0}{1}.mdf", UserPath, DatabaseFixture.DATABASE_NAME))) File.Delete(string.Format("{0}{1}.mdf", UserPath, DatabaseFixture.DATABASE_NAME));
+                    if (File.Exists(string.Format("{0}{1}.ldf", UserPath, DatabaseFixture.DATABASE_NAME))) File.Delete(string.Format("{0}{1}.ldf", UserPath, DatabaseFixture.DATABASE_NAME));
+                    command.CommandText = string.Format(@"
 USE [master]
-RESTORE DATABASE [{0}] 
-FROM DISK = N'{2}{0}.bak' 
-WITH  FILE = 1,  MOVE N'{0}_Data' 
-TO N'{2}{0}_Data.mdf',  
-MOVE N'{0}_Log' TO N'{2}{0}_log.ldf',  
-NOUNLOAD, REPLACE, STATS = 5;
-", database, bakFile, filePath);
+DECLARE @NOTE VARCHAR(8000) = '';
+SET @NOTE = 'Restoring Local DB'; RAISERROR (@NOTE, 10, 1) WITH NOWAIT; 
 
-                            WriteLine(string.Format("Restoring the database {0} from backup {1}", database, bakFile, filePath));
-                            var cmd = cn.CreateCommand();
-                            cn.InfoMessage += delegate (object sender, SqlInfoMessageEventArgs args)
-                            {
-                                WriteLine(string.Format("{0}", args.Message));
-                                return;
-                            };
-                            cn.FireInfoMessageEventOnUserErrors = true;
-                            cmd.CommandText = SQL;
-                            cmd.CommandTimeout = 1800;
-                            cn.Open();
-                            cmd.ExecuteNonQuery();
-                            WriteLine(string.Format("Database restored!", database, bakFile));
-                            connectionString = connectionString.Replace("master", database);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        WriteLine(string.Format("Failure: {0}", ex.Message));
-                    }
+SET NOCOUNT ON;
+DECLARE @PMSG VARCHAR(8000) = ''; DECLARE @PROC VARCHAR(512) = 'LocalDB Restore: ';
+BEGIN TRY
+	IF EXISTS (SELECT name FROM sys.databases WHERE name = N'{2}') BEGIN
+		ALTER DATABASE [{2}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+		EXEC msdb.dbo.sp_delete_database_backuphistory @database_name = N'{2}';
+		SET @NOTE = 'Deleting old database'; RAISERROR (@NOTE, 10, 1) WITH NOWAIT; 
+		DROP DATABASE [{2}]
+	END
+END TRY
+BEGIN CATCH
+END CATCH
+DECLARE @MDF VARCHAR(512) = CONVERT(NVARCHAR, serverproperty('InstanceDefaultDataPath')) + '{2}.mdf';
+DECLARE @LDF VARCHAR(512) = CONVERT(NVARCHAR, serverproperty('InstanceDefaultLogPath')) + '{2}.ldf';
+BEGIN TRY
+	DROP DATABASE [{2}]
+END TRY
+BEGIN CATCH
+END CATCH
 
-                    _databaseInitialized = true;
-                    return true;
+SET @NOTE = 'Restoring....'; RAISERROR (@NOTE, 10, 1) WITH NOWAIT; 
+RESTORE DATABASE [{2}]
+FROM DISK = '{0}'
+WITH REPLACE,RECOVERY,
+    MOVE '{2}_Data' TO @MDF,
+    MOVE '{2}_Log' TO @LDF;
+", DatabaseBackup, UserPath, DatabaseFixture.DATABASE_NAME).Replace(@"\", @"\\");
+                    command.CommandTimeout = 300;
+                    await command.ExecuteNonQueryAsync();
                 }
-            }
-            return true;
-        }
-
-        public string ServerName()
-        {
-            return ServerName(this.ConnectionString);
-        }
-
-        public string ServerName(string connectionString)
-        {
-            var serverName = "Unknown";
-            try
-            {
-                //WriteLine("Attempting to connect to {0}", connectionString);
-                using (var connection = new SqlConnection(connectionString + ";Connect Timeout=5"))
+                catch (Exception)
                 {
-                    var query = "SELECT @@SERVERNAME";
-                    var command = new SqlCommand(query, connection);
-                    connection.Open();
-                    serverName = command.ExecuteScalar()?.ToString();
-                    //WriteLine(string.Format("SQL Query execution successful at {0}", serverName));
+                    throw;
                 }
             }
-            catch (Exception ex)
-            {
-                WriteLine(string.Format("Failure: {0}", ex.Message));
-            }
-            return serverName ?? "Unknown";
-        }
 
+        }
     }
 
-    [CollectionDefinition("DatabaseTest")]
+    [CollectionDefinition("DatabaseCollection")]
     public class DatabaseCollection : ICollectionFixture<DatabaseFixture>
     {
+        public static string CLASS_NAME = "Database Collection";
         // This class has no code, and is never created. Its purpose is simply
         // to be the place to apply [CollectionDefinition] and all the
         // ICollectionFixture<> interfaces.
     }
+
+    public class TestBase 
+    {
+        protected string SchemaFileName = "";
+        protected string ConfigFileName = "";
+        protected string TemplatePath = "";
+        protected Configuration AWLT2008Configuration;
+        public TestBase()
+        {
+            this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
+            this.ConfigFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"AWLT2008.config.json").ResolvePathVars();
+            this.TemplatePath = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"Templates" + Path.DirectorySeparatorChar + @"").ResolvePathVars();
+            this.AWLT2008Configuration = EzDbCodeGen.Core.Config.Configuration.FromFile(this.ConfigFileName);
+        }
+
+        protected string CreateTempFile(string extention = ".schema.json")
+        {
+            try
+            {
+
+                string fileName = System.IO.Path.GetTempPath() + Guid.NewGuid().ToString() + extention;
+                return fileName;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+
+    }
+
 }
+
