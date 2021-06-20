@@ -12,6 +12,7 @@ namespace EzDbCodeGen.Cli
         public string AppName { get; set; } = "MyApp";
         public string ConnectionString { get; set; }
         public string TemplateFileNameOrPath { get; set; }
+        public string CodeGenConfigFile { get; set; }
         public bool AutoRun { get; set; } = false;
     }
 }

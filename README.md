@@ -17,7 +17,7 @@ Set-ExecutionPolicy RemoteSigned
 
 ### Using this project:
 
-1. Navigate to an empty directoy where you want to install this tool at.
+1. Navigate to an empty directory where you want to install this tool at.
 1. Using the command line: `dotnet new tool-manifest`
 2. Once this has completed:  
  `dotnet tool install EzDbCodeGen.Cli --interactive`  

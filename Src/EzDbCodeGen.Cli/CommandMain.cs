@@ -25,10 +25,10 @@ namespace EzDbCodeGen.Cli
         internal static Settings Settings { get; set; } = new Settings();
         public static string SampleFilesPath { get; set; }
         public static string AppName { get; set; }
-
         public static string SchemaName { get; set; }
-
         public static string TemplateFileNameOrPath { get; set; }
+        public static string CodeGenConfigFile { get; set; }
+
         public static string pfx { get; set; } = "EzDbCodeGen: ";
 
 
@@ -63,10 +63,9 @@ namespace EzDbCodeGen.Cli
                     connparm.Database = Prompt.GetString("What is the database table?", defaultValue: connparm.Database, promptColor: ConsoleColor.Green);
                     connparm.UserName = Prompt.GetString("What is the username to access the database?", defaultValue: (connparm.Trusted ?  "TRUSTED" : connparm.UserName), promptColor: ConsoleColor.Green);
                     connparm.Trusted = connparm.UserName.Equals("TRUSTED");
-                    var password = "";
                     if (!connparm.Trusted)
                     {
-                        password = Prompt.GetString("What is the password to access the database?", defaultValue: connparm.Password, promptColor: ConsoleColor.Green);
+                        connparm.Password = Prompt.GetString("What is the password to access the database?", defaultValue: connparm.Password, promptColor: ConsoleColor.Green);
                     } 
                     if (Prompt.GetYesNo("Does this connection string look right: " + connparm.ConnectionString, true, promptColor: ConsoleColor.Green))
                     {
@@ -100,7 +99,48 @@ namespace EzDbCodeGen.Cli
                 Settings.ConnectionString = connparm.ConnectionString;
             }
         }
-
+        /// <summary>
+        /// Will search the path for a config file using the following logic (ignore .config.json)
+        /// 1) First grab a custom app specific config.json (so anything other than ezdbcodegen.config
+        /// 2) Otherwise,  if ezdbcodegen.config.json exists, then we will return this one
+        /// </summary>
+        /// <param name="pathToSearch"></param>
+        /// <returns></returns>
+        static string ConfigFileSearch(string pathToSearch)
+        {
+            var iCount = 0;
+            var defaultFile = "";
+            var appSpecificConfigFile = "";
+            List<string> templateFileList = new List<string>();
+            var configFileList = Directory.GetFiles(pathToSearch, "*.config.json").ToList();
+            if (configFileList.Count>0)
+            {
+                foreach(var configFile in configFileList)
+                {
+                    if (Path.GetFileNameWithoutExtension(configFile).Equals("ezdbcodegen.config"))
+                    {
+                        defaultFile = configFile;
+                    } 
+                    else if (string.IsNullOrEmpty(appSpecificConfigFile))
+                    {
+                        iCount++;
+                        appSpecificConfigFile = configFile;
+                    }
+                    else {
+                        iCount++;
+                    }
+                }
+            }
+            if (iCount>1)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("Warning!  There is more than 1 custom app config.json file in this path,  we are only choosing the first we encounter.");
+                Console.ResetColor();
+            }
+            if (File.Exists(appSpecificConfigFile)) return appSpecificConfigFile;
+            if (File.Exists(defaultFile)) return defaultFile;
+            return null;
+        }
         /// <summary>
         /// 
         /// </summary>
@@ -169,6 +209,7 @@ namespace EzDbCodeGen.Cli
                 Console.WriteLine($" ");
                 //changed the Setings Template path to the samples templates
                 Settings.TemplateFileNameOrPath = Path.Combine(sampleFilesPath, "Templates").PathEnds();
+                Settings.CodeGenConfigFile = Path.Combine(sampleFilesPath, appName + ".config.json");
                 return true;
             }
             return false;
@@ -289,6 +330,8 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                         TemplateFileNameOrPath = Settings.TemplateFileNameOrPath;
                         AppName = Settings.AppName;
                         SchemaName = Settings.SchemaName;
+                        CodeGenConfigFile = Settings.CodeGenConfigFile;
+                        if (!File.Exists(CodeGenConfigFile)) CodeGenConfigFile = null;
                     }
                     Console.WriteLine($"EzDbCodeGen Tool Version {version_.ToString()}");
                     SampleFilesPath = (sampleFilesOption.HasValue() 
@@ -304,7 +347,11 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                         AppSettings.Instance.ConnectionString = sourceConnectionStringOption.Value().SettingResolution();
                     }
 
-                    if (configFileOption.HasValue()) AppSettings.Instance.ConfigurationFileName = configFileOption.Value();
+                    if (configFileOption.HasValue()) CodeGenConfigFile = configFileOption.Value();
+                    if (string.IsNullOrEmpty(CodeGenConfigFile))
+                    {
+                        CodeGenConfigFile = ConfigFileSearch(Environment.CurrentDirectory);
+                    }
 
                     var Errors = new StringBuilder();
                     var OutputPath = string.Empty;
@@ -334,6 +381,8 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                        ))) TemplateFileNameOrPath = Environment.CurrentDirectory.PathEnds();
 
                     if (InteractiveTemplatePath(TemplateFileNameOrPath)) TemplateFileNameOrPath = Settings.TemplateFileNameOrPath;
+                    Settings.CodeGenConfigFile = CodeGenConfigFile;
+                    AppSettings.Instance.ConfigurationFileName = CodeGenConfigFile;  //Need to set this because it may be used later in the app
 
                     if (!Settings.AutoRun)
                     {
@@ -387,17 +436,14 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                     }
 
                     Console.WriteLine("Performing Rendering of template " + pfx + "....");
-                    if (AppSettings.Instance.VerboseMessages)
-                    {
-                        Console.WriteLine(pfx + "Template Path: " + TemplateFileNameOrPath);
-                        Console.WriteLine(pfx + "Path Name: " + pathNameOption.Value());
-                        Console.WriteLine(pfx + "Config File Name: " + AppSettings.Instance.ConfigurationFileName);
-                        if (!sourceSchemaFileNameOption.HasValue()) Console.WriteLine(pfx + "Source Connection String: " + AppSettings.Instance.ConnectionString);
-                        if (sourceSchemaFileNameOption.HasValue()) Console.WriteLine(pfx + "Source Schema File Name: " + sourceSchemaFileNameOption.Value());
+                    Console.WriteLine(pfx + "Template Path: " + TemplateFileNameOrPath);
+                    Console.WriteLine(pfx + "Path Name: " + pathNameOption.Value());
+                    Console.WriteLine(pfx + "Config File Name: " + AppSettings.Instance.ConfigurationFileName);
+                    if (!sourceSchemaFileNameOption.HasValue()) Console.WriteLine(pfx + "Source Connection String: " + AppSettings.Instance.ConnectionString);
+                    if (sourceSchemaFileNameOption.HasValue()) Console.WriteLine(pfx + "Source Schema File Name: " + sourceSchemaFileNameOption.Value());
 
-                        if (compareToSchemaFileNameOption.HasValue()) Console.WriteLine(pfx + "Compare To Schema File Name: " + compareToSchemaFileNameOption.Value());
-                        if ((!compareToSchemaFileNameOption.HasValue()) && (compareToConnectionStringOption.HasValue())) Console.WriteLine(pfx + "Compare To Connection String: " + compareToConnectionStringOption.Value());
-                    }
+                    if (compareToSchemaFileNameOption.HasValue()) Console.WriteLine(pfx + "Compare To Schema File Name: " + compareToSchemaFileNameOption.Value());
+                    if ((!compareToSchemaFileNameOption.HasValue()) && (compareToConnectionStringOption.HasValue())) Console.WriteLine(pfx + "Compare To Connection String: " + compareToConnectionStringOption.Value());
                     var CodeGen = new CodeGenerator
                     {
                         SchemaName = Settings.SchemaName,
