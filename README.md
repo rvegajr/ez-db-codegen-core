@@ -17,21 +17,13 @@ Set-ExecutionPolicy RemoteSigned
 
 ### Using this project:
 
+1. Navigate to an empty directoy where you want to install this tool at.
 1. Using the command line: `dotnet new tool-manifest`
 2. Once this has completed:  
  `dotnet tool install EzDbCodeGen.Cli --interactive`  
 (or to update: `dotnet tool update EzDbCodeGen.Cli --interactive`)
-3. `dotnet ezdbcg -i "." -a "MyAppName"` 
-
-
-
-Lets go through a test run of how to use this before we get into the nitty gritty:
-####  From NuGet (or use the nuget package manager)
-
-1. Install-Package EzDbCodeGen  - it will create a folder in EzDbCodeGen.NuGet.TestTarget called EzDbCodeGen.  This will contain a subdirectoy called appbin that contains a portable deployment of a portable dotnet core 2.2 console application. The nuget package will use your project name name to create an application specific version of an config file and powershell script file that you can use to generate your code.   Subsequent updates to the nuget package will not touch the application specific files.  There will also be a Templates directory, here is where you will place your handle bars templates.  The powershell script, if passed a path, will execute each .hbs template in this path.
-2. Update the connection string in ezdbcodegen.ps1 with the database you wish to create your templates on
-3. right click on ezdbcodegen.ps1 and select "Open with PowerShell ISE" (because for whatever reason,  the direct executer just hangs for me)
-4. Click the green right arrow to run the script.  You should see a powershell window come up with the script running,  EzDbCodeGen/Generated should have the results of both of the templates execution
+3. You will need a database that you can run the sample templates against.  This utility will build the connection string, test it,  download the sample files from the nuget library, copy them to the proper location, then perform the code generation was instructed by the templates.  
+`dotnet ezdbcg` 
 
 ## Deployment
 
