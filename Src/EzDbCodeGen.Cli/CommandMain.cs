@@ -11,6 +11,7 @@ using EzDbCodeGen.Core.Enums;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbCodeGen.Core.Classes;
 using Newtonsoft.Json;
+using EzDbSchema.Core.Interfaces;
 
 namespace EzDbCodeGen.Cli
 {
@@ -24,41 +25,79 @@ namespace EzDbCodeGen.Cli
         internal static Settings Settings { get; set; } = new Settings();
         public static string SampleFilesPath { get; set; }
         public static string AppName { get; set; }
+
+        public static string SchemaName { get; set; }
+
         public static string TemplateFileNameOrPath { get; set; }
         public static string pfx { get; set; } = "EzDbCodeGen: ";
 
 
         static void InteractiveConnectionString()
         {
+            var iLoopCount = 0;
             bool questionLoop = true;
-            var ConnectionStringLocal = Prompt.GetString("What connection string would you like to use (just press enter to build it)?", promptColor: ConsoleColor.Green);
+            Console.ResetColor();
+            var defaultConnectionString = "Server=localhost;Database=YourDatabaseName;Trusted_Connection=True;";
+            IConnectionParameters connparm = new EzDbSchema.MsSql.ConnectionParameters();
+            connparm.ConnectionString = (string.IsNullOrEmpty(Settings.ConnectionString) ? defaultConnectionString : Settings.ConnectionString);
+
+            var ConnectionStringLocal = "";
+            if (!connparm.Database.Equals("YourDatabaseName"))
+            {
+                var ConnectionStringPromptMessage = $"Use this connection string '{connparm.ConnectionString}' [Y] (Type [N] to build a new one)";
+                if (Prompt.GetYesNo(ConnectionStringPromptMessage, true, promptColor: ConsoleColor.Gray))
+                {
+                    ConnectionStringLocal = Prompt.GetString("What connection string would you like to use (just press enter to build it)?", promptColor: ConsoleColor.Green);
+                }
+            } else
+            {
+                ConnectionStringLocal = Prompt.GetString("Enter in the connection string you would like to use (or leave blank to build it)?", defaultValue: "", promptColor: ConsoleColor.Green);
+            }
+
             if ((ConnectionStringLocal ?? "") == "")
             {
                 while (questionLoop)
                 {
-                    var server = Prompt.GetString("What is the database server?", defaultValue: "localhost", promptColor: ConsoleColor.Green);
-                    var db = Prompt.GetString("What is the database table?", promptColor: ConsoleColor.Green);
-                    var username = Prompt.GetString("What is the username to access the database?", defaultValue: "TRUSTED", promptColor: ConsoleColor.Green);
+                    iLoopCount++;
+                    connparm.Server = Prompt.GetString("What is the database server?", defaultValue: connparm.Server, promptColor: ConsoleColor.Green);
+                    connparm.Database = Prompt.GetString("What is the database table?", defaultValue: connparm.Database, promptColor: ConsoleColor.Green);
+                    connparm.UserName = Prompt.GetString("What is the username to access the database?", defaultValue: (connparm.Trusted ?  "TRUSTED" : connparm.UserName), promptColor: ConsoleColor.Green);
+                    connparm.Trusted = connparm.UserName.Equals("TRUSTED");
                     var password = "";
-                    if (!username.Equals("TRUSTED"))
+                    if (!connparm.Trusted)
                     {
-                        password = Prompt.GetString("What is the password to access the database?", defaultValue: "", promptColor: ConsoleColor.Green);
-                    }
-                    if (username.Equals("TRUSTED"))
+                        password = Prompt.GetString("What is the password to access the database?", defaultValue: connparm.Password, promptColor: ConsoleColor.Green);
+                    } 
+                    if (Prompt.GetYesNo("Does this connection string look right: " + connparm.ConnectionString, true, promptColor: ConsoleColor.Green))
                     {
-                        ConnectionStringLocal = $"Server={server};Database={db};Trusted_Connection=True;";
-                    }
-                    else
-                    {
-                        ConnectionStringLocal = $"Server={server};Database={db};User Id={username};Password={password};";
-                    }
-                    if (Prompt.GetYesNo("Does this connection string look right: " + ConnectionStringLocal, true, promptColor: ConsoleColor.Green))
-                    {
-                        Settings.ConneectionString = ConnectionStringLocal;
-                        AppSettings.Instance.ConnectionString = Settings.ConneectionString;
-                        break;
+                        Settings.ConnectionString = connparm.ConnectionString;
+                        AppSettings.Instance.ConnectionString = Settings.ConnectionString;
+                        try
+                        {
+                            Console.WriteLine("Testing connection to the database");
+                            if (connparm.IsValid())
+                            {
+                                Settings.ConnectionString = connparm.ConnectionString;
+                                Console.ForegroundColor = ConsoleColor.Green;
+                                Console.WriteLine("Connection OK!");
+                                break;
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.WriteLine($"Connection Failed :( {ex.Message}");
+                            if (!Prompt.GetYesNo("Would you like to try build the connection string again?", true, promptColor: ConsoleColor.Red))
+                            {
+                                Console.ForegroundColor = ConsoleColor.White;
+                                break;
+                            }
+                        }
                     }
                 }
+            } else
+            {
+                Settings.ConnectionString = connparm.ConnectionString;
             }
         }
 
@@ -236,6 +275,8 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                 if (verboseOption.HasValue()) AppSettings.Instance.VerboseMessages = verboseOption.HasValue();
                 try
                 {
+                    AppName = "MyApp";
+                    SchemaName = "MySchema";
                     var PathConfigFileName = Path.Combine(Environment.CurrentDirectory, "").PathEnds() + ".ezdbcodegen.config";
                     if (File.Exists(PathConfigFileName))
                     {
@@ -244,20 +285,20 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                     if (Settings.AutoRun)
                     {
                         Console.WriteLine("A previous run in this path asked to reuse the latest settings,  reading from '.ezdbcodegen.config' and usine these settings for this run");
-                        AppSettings.Instance.ConnectionString = Settings.ConneectionString;
+                        AppSettings.Instance.ConnectionString = Settings.ConnectionString;
                         TemplateFileNameOrPath = Settings.TemplateFileNameOrPath;
+                        AppName = Settings.AppName;
+                        SchemaName = Settings.SchemaName;
                     }
                     Console.WriteLine($"EzDbCodeGen Tool Version {version_.ToString()}");
                     SampleFilesPath = (sampleFilesOption.HasValue() 
                         ? sampleFilesOption.Value().ResolvePathVars() 
                         : Path.Combine(Environment.CurrentDirectory, "Sample").PathEnds()
                        );
-                    AppName = (appNameOption.HasValue() ? appNameOption.Value() : "MyApp");
+                    if (appNameOption.HasValue()) AppName=appNameOption.Value();
                     if (sampleFilesOption.HasValue()) SampleFileDownload(SampleFilesPath, AppName);
 
-                    var schemaName = "MySchema";
-
-                    if (schemaNameOption.HasValue()) schemaName = schemaNameOption.Value();
+                    if (schemaNameOption.HasValue()) SchemaName = schemaNameOption.Value();
                     if (sourceConnectionStringOption.HasValue())
                     {
                         AppSettings.Instance.ConnectionString = sourceConnectionStringOption.Value().SettingResolution();
@@ -268,6 +309,7 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                     var Errors = new StringBuilder();
                     var OutputPath = string.Empty;
                     if ((pathNameOption.HasValue()) && (pathNameOption.Value().Length > 0)) OutputPath = pathNameOption.Value();
+                    if (OutputPath == string.Empty) OutputPath = Environment.CurrentDirectory.PathEnds();
                     if ((!sourceSchemaFileNameOption.HasValue()) && (AppSettings.Instance.ConnectionString.Length == 0))
                     {
                         InteractiveConnectionString();
@@ -284,7 +326,7 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                     {
                         //TemplateFileNameOrPath = ("{ASSEMBLY_PATH}" + TemplateFileNameOrPath).ResolvePathVars();
                         //Default to path where dot net tool us executed 
-                        TemplateFileNameOrPath = SampleFilesPath;
+                        TemplateFileNameOrPath = Path.Combine(SampleFilesPath, "Templates").PathEnds();
                     }
                     if (!(
                         (File.Exists(TemplateFileNameOrPath)) ||
@@ -295,14 +337,11 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
 
                     if (!Settings.AutoRun)
                     {
-                        if (Prompt.GetYesNo("Would you like to use this configuration everytime you run in this path?", true))
-                        {
-                            Settings.AutoRun = true;
-                            File.WriteAllText(PathConfigFileName, JsonConvert.SerializeObject(Settings));
-                        }
+                        Settings.AutoRun = Prompt.GetYesNo("Would you like to use this configuration everytime you run in this path?", true);
                     }
+                    File.WriteAllText(PathConfigFileName, JsonConvert.SerializeObject(Settings));
 
-                    
+
                     if (!((File.Exists(TemplateFileNameOrPath)) || (Directory.Exists(TemplateFileNameOrPath))))
                     {
                         //If we find not tmeplate files or path,  then lets see if we should show the help dump
@@ -332,6 +371,7 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                         throw new Exception(Errors.ToString());
                     }
 
+                    Console.ResetColor();
                     // get the file attributes for file or directory
                     FileAttributes attr = File.GetAttributes(TemplateFileNameOrPath);
 
@@ -360,7 +400,7 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                     }
                     var CodeGen = new CodeGenerator
                     {
-                        SchemaName = schemaName,
+                        SchemaName = Settings.SchemaName,
                         VerboseMessages = AppSettings.Instance.VerboseMessages,
                         ConfigurationFileName = AppSettings.Instance.ConfigurationFileName,
                         ProjectPath = ((projectFileToModifyOption.HasValue()) ? projectFileToModifyOption.Value() : ""),
@@ -401,7 +441,7 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("Could not render template. " + ex.Message);
+                     Console.WriteLine("Could not render template. " + ex.Message);
                     Console.WriteLine("Stack Trace:");
                     return Exit(ex.StackTrace, 100);
                 }
