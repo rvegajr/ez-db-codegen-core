@@ -42,16 +42,61 @@ namespace EzDbCodeGen.Cli
             connparm.ConnectionString = (string.IsNullOrEmpty(Settings.ConnectionString) ? defaultConnectionString : Settings.ConnectionString);
 
             var ConnectionStringLocal = "";
-            if (!connparm.Database.Equals("YourDatabaseName"))
+
+
+            while (questionLoop)
             {
-                var ConnectionStringPromptMessage = $"Use this connection string '{connparm.ConnectionString}' [Y] (Type [N] to build a new one)";
-                if (Prompt.GetYesNo(ConnectionStringPromptMessage, true, promptColor: ConsoleColor.Gray))
+                iLoopCount++;
+                if (!connparm.Database.Equals("YourDatabaseName"))
                 {
-                    ConnectionStringLocal = Prompt.GetString("What connection string would you like to use (just press enter to build it)?", promptColor: ConsoleColor.Green);
+                    var ConnectionStringPromptMessage = $"Use this connection string '{connparm.ConnectionString}' [Y] (Type [N] to build a new one)";
+                    if (Prompt.GetYesNo(ConnectionStringPromptMessage, true, promptColor: ConsoleColor.Gray))
+                    {
+                        ConnectionStringLocal = Prompt.GetString("What connection string would you like to use (just press enter to build it)?", promptColor: ConsoleColor.Green);
+                    }
                 }
-            } else
-            {
-                ConnectionStringLocal = Prompt.GetString("Enter in the connection string you would like to use (or leave blank to build it)?", defaultValue: "", promptColor: ConsoleColor.Green);
+                else
+                {
+                    ConnectionStringLocal = Prompt.GetString("Enter in the connection string you would like to use (or leave blank to build it)?", defaultValue: "", promptColor: ConsoleColor.Green);
+                }
+
+                if ((ConnectionStringLocal ?? "") == "")
+                {
+                    connparm.Server = Prompt.GetString("What is the database server?", defaultValue: connparm.Server, promptColor: ConsoleColor.Green);
+                    connparm.Database = Prompt.GetString("What is the database table?", defaultValue: connparm.Database, promptColor: ConsoleColor.Green);
+                    connparm.UserName = Prompt.GetString("What is the username to access the database?", defaultValue: (connparm.Trusted ? "TRUSTED" : connparm.UserName), promptColor: ConsoleColor.Green);
+                    connparm.Trusted = connparm.UserName.Equals("TRUSTED");
+                    if (!connparm.Trusted)
+                    {
+                        connparm.Password = Prompt.GetString("What is the password to access the database?", defaultValue: connparm.Password, promptColor: ConsoleColor.Green);
+                    }
+                }
+                if (Prompt.GetYesNo("Does this connection string look right: " + connparm.ConnectionString, true, promptColor: ConsoleColor.Green))
+                {
+                    Settings.ConnectionString = connparm.ConnectionString;
+                    AppSettings.Instance.ConnectionString = Settings.ConnectionString;
+                    try
+                    {
+                        Console.WriteLine("Testing connection to the database");
+                        if (connparm.IsValid())
+                        {
+                            Settings.ConnectionString = connparm.ConnectionString;
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.WriteLine("Connection OK!");
+                            break;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine($"Connection Failed :( {ex.Message}");
+                        if (!Prompt.GetYesNo("Would you like to try build the connection string again?", true, promptColor: ConsoleColor.Red))
+                        {
+                            Console.ForegroundColor = ConsoleColor.White;
+                            break;
+                        }
+                    }
+                }
             }
 
             if ((ConnectionStringLocal ?? "") == "")
