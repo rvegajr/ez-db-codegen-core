@@ -153,12 +153,14 @@ namespace EzDbCodeGen.Core
         public IDatabase LoadSchema(Configuration config)
         {
             try
-            { 
-                this.Schema = (IDatabase)JsonConvert.DeserializeObject<Config.Database>(File.ReadAllText(DatabaseSchemaDumpFileName),
-                    new JsonSerializerSettings {
+            {
+               var db = JsonConvert.DeserializeObject(File.ReadAllText(DatabaseSchemaDumpFileName),
+                    new JsonSerializerSettings
+                    {
                         PreserveReferencesHandling = PreserveReferencesHandling.All,
                         TypeNameHandling = TypeNameHandling.All
                     });
+                this.Schema = (IDatabase)db;
                 return this.Schema.Filter(config);
             }
             catch (Exception ex)

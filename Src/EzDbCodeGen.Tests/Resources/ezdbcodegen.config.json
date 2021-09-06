@@ -1,0 +1,170 @@
+﻿{
+  "Database": {
+    "DefaultSchema": "dbo", /* Default schemas are assumed names when searching for an object name*/
+    /*AliasNamePattern - You can use the following variables here {SCHEMANAME}, {OBJECTNAME} with replace patterns after the instructions, for example:
+          Lets say the Schema name is "CUSTOMER" and the Object name is "tbl_Address" 
+            You have the following one letter codes to modify the string after the name seperated by "|"
+                U=Upper Case,  L=Lower Case, P=Proper Case, X'<String to remove>'= Clear String, R'Old string'=>'New String', S=Single, M=Pluralize, T=TitleCase
+          After Filtering,  the following patterns will yield that following names:
+        "{SCHEMANAME}{OBJECTNAME}" = "CUSTOMERtbl_Address"
+        "{SCHEMANAME}{OBJECTNAME-U}" = "CUSTOMERTBL_ADDRESS"
+        "{SCHEMANAME-L}{OBJECTNAME-L|X'tbl_'}" = "customeraddress"
+        "{SCHEMANAME-P}{OBJECTNAME-P|X'tbl_'}" ="CustomerAddress"
+        */
+    "PropertyNameSuffix": "Value", //If a proerty has the same name as its parent Entity,  this is the suffix that will be appended to the Alias name
+    "AliasNamePattern": "{SCHEMANAME-P|X'dbo'}{OBJECTNAME-S|X' '|X'tbl_'}", /* Default value is {OBJECTNAME} if blank or not present*/
+    "SchemaName": "MyEntities",
+    "DeleteObjectOnFilter": true, /* If this is true, the object will be deleted if filtered out,  if its false, it will be marked with IsEnabled=false */
+    "Misc": {
+      "Field1": "Value1",
+      "Field2": "Value2"
+    },
+    /* You can specify this in format of dbo.TABLENAME.AddDate for ColumnNameFilters, ColumnNameComputed and ColumnNameNotMapped
+        <schema>.<table>.<column> - If you specify 
+        <table>.<column>          -
+        <column>                  - 
+    */
+    "ColumnNameFilters": [
+      "AddDate*", //Will filter out every column that begins with AddDate in every table in every schema
+      "AdventureWorksDWBuildVersion.DBVersion", //Will filter out column DBVersion in table AdventureWorksDWBuildVersion in Default schema
+      "Customers.LastUpdateDate*", //Will filter out every column that begins with LastUpdateDate in the Customer table IN THE DEFAULT SCHEMA
+      "*.Customers.LastUpdateDate*", //Will filter out every column that begins with LastUpdateDate in the Customer table in every schema
+      "System.FactCallCenter.Date", //Will filter out Date column for table FactCallCenter in schema System
+      "FactCallCenter.ServiceGrade", //Will filter out ServiceGrade column for table FactCallCenter in the Default Schema 
+      "Date", //Will filter out every column that equals Date in every table in every schema
+      "AccountCodeAlternateKey" //Will filter out column with a name of AccountCodeAlternateKey in every column and schema
+    ],
+    "ColumnNameComputed": [
+      "SysUpdateDate*"
+    ],
+    "ColumnNameNotMapped": [
+      "dbo.*.NotMappedColumn*"
+    ]
+  },
+    /* Entities higher up will be utilized for ignore actions and rename actions.*/
+    "Entities": [
+        /*
+        {
+            "Name": "Schema.EntityName",  <== Table Name,  1 wild card, or 2 wild cards (with one on a block of text in the middle) will work,  so *, or *EndsTableName, BeginsTableName*, *ContainsTableName*
+            "Ignore": false,       <== If true,  the the entity that matches this will not be written in the filter
+            "RenameTo": "*",       <== wild card count should match Name unless you intended on it,  you can add the property name {SCHEMANAME}
+            "Overrides": {
+                "PrimaryKey": [    <== Primary key must exist, this will override the primary key list in the order listed below,  wild card in the name are not supported
+                    { "FieldName": "Column1" },
+                    { "FieldName": "Column2" }
+                ]
+            },
+            "ObjectFilters": [
+              "*WildCardName*",
+              "BeingsWith",
+              "*EndsWith*"
+            ]
+        }
+        */
+        { /* For views,  if you do not specify a primary keys,  that app has no idea what keys you want to search on so the contoller it creates will be for every column,  
+            it is strongly recommend that for every view,  you define a unique set of columns that the can be used to search the view on
+          */
+            "Name": "ViewName",
+            "Ignore": false,
+			      "Misc" : {
+				      "CacheEnabled" : false,
+				      "CacheDuration" : 10,
+				      "PrimaryKey" : "Column1,Column2"
+			      }
+        },
+        {
+            "Name": "*DatabaseLog*",
+            "Ignore": true
+        },
+        {
+            "Name": "MARSxtra.tempload",
+            "Ignore": false,
+            "Overrides": {
+                "PrimaryKey": [
+                    { "FieldName": "PeriodId" },
+                    { "FieldName": "Inv Year" },
+                    { "FieldName": "Loan Number" }
+                ]
+            }
+        },
+        {
+            "Name": "MARSxtra.vw_REO",
+            "Ignore": false,
+            "Overrides": {
+                "PrimaryKey": [
+                    { "FieldName": "REOID" }
+                ]
+            }
+        },
+        {
+            "Name": "*sysdiagrams",
+            "Ignore": true
+        },
+        {
+            "Name": "*SysDiagramIds*",
+            "Ignore": true
+        },
+        {
+            "Name": "*UserSysdiagrams*",
+            "Ignore": true
+        },
+        {
+            "Name": "*RelationshipLoad*",
+            "Ignore": true
+        },
+        {
+            "Name": "*RelationshipLoad*",
+            "Ignore": true
+        },
+        {
+            "Name": "*relationships*",
+            "Ignore": true
+        },
+        {
+            "Name": "*TransactionLoad*",
+            "Ignore": true
+        },
+        {
+            "Name": "dbo.REPORT*",
+            "Ignore": true
+        },
+        {
+            "Name": "web.vw*",
+            "Ignore": true
+        },
+        {
+            "Name": "dbo.v*",
+            "Ignore": true
+        },
+        {
+            "Name": "dbo.dt*",
+            "Ignore": true
+        },
+        {
+            "Name": "dbo.V*",
+            "Ignore": true
+        },
+        {
+            "Name": "*relationshipcashflowhistory*",
+            "Ignore": true
+        },
+        {
+            "Name": "*pvchange*",
+            "Ignore": true
+        },
+        {
+            "Name": "*RelationshipCashFlowHistory*",
+            "Ignore": true
+        },
+        { /* This will find everything that matches the following Name pattern and rename its alias to the mask mentioned in AliasRenameTo,  noting that a * will remove to  */
+            "Name": "tbl_*",
+            "AliasRenameTo": "*"
+        }
+    ],
+    "PluralizerCrossReference": [
+        {
+            "SingleWord": "ProductCurve",
+            "PluralWord": "ProductCurves"
+        }
+    ]
+}

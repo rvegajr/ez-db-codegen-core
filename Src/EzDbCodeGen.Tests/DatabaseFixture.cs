@@ -129,12 +129,15 @@ WITH REPLACE,RECOVERY,
         protected string SchemaFileName = "";
         protected string ConfigFileName = "";
         protected string TemplatePath = "";
+        protected string ResourcesPath = "";
         protected Configuration AWLT2008Configuration;
         public TestBase()
         {
-            this.SchemaFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"MySchemaName.db.json").ResolvePathVars();
-            this.ConfigFileName = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"AWLT2008.config.json").ResolvePathVars();
-            this.TemplatePath = (@"{ASSEMBLY_PATH}Resources" + Path.DirectorySeparatorChar + @"Templates" + Path.DirectorySeparatorChar + @"").ResolvePathVars();
+            this.ResourcesPath = Path.GetFullPath(@"./Resources" + Path.DirectorySeparatorChar);
+            this.SchemaFileName = ($"{this.ResourcesPath}MySchemaName.db.json");
+            this.ConfigFileName = ($"{this.ResourcesPath}AWLT2008.config.json");
+            this.TemplatePath = ($"{this.ResourcesPath}Templates" + Path.DirectorySeparatorChar + @"");
+            
             this.AWLT2008Configuration = EzDbCodeGen.Core.Config.Configuration.FromFile(this.ConfigFileName);
         }
 
