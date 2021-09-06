@@ -18,6 +18,7 @@ using EzDbSchema.Core;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbCodeGen.Core.Config;
 using EzDbCodeGen.Core.Classes;
+using System.Diagnostics;
 
 namespace EzDbCodeGen.Core
 {
@@ -198,6 +199,7 @@ namespace EzDbCodeGen.Core
             set
             {
                 _currentTask = (string.IsNullOrEmpty(_currentTemplateName) ? "" : (_currentTemplateName + ": ")) + value;
+                Debug.WriteLine(_currentTask);
                 if ((this.VerboseMessages) && (OnStatusChangeEventArgs != null)) OnStatusChangeEventArgs(this, new StatusChangeEventArgs(_currentTask));
             }
         }
@@ -593,18 +595,23 @@ namespace EzDbCodeGen.Core
     {
         public static CodeGenBase WithTemplate(this CodeGenBase codeGenBase, ITemplateDataInput templateInputToUse)
         {
+            codeGenBase.OriginalTemplateDataInputSource = templateInputToUse;
             return codeGenBase;
         }
         public static CodeGenBase WithConfiguration(this CodeGenBase codeGenBase, Configuration configuration)
         {
+            //codeGenBase.Se = configuration;
+            AppSettings.Instance.Configuration = configuration;
             return codeGenBase;
         }
         public static CodeGenBase WithConfiguration(this CodeGenBase codeGenBase, string configurationFileName)
         {
+            codeGenBase.ConfigurationFileName = configurationFileName;
             return codeGenBase;
         }
         public static CodeGenBase WithOutputPath(this CodeGenBase codeGenBase, string outputPath)
         {
+            codeGenBase.OutputPath = outputPath;
             return codeGenBase;
         }
     }

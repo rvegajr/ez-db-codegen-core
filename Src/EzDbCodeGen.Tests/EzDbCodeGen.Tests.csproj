@@ -12,8 +12,8 @@
   <ItemGroup>
     <None Remove="Resources\AdventureWorksLT2008.zip" />
     <None Remove="Resources\AWLT2008.config.json" />
+    <None Remove="Resources\ezdbcodegen.config.json" />
     <None Remove="Resources\MySchemaName.db.json" />
-    <None Remove="Resources\Templates\SchemaRender.hbs" />
     <None Remove="Resources\Templates\SchemaRenderAsFiles.hbs" />
     <None Remove="Resources\Templates\SchemaRenderAsFilesNoOutput.hbs" />
   </ItemGroup>
@@ -24,10 +24,10 @@
     <Content Include="Resources\AWLT2008.config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Resources\MySchemaName.db.json">
+    <Content Include="Resources\ezdbcodegen.config.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="Resources\Templates\SchemaRender.hbs">
+    <Content Include="Resources\MySchemaName.db.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Content Include="Resources\Templates\SchemaRenderAsFiles.hbs">
@@ -38,9 +38,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="5.0.7" />
-    <PackageReference Include="MartinCostello.SqlLocalDb" Version="3.0.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.10.0" />
+    <PackageReference Include="EzDbSchema" Version="5.0.8" />
+    <PackageReference Include="MartinCostello.SqlLocalDb" Version="3.0.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <PrivateAssets>all</PrivateAssets>
@@ -64,12 +64,15 @@
     <None Update="Resources\Json.Comparer.Tests.csprojsample">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Update="Resources\Templates\SchemaRender.hbs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="Resources\Web.sample.config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="Handlebars.Net" Version="2.0.8" />
+    <PackageReference Update="Handlebars.Net" Version="2.0.9" />
     <PackageReference Update="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Update="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Update="System.Json" Version="4.7.1" />

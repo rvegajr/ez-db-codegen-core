@@ -39,8 +39,8 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="EzDbSchema" Version="5.0.7" />
-    <PackageReference Update="Handlebars.Net" Version="2.0.8" />
+    <PackageReference Update="EzDbSchema" Version="5.0.8" />
+    <PackageReference Update="Handlebars.Net" Version="2.0.9" />
     <PackageReference Update="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Update="System.Data.SqlClient" Version="4.8.2" />
     <PackageReference Update="System.Json" Version="4.7.1" />

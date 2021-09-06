@@ -25,7 +25,7 @@ namespace EzDbCodeGen.Core.Classes
         public bool ModifyClassPath(string ProjectFile, string PathToSearchFor) {
             var list = new Dictionary<string, TemplateFileAction>
             {
-                { ProjectFile, TemplateFileAction.Add }
+                { PathToSearchFor, TemplateFileAction.Add }
             };
             return ModifyClassPath(ProjectFile, list);
         }

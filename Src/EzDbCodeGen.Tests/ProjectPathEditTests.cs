@@ -31,18 +31,34 @@ namespace EzDbCodeGen.Tests
         [Fact]
         public void PathOffsetTests()
         {
-            var projectPath = @"C:\Users\Ricardo Vega\Documents\GitHub\ez-db-codegen-core\Src\EzDbCodeGen.Cli\EzDbCodeGen.Cli.csproj";
-            Uri address1 = new Uri(projectPath);
-            Uri address2 = new Uri(@"C:\Users\Ricardo Vega\Documents\GitHub\ez-db-codegen-core\Src\EzDbCodeGen.Cli\Templates\");
-            var ret = (new Uri(@"C:\Users\Ricardo Vega\Documents\GitHub\ez-db-codegen-core\Src\EzDbCodeGen.Cli\EzDbCodeGen.Cli.csproj"))
-                .MakeRelativeUri(new Uri(@"C:\Users\Ricardo Vega\Documents\GitHub\ez-db-codegen-core\Src\EzDbCodeGen.Cli\Templates"))
+            var projectPath = Path.GetFullPath(@".\..\..\..\..\EzDbCodeGen.Cli\EzDbCodeGen.Cli.csproj");
+            var templatePath = Path.GetFullPath(@".\..\..\..\..\EzDbCodeGen.Cli\Templates\");
+            var SrcPath = Path.GetFullPath(@".\..\..\..\..\");
+            Uri projectPathUri = new Uri(projectPath);
+            Uri templatePathUri = new Uri(templatePath);
+            Uri SrcPathUri = new Uri(SrcPath);
+            var ret = (projectPathUri)
+                .MakeRelativeUri(templatePathUri)
                 .ToString()
                 .Replace('/', Path.DirectorySeparatorChar);
-            Assert.True(ret.Equals("C:\\Users\\Ricardo Vega\\AppData\\Local\\Temp\\..\\..\\"), string.Format("Directory of {0} was not expected", ret));
+            var retB = (templatePathUri)
+                .MakeRelativeUri(projectPathUri)
+                .ToString()
+                .Replace('/', Path.DirectorySeparatorChar);
+            var retC = (SrcPathUri)
+                .MakeRelativeUri(projectPathUri)
+                .ToString()
+                .Replace('/', Path.DirectorySeparatorChar);
+            var retD = (projectPathUri)
+                .MakeRelativeUri(SrcPathUri)
+                .ToString()
+                .Replace('/', Path.DirectorySeparatorChar);
 
-            var str = @"C:\Users\Ricardo Vega\AppData\";
-            var ret2 = (str.PathEnds() + address2.MakeRelativeUri(address1).ToString().Replace('/', Path.DirectorySeparatorChar));
-            Assert.True(ret2.Equals("C:\\Users\\Ricardo Vega\\AppData\\Local\\Temp\\..\\..\\"), string.Format("Directory of {0} was not expected", ret2));
+
+
+            Assert.True(ret.Equals(@"Templates\"), string.Format("Directory of {0} was not expected", ret));
+            Assert.True(retB.Equals("..\\EzDbCodeGen.Cli.csproj"), string.Format("Directory of {0} was not expected", ret));
+            Assert.True(retC.Equals(@"EzDbCodeGen.Cli\EzDbCodeGen.Cli.csproj"), string.Format("Directory of {0} was not expected", ret));
         }
 
         [Fact]
@@ -61,7 +77,7 @@ namespace EzDbCodeGen.Tests
             var retDA3 = par.ModifyClassPath(this.OldFormatProjectFileName, @"TestObjects\SimpleObjectWithExtraProperty.cs");
             var newtext3 = File.ReadAllText(this.OldFormatProjectFileName);
             Assert.True(newtext3.Contains(@"TestObjects\SimpleObjectWithExtraProperty.cs"), "Class name is not present");
-            Assert.False(retDA3, "Changes to the file should not have been made");
+            Assert.True(retDA3, "Changes to the file should have been made");
 
             var retDA4 = par.ModifyClassPath(this.OldFormatProjectFileName, @"TestObjects\SimpleObjectWithExtraPropertyADDED.cs");
             var newtext4 = File.ReadAllText(this.OldFormatProjectFileName);
