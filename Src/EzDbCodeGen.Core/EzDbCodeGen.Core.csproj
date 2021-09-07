@@ -1,16 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-	  <Version>5.0.10.0</Version>
+	  <Version>5.0.11.0</Version>
     <TargetFrameworks>netstandard2.0;netstandard2.1;net461;net472;net48;netcoreapp3.1;net5.0</TargetFrameworks>
-    <AssemblyVersion>5.0.10.0</AssemblyVersion>
-    <FileVersion>5.0.10.0</FileVersion>
+    <AssemblyVersion>5.0.11.0</AssemblyVersion>
+    <FileVersion>5.0.11.0</FileVersion>
     <InformationalVersion>5.0.0+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="ezdbcodegen.config.json" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="5.0.8" />
+    <PackageReference Include="EzDbSchema" Version="5.0.9" />
     <PackageReference Include="Handlebars.Net" Version="2.0.9" />
     <PackageReference Include="Json.Comparer.Core" Version="0.6.9" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />

@@ -304,7 +304,27 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                         AppSettings.Instance.ConnectionString = sourceConnectionStringOption.Value().SettingResolution();
                     }
 
-                    if (configFileOption.HasValue()) AppSettings.Instance.ConfigurationFileName = configFileOption.Value();
+                    //Overriding withe the config file option will always superscede all configuration settings
+                    if (configFileOption.HasValue())
+                    {
+                        AppSettings.Instance.ConfigurationFileName = configFileOption.Value();
+                    } else
+                    {
+                        var configFileFound = Path.Combine(Environment.CurrentDirectory, "ezdbcodegen.config.json");
+                        string[] ConfigurationFileNameSearchList = Directory.GetFiles(Path.Combine(Environment.CurrentDirectory, "").PathEnds(), "*.config.json");
+                        if (ConfigurationFileNameSearchList.Contains(configFileFound, StringComparer.InvariantCultureIgnoreCase))
+                        {
+                            Console.WriteLine($"Found Config file at {configFileFound}");
+                            AppSettings.Instance.ConfigurationFileName = configFileFound;
+                        }
+                        else if (ConfigurationFileNameSearchList.Count() > 0)
+                        {
+                            configFileFound = ConfigurationFileNameSearchList.FirstOrDefault();
+                            Console.WriteLine($"Found Config file at {configFileFound}");
+                            AppSettings.Instance.ConfigurationFileName = configFileFound;
+                        }
+                    }
+
 
                     var Errors = new StringBuilder();
                     var OutputPath = string.Empty;
