@@ -284,7 +284,7 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                     }
                     if (Settings.AutoRun)
                     {
-                        Console.WriteLine("A previous run in this path asked to reuse the latest settings,  reading from '.ezdbcodegen.config' and usine these settings for this run");
+                        Console.WriteLine("A previous run in this path asked to reuse the latest settings,  reading from '.ezdbcodegen.config' and using these settings for this run");
                         AppSettings.Instance.ConnectionString = Settings.ConnectionString;
                         TemplateFileNameOrPath = Settings.TemplateFileNameOrPath;
                         AppName = Settings.AppName;

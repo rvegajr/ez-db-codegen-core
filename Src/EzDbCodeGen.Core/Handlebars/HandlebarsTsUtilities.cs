@@ -11,6 +11,8 @@ using EzDbSchema.Core.Interfaces;
 using EzDbCodeGen.Core.Extentions.Objects;
 using EzDbCodeGen.Core.Extentions.Strings;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
+
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
@@ -73,7 +75,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
@@ -119,7 +121,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
@@ -171,7 +173,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
@@ -223,7 +225,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
@@ -273,7 +275,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
