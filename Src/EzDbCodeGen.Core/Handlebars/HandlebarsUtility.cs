@@ -14,6 +14,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using EzDbSchema.Core.Enums;
 using System.Runtime.CompilerServices;
+using System.Diagnostics;
+
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
@@ -85,7 +87,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });

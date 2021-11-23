@@ -1,7 +1,7 @@
 #tool nuget:?package=vswhere
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
-var IncrementMinorVersion = true;
+var IncrementMinorVersion = false;
 var NuGetReleaseNotes = new [] {"Added dialog that allows connection string building and directory autorun", "Completed nuget tool port and .net5 upgrade"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
@@ -10,7 +10,7 @@ FilePath msBuildPathX64 = (vsLatest==null)
                             : vsLatest.CombineWithFilePath("./MSBuild/Current/bin/msbuild.exe");
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
-var framework = Argument("framework", "net5.0");
+var framework = Argument("framework", "net6.0");
 var runtime = Argument("runtime", "Portable");
 
 var binDir = Directory("./bin") ;
@@ -119,7 +119,7 @@ Task("Publish")
     .IsDependentOn("Build")
     .Does(() =>
 {
-	 DoPackage("EzDbCodeGen.Cli", "net5.0", NugetVersion, "portable");
+	 DoPackage("EzDbCodeGen.Cli", "net6.0", NugetVersion, "portable");
 });
 
 Task("Run-Unit-Tests")

@@ -12,6 +12,7 @@ using EzDbCodeGen.Core;
 using System.Runtime.CompilerServices;
 using EzDbSchema.Core.Objects;
 using System.Text;
+using System.Diagnostics;
 
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
@@ -94,7 +95,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
 
@@ -129,7 +130,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
@@ -147,7 +148,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if (fkName.Equals("FK_Wells_PIGAreaId_DELETE")) {
+                        if (fkName.Equals("FK_ProjectStatusMatrix_ProjectStatuses")) {
                             fkName = (fkName + " ").Trim();
                         }
                         if (FKToUse.Contains(fkName))
@@ -185,7 +186,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
@@ -205,7 +206,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if ((fkName.Equals("FK_AreaTargetFormations_AreaTypes")) || (fkName.Equals("FK_AreaTargetFormations_TargetFormations1")))
+                        if ((fkName.Equals("FK_ProjectStatusMatrix_ProjectStatuses")) || (fkName.Equals("FK_AreaTargetFormations_TargetFormations1")))
                             fkName = fkName + "";
                         if (FKToUse.Contains(fkName))
                         {
@@ -233,7 +234,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
@@ -252,7 +253,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if ((fkName.Equals("FK_AreaTargetFormations_AreaTypes")) || (fkName.Equals("FK_Wells_WellStickSurveys")))
+                        if ((fkName.Equals("FK_ProjectStatusMatrix_ProjectStatuses")) || (fkName.Equals("FK_ProjectStatusMatrix_ProjectStatuses")))
                             fkName += fkName + "";
                         if (FKToUse.Contains(fkName))
                         {
@@ -277,7 +278,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
@@ -374,7 +375,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
@@ -414,7 +415,7 @@ namespace EzDbCodeGen.Core
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });

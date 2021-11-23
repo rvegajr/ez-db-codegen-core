@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
-    <AssemblyVersion>5.0.0.0</AssemblyVersion>
-    <FileVersion>5.0.0.0</FileVersion>
-    <InformationalVersion>5.0.0+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
+    <TargetFramework>net6.0</TargetFramework>
+    <AssemblyVersion>6.0.0.0</AssemblyVersion>
+    <FileVersion>6.0.0.0</FileVersion>
+    <InformationalVersion>6.0.0+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\Ef6ContextTemplateAnnotations.hbs" Link="EzDbCodeGen\Templates\Ef6ContextTemplateAnnotations.hbs" />
@@ -17,10 +17,10 @@
     <None Include="..\..\..\Summit\MARSApi\MARSApi.Web\EzDbCodeGen\Templates\WebApiControllersTemplate.hbs" Link="EzDbCodeGen\Templates\WebApiControllersTemplate.hbs" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="EzDbSchema" Version="5.0.8" />  
+    <PackageReference Update="EzDbSchema" Version="6.0.0" />  
     <PackageReference Update="Handlebars.Net" Version="2.0.9" />  
     <PackageReference Update="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Update="System.Data.SqlClient" Version="4.8.2" />
+    <PackageReference Update="System.Data.SqlClient" Version="4.8.3" />
     <PackageReference Update="System.Json" Version="4.7.1" />
   </ItemGroup>
 </Project>

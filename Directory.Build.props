@@ -1,7 +1,7 @@
  <Project>
   <PropertyGroup>
     <Id>EzDbCodeGen</Id>
-    <Version>5.0.1</Version>
+    <Version>6.0.0</Version>
     <MinClientVersion>5.0.2</MinClientVersion>
     <Title>EzDbCodeGen - Easy Database Code Generator</Title>
     <Authors>Ricardo Vega Jr.</Authors>
@@ -15,13 +15,13 @@
     <Copyright>Noctusoft 2018-2021</Copyright>	
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="5.0.1" />
-    <PackageReference Include="Handlebars.Net" Version="2.0.7" />
+    <PackageReference Include="EzDbSchema" Version="6.0.0" />
+    <PackageReference Include="Handlebars.Net" Version="2.0.9" />
     <PackageReference Include="Json.Comparer.Core" Version="0.6.9" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Include="Pluralize.NET" Version="1.0.2" />
-    <PackageReference Include="System.Data.SqlClient" Version="4.8.2" />
+    <PackageReference Include="System.Data.SqlClient" Version="4.8.3" />
     <PackageReference Include="System.Json" Version="4.7.1" />
-    <PackageReference Include="FastMember" Version="1.5.0" />
+    <PackageReference Include="FastMemberMT" Version="6.0.0" />
   </ItemGroup>  
 </Project>

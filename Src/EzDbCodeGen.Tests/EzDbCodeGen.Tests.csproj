@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
     <StartupObject />
-    <AssemblyVersion>5.0.0.0</AssemblyVersion>
-    <FileVersion>5.0.0.0</FileVersion>
-    <InformationalVersion>5.0.0+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
+    <AssemblyVersion>6.0.0.0</AssemblyVersion>
+    <FileVersion>6.0.0.0</FileVersion>
+    <InformationalVersion>6.0.0+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\AdventureWorksLT2008.zip" />
@@ -38,9 +38,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="5.0.8" />
-    <PackageReference Include="MartinCostello.SqlLocalDb" Version="3.0.1" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.11.0" />
+    <PackageReference Include="EzDbSchema" Version="6.0.0" />
+    <PackageReference Include="MartinCostello.SqlLocalDb" Version="3.1.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <PrivateAssets>all</PrivateAssets>
@@ -74,7 +74,7 @@
   <ItemGroup>
     <PackageReference Update="Handlebars.Net" Version="2.0.9" />
     <PackageReference Update="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Update="System.Data.SqlClient" Version="4.8.2" />
+    <PackageReference Update="System.Data.SqlClient" Version="4.8.3" />
     <PackageReference Update="System.Json" Version="4.7.1" />
   </ItemGroup>
 </Project>
