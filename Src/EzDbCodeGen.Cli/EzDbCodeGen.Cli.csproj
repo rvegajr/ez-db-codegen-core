@@ -10,6 +10,9 @@
     <FileVersion>6.0.0.0</FileVersion>
     <InformationalVersion>5.0.0+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
   </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
   <ItemGroup>
     <None Remove="ezdbcodegen.config.json" />
   </ItemGroup>

@@ -67,6 +67,7 @@ namespace EzDbCodeGen.Cli
                     if (!connparm.Trusted)
                     {
                         password = Prompt.GetString("What is the password to access the database?", defaultValue: connparm.Password, promptColor: ConsoleColor.Green);
+                        connparm.Password = password;
                     } 
                     if (Prompt.GetYesNo("Does this connection string look right: " + connparm.ConnectionString, true, promptColor: ConsoleColor.Green))
                     {
