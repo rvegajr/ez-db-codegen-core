@@ -253,7 +253,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if ((fkName.Equals("FK_ProjectStatusMatrix_ProjectStatuses")) || (fkName.Equals("FK_ProjectStatusMatrix_ProjectStatuses")))
+                        if ((fkName.Equals("FK_AreaWaterTypes_WaterTypes")) || (fkName.Equals("FK_AreaWaterTypes_WaterTypes")))
                             fkName += fkName + "";
                         if (FKToUse.Contains(fkName))
                         {
@@ -270,6 +270,7 @@ namespace EzDbCodeGen.Core
                                                  || (SameTableCount > 1))
                                                     ?  string.Format(",", relGroupSummary.FromColumnName) : ToTableNameSingular);
                             writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} 1->1</summary>", prefix, relGroupSummary.Name));
+                            writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relGroupSummary.ToObjectPropertyName)));
                             writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
                             PreviousOneToOneFields.Add(FieldName);
                         }
