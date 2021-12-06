@@ -286,6 +286,7 @@ namespace EzDbCodeGen.Core
                             this.ProjectPath = this.ProjectPath.Substring(1);
                             CurrentTask = string.Format("'@' was found at the beginning of ProjectPath but doesn't do anything here and will be ignored");
                         }
+                        if (this.ProjectPath.StartsWith(".")) this.ProjectPath = $"{CodeGenBase.VAR_THIS_PATH}{this.ProjectPath.Substring(1)}";
                         if (this.ProjectPath.Contains(CodeGenBase.VAR_THIS_PATH)) this.ProjectPath = Path.GetFullPath(this.ProjectPath.Replace(CodeGenBase.VAR_THIS_PATH, Path.GetDirectoryName(templateFileName).PathEnds()));
                         if (this.ProjectPath.Contains(CodeGenBase.VAR_TEMP_PATH)) this.ProjectPath = Path.GetFullPath(this.ProjectPath.Replace(CodeGenBase.VAR_TEMP_PATH, Path.GetDirectoryName(templateFileName).PathEnds()));
                         CurrentTask = string.Format("Project Path modifier found in template, resolved to: {0}", this.ProjectPath);
@@ -303,6 +304,7 @@ namespace EzDbCodeGen.Core
                             CurrentTask = string.Format("'@' was found at the beginning... Will forcefully delete: {0}", this.OutputPath);
                             forceDeleteReloadOfDirectory = true;
                         }
+                        if (this.OutputPath.StartsWith(".")) this.OutputPath = $"{CodeGenBase.VAR_THIS_PATH}{this.OutputPath.Substring(1)}";
                         if (this.OutputPath.Contains(CodeGenBase.VAR_THIS_PATH)) this.OutputPath = Path.GetFullPath(this.OutputPath.Replace(CodeGenBase.VAR_THIS_PATH, Path.GetDirectoryName(templateFileName).PathEnds()));
                         if (this.OutputPath.Contains(CodeGenBase.VAR_TEMP_PATH)) this.OutputPath = Path.GetFullPath(this.OutputPath.Replace(CodeGenBase.VAR_TEMP_PATH, Path.GetDirectoryName(templateFileName).PathEnds()));
                         CurrentTask = string.Format("Output Path modifier found in template, resolved to: {0}", this.OutputPath);
@@ -560,7 +562,8 @@ namespace EzDbCodeGen.Core
                         }
 
                         CurrentTask = string.Format("Now we modify the project file {0}", this.ProjectPath);
-                        var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset.AsWildCardPaths());
+                        //var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset.AsWildCardPaths());
+                        var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset);
                         if (ret)
                             StatusMessage(string.Format("There were changes to {0},  project will probably have to be reloaded", this.ProjectPath));
                         else
