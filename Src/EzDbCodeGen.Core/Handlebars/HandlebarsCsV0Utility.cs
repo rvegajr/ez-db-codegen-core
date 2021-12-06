@@ -253,8 +253,8 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if ((fkName.Equals("FK_AreaWaterTypes_WaterTypes")) || (fkName.Equals("FK_AreaWaterTypes_WaterTypes")))
-                            fkName += fkName + "";
+                        if ((fkName.Equals("FK_TankBatteries_AssetTeams")) || (fkName.Equals("FK_TankBatteries_AssetTeams")))
+                            fkName = fkName + "";
                         if (FKToUse.Contains(fkName))
                         {
                             var relationship = fkNameKV.Value;
@@ -268,7 +268,7 @@ namespace EzDbCodeGen.Core
                                                  || (entity.Properties.ContainsKey(ToTableNameSingular))
                                                  || (entityName == relGroupSummary.ToTableName)
                                                  || (SameTableCount > 1))
-                                                    ?  string.Format(",", relGroupSummary.FromColumnName) : ToTableNameSingular);
+                                                    ?  string.Join(",", relGroupSummary.FromColumnName) : ToTableNameSingular);
                             writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} 1->1</summary>", prefix, relGroupSummary.Name));
                             writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relGroupSummary.ToObjectPropertyName)));
                             writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
@@ -307,7 +307,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if (fkName.Contains("FK_AreaTargetFormations_AreaTypes"))
+                        if (fkName.Contains("FK_TankBatteries_AssetTeams"))
                         {
                             entityName = (entityName + " ").Trim();
                         }

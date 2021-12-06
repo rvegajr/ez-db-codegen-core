@@ -304,7 +304,6 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                     {
                         AppSettings.Instance.ConnectionString = sourceConnectionStringOption.Value().SettingResolution();
                     }
-
                     //Overriding withe the config file option will always superscede all configuration settings
                     if (configFileOption.HasValue())
                     {

@@ -12,6 +12,23 @@ using System.Runtime.CompilerServices;
 
 namespace EzDbCodeGen.Core.Classes
 {
+    internal static class ProjectHelpersExtentions
+    {
+        public static Dictionary<string, TemplateFileAction> AsWildCardPaths(this Dictionary<string, TemplateFileAction> filesList ) {
+            var retFilesList = new Dictionary<string, TemplateFileAction>();
+            foreach(var fileName in filesList.Keys)
+            {
+                var path = Path.GetDirectoryName(fileName);
+                var WCPath = $"{path}{Path.DirectorySeparatorChar}*";
+                if (!retFilesList.ContainsKey(WCPath))
+                {
+                    retFilesList.Add(WCPath, TemplateFileAction.Add);
+                }
+            }
+            return retFilesList;
+        }
+
+    }
     internal class ProjectHelpers
     {
         /// <summary>
@@ -43,6 +60,7 @@ namespace EzDbCodeGen.Core.Classes
             var UpdateXML = false;
             try
             {
+                var WildCardDirectories = new HashSet<string>();
                 var isNewProjectFormat = false;
                 var txt = File.ReadAllText(ProjectFile);
                 isNewProjectFormat = (txt.ToLower().Contains("\"microsoft.net.sdk"));
@@ -85,7 +103,7 @@ namespace EzDbCodeGen.Core.Classes
                         {
                             ItemGroupBuffer.Append(@"<Compile Include=""" + PathToSearchFor + @""" />");
                             UpdateXML = true;
-                        } else if (nodes.Count > 1)
+                        } else if (nodes.Count > 0)
                         {//This will remove duplicates and ensure the name that we have matches the case for files
                             for (int i = nodes.Count - 1; i >= 0; i--)
                             {

@@ -165,12 +165,21 @@ namespace EzDbCodeGen.Core
             foreach (var _templateFullFileName in filesEndingInHbs)
             {
                 string templateFullFileName = (FileName)_templateFullFileName;
-                if ((this.TemplateFileNameFilter.Length>0) && (Path.GetFileNameWithoutExtension(templateFullFileName).IsIn(this.TemplateFileNameFilter)))
+                try
                 {
-                    CurrentTask = string.Format("Template {0} will be ignored because it matches a pattern in TemplateFileNameFilter", Path.GetFileNameWithoutExtension(templateFullFileName));
-                } else
+                    if ((this.TemplateFileNameFilter.Length > 0) && (Path.GetFileNameWithoutExtension(templateFullFileName).IsIn(this.TemplateFileNameFilter)))
+                    {
+                        CurrentTask = string.Format("Template {0} will be ignored because it matches a pattern in TemplateFileNameFilter", Path.GetFileNameWithoutExtension(templateFullFileName));
+                    }
+                    else
+                    {
+                        returnCodeList.Merge(ProcessTemplate((FileName)_templateFullFileName, originalTemplateInputSource, compareToTemplateInputSource, outputPath));
+                    }
+                }
+                catch (Exception ex)
                 {
-                    returnCodeList.Merge(ProcessTemplate((FileName)_templateFullFileName, originalTemplateInputSource, compareToTemplateInputSource, outputPath));
+                    CurrentTask = $"ERROR: Processing Template {templateFullFileName}. {ex.Message}";
+                    returnCodeList.Add(templateFullFileName, ReturnCode.Error);
                 }
             }
             return returnCodeList;
@@ -283,7 +292,7 @@ namespace EzDbCodeGen.Core
                         templateAsString = templateAsString.Replace(CodeGenBase.OP_PROJECT_PATH, "").Replace(CodeGenBase.OP_PROJECT_PATH_END, "").Trim();
                     }
 
-                    //Does template have and Output path override? if so, override the local outputDirectory and strip it 
+                    //Does template have an Output path override? if so, override the local outputDirectory and strip it 
                     if (templateAsString.Contains(CodeGenBase.OP_OUTPUT_PATH))
                     {
                         this.OutputPath = templateAsString.Pluck(CodeGenBase.OP_OUTPUT_PATH, CodeGenBase.OP_OUTPUT_PATH_END, out templateAsString).Trim();
@@ -381,7 +390,8 @@ namespace EzDbCodeGen.Core
                         FileContents = FileContents.Replace(CodeGenBase.OP_FILE, "").Replace(CodeGenBase.OP_FILE_END, "").Trim();
 						if ((newOutputFileName.Length > 0) && (newOutputFileName.StartsWith(this.OutputPath, StringComparison.Ordinal)))
 						{
-							EntityKey = "XXX" + Guid.NewGuid().ToString();  /* guaruntee this to be unique */
+                            newOutputFileName = Path.GetFullPath(newOutputFileName);
+                            EntityKey = "XXX" + Guid.NewGuid().ToString();  /* guaruntee this to be unique */
 																			//var FileContents = filePart.Substring(CodeGenBase.OP_FILE_END.Length + 1);
 							if (FileContents.Contains(CodeGenBase.OP_ENTITY_KEY))
 							{
@@ -521,7 +531,7 @@ namespace EzDbCodeGen.Core
                 StatusMessage(string.Format("Template was rendered to path {0}", this.OutputPath));
 
                 CurrentTask = string.Format("Checking Project File Modification Option: {0}", (this.ProjectPath.Length>0));
-
+                
                 if (this.ProjectPath.Length > 0)
                 {
                     CurrentTask = string.Format("Looks like Project Mod was set to true, Does path exist? ");
@@ -535,9 +545,13 @@ namespace EzDbCodeGen.Core
                         StatusMessage(string.Format("ProjectPath was set to {0},  so we will alter this project with the files affected if necessary", this.ProjectPath));
                         var FileActionsOffset = new Dictionary<string, TemplateFileAction>();
                         CurrentTask = string.Format("Figuring out offset of files added compared to Project location");
+                        this.ProjectPath = Path.GetFullPath(this.ProjectPath);
+                        var ProjectFileName = this.ProjectPath;
+                        var ProjectFilePath = Path.GetDirectoryName(this.ProjectPath);
+
                         foreach (var fileWithFileAction in FileActions)
                         {
-                            var fileOffset = (new Uri(this.ProjectPath))
+                            var fileOffset = (new Uri(ProjectFilePath))
                                 .MakeRelativeUri(new Uri(fileWithFileAction.Key))
                                 .ToString()
                                 .Replace('/', Path.DirectorySeparatorChar);
@@ -546,7 +560,7 @@ namespace EzDbCodeGen.Core
                         }
 
                         CurrentTask = string.Format("Now we modify the project file {0}", this.ProjectPath);
-                        var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset);
+                        var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset.AsWildCardPaths());
                         if (ret)
                             StatusMessage(string.Format("There were changes to {0},  project will probably have to be reloaded", this.ProjectPath));
                         else
