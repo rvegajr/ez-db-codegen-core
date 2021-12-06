@@ -271,6 +271,10 @@ namespace EzDbCodeGen.Core
 				CurrentTask = "Template path is " + templateFileName;
 
 				string result = "";
+                var projectPathSetFromTemplate = false;
+                var oldProjectPath = this.ProjectPath;
+                var outputPathSetFromTemplate = false;
+                var oldOutputPath = this.OutputPath;
                 try
                 {
 
@@ -280,6 +284,7 @@ namespace EzDbCodeGen.Core
                     //Does template have a project path override? If so, extract it and stash it
                     if (templateAsString.Contains(CodeGenBase.OP_PROJECT_PATH))
                     {
+                        projectPathSetFromTemplate = true;
                         this.ProjectPath = templateAsString.Pluck(CodeGenBase.OP_PROJECT_PATH, CodeGenBase.OP_PROJECT_PATH_END, out templateAsString).Trim();
                         if (this.ProjectPath.StartsWith("@"))  //An @ at the beginning forces the app to treat this as a path and delete and attempt to recreate it 
                         {
@@ -297,6 +302,7 @@ namespace EzDbCodeGen.Core
                     if (templateAsString.Contains(CodeGenBase.OP_OUTPUT_PATH))
                     {
                         this.OutputPath = templateAsString.Pluck(CodeGenBase.OP_OUTPUT_PATH, CodeGenBase.OP_OUTPUT_PATH_END, out templateAsString).Trim();
+                        outputPathSetFromTemplate = true;
 
                         if (this.OutputPath.StartsWith("@"))  //An @ at the beginning forces the app to treat this as a path and delete and attempt to recreate it 
                         {
@@ -353,7 +359,7 @@ namespace EzDbCodeGen.Core
 				}
 				finally
 				{
-				}
+                }
 
                 result = result.Replace("<t>", "")
 					.Replace("<t/>", "")
@@ -553,7 +559,7 @@ namespace EzDbCodeGen.Core
 
                         foreach (var fileWithFileAction in FileActions)
                         {
-                            var fileOffset = (new Uri(ProjectFilePath))
+                            var fileOffset = (new Uri(ProjectFilePath.PathEnds()))
                                 .MakeRelativeUri(new Uri(fileWithFileAction.Key))
                                 .ToString()
                                 .Replace('/', Path.DirectorySeparatorChar);
@@ -562,15 +568,18 @@ namespace EzDbCodeGen.Core
                         }
 
                         CurrentTask = string.Format("Now we modify the project file {0}", this.ProjectPath);
-                        //var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset.AsWildCardPaths());
-                        var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset);
+                        var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset.AsWildCardPaths());
+                        //var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset);
                         if (ret)
                             StatusMessage(string.Format("There were changes to {0},  project will probably have to be reloaded", this.ProjectPath));
                         else
                             StatusMessage(string.Format("There were no changes to {0}", this.ProjectPath));
                     }
                 }
-				CurrentTask = string.Format("All done!");
+                if (outputPathSetFromTemplate) this.OutputPath = oldOutputPath;
+                if (projectPathSetFromTemplate) this.ProjectPath = oldProjectPath;
+
+                CurrentTask = string.Format("All done!");
 				return new ReturnCodes(templateFileName, returnCode);
 			}
 			catch (Exception ex)

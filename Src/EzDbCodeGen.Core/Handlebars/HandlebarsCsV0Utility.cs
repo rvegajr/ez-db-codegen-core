@@ -199,10 +199,14 @@ namespace EzDbCodeGen.Core
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context.Value;
                     var entityName = entity.Schema + "." + entity.Name;
-
+                    if (entityName.Equals("dbo.Projects"))
+                        entityName = entityName + "";
                     List<string> PreviousManyToOneFields = new List<string>();
 
-                    var FKToUse = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne).Select(s => s.Name).ToList();
+                    var FKToUse = new List<string>();
+                    FKToUse.AddRange(entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne).Select(s => s.Name).ToList());
+                    FKToUse.AddRange(entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToOne).Select(s => s.Name).ToList());
+                    FKToUse = FKToUse.Distinct().ToList();
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
@@ -212,23 +216,28 @@ namespace EzDbCodeGen.Core
                         {
                             var relationship = fkNameKV.Value;
                             var relGroupSummary = relationship.AsSummary();
+                            if (relGroupSummary.MultiplicityType.Equals(RelationshipMultiplicityType.OneToOne))
+                            {
+                                //Ignore one to one as it will be handled through POCOModelFKOneToOneV0 
+                            } else
+                            {
+                                int SameTableCount = 0;
+                                foreach (var rg in entity.RelationshipGroups.Values)
+                                    if (rg.AsSummary().ToTableName.Equals(relGroupSummary.ToTableName)) SameTableCount++;
+                                string ToTableNameSingular = relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular();
+                                string _FieldName = ((PreviousManyToOneFields.Contains(ToTableNameSingular)
+                                                     || (entity.Properties.ContainsKey(ToTableNameSingular))
+                                                     || (entityName == relGroupSummary.ToTableName)
+                                                     || (SameTableCount > 1))
+                                                        ? string.Join(", ", relGroupSummary.FromColumnName) : ToTableNameSingular);
 
-                            int SameTableCount = 0;
-                            foreach (var rg in entity.RelationshipGroups.Values)
-                                if (rg.AsSummary().ToTableName.Equals(relGroupSummary.ToTableName)) SameTableCount++;
-                            string ToTableNameSingular = relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular();
-                            string _FieldName = ((PreviousManyToOneFields.Contains(ToTableNameSingular)
-                                                 || (entity.Properties.ContainsKey(ToTableNameSingular))
-                                                 || (entityName == relGroupSummary.ToTableName)
-                                                 || (SameTableCount > 1))
-                                                    ? string.Join(", ", relGroupSummary.FromColumnName ) : ToTableNameSingular);
+                                string FieldName = entity.GenerateObjectName(fkName, ObjectNameGeneratedFrom.JoinFromColumnName);
 
-                            string FieldName = entity.GenerateObjectName(fkName, ObjectNameGeneratedFrom.JoinFromColumnName);
-
-                            writer.WriteSafeString(string.Format("\n{0}/// <summary>{1}  *->0|1</summary>", prefix, fkName));
-                            writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, relGroupSummary.FromFieldName));
-                            writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
-                            PreviousManyToOneFields.Add(FieldName);
+                                writer.WriteSafeString(string.Format("\n{0}/// <summary>{1}  *->0|1</summary>", prefix, fkName));
+                                writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relGroupSummary.FromFieldName)));
+                                writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
+                                PreviousManyToOneFields.Add(FieldName);
+                            }
                         }
                     }
                 }

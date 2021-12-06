@@ -147,7 +147,8 @@ namespace EzDbCodeGen.Core.Classes
                 foreach (XmlElement nod in nodeToCheck)
                 {
                     var FileToCheck = ProjectPath + nod.Attributes["Include"].InnerText;
-                    if (!File.Exists(FileToCheck))
+                    //Ignore wile card paths in the file check
+                    if ((!FileToCheck.EndsWith("*")) && (!File.Exists(FileToCheck))) 
                     {
                         nod.ParentNode.RemoveChild(nod);
                         UpdateXML = true;
