@@ -141,6 +141,8 @@ namespace EzDbCodeGen.Core
                 {
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context.Value;
+                    if (entity.Name.Contains("AssetTeam"))
+                        entity.Name = entity.Name + "";
                     List<string> PreviousOneToManyFields = new List<string>();
                     PreviousOneToManyFields.Clear();
 
@@ -148,7 +150,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if (fkName.Equals("FK_ProjectStatusMatrix_ProjectStatuses")) {
+                        if (fkName.Equals("FK_TankBatteries_AssetTeams")) {
                             fkName = (fkName + " ").Trim();
                         }
                         if (FKToUse.Contains(fkName))
@@ -255,6 +257,8 @@ namespace EzDbCodeGen.Core
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context.Value;
                     var entityName = entity.Schema + "." + entity.Name;
+                    if (entityName.Equals("dbo.Items"))
+                        entityName = entityName + "";
 
                     var PreviousOneToOneFields = new List<string>();
 
@@ -279,7 +283,7 @@ namespace EzDbCodeGen.Core
                                                  || (SameTableCount > 1))
                                                     ?  string.Join(",", relGroupSummary.FromColumnName) : ToTableNameSingular);
                             writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} 1->1</summary>", prefix, relGroupSummary.Name));
-                            writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relGroupSummary.ToObjectPropertyName)));
+                            writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relGroupSummary.FromObjectPropertyName)));
                             writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
                             PreviousOneToOneFields.Add(FieldName);
                         }
