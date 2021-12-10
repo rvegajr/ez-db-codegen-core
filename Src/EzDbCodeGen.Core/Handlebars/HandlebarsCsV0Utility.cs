@@ -39,7 +39,7 @@ namespace EzDbCodeGen.Core
 
                     if ((entityName.Contains("dbo.AreaTargetFormations")) && (property.Name.Contains("AreaTypeId")))
                         entityName = (entityName + " ").Trim();
-                    if (entityName.Contains("dbo.Scenarios")) //&& (property.Name.Contains("")))
+                    if (entityName.Contains("dbo.ProjectSubTypes")) //&& (property.Name.Contains("")))
                         entityName = (entityName + " ").Trim();
                     if (property.Type == "decimal")
                     {
@@ -141,7 +141,7 @@ namespace EzDbCodeGen.Core
                 {
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context.Value;
-                    if (entity.Name.Contains("AssetTeam"))
+                    if (entity.Name.Contains("ProjectSubTypes"))
                         entity.Name = entity.Name + "";
                     List<string> PreviousOneToManyFields = new List<string>();
                     PreviousOneToManyFields.Clear();
@@ -157,7 +157,8 @@ namespace EzDbCodeGen.Core
                         {
                             var relationship = fkNameKV.Value;
                             var relGroupSummary = relationship.AsSummary();
-                            string ToTableName = entity.Parent.Entities[relGroupSummary.ToTableName].Alias.ToSingular();
+                            var targetTableExists = entity.Parent.Entities.ContainsKey(relGroupSummary.ToTableName);
+                            string ToTableName = targetTableExists ? entity.Parent.Entities[relGroupSummary.ToTableName].Alias.ToSingular() : relGroupSummary.ToTableName;
                             //string ToObjectFieldName = relGroupSummary.AsObjectPropertyName();
                             string ToObjectFieldName = string.Format("{0}_{1}", relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", ""), relGroupSummary.ToColumnName.First());
 
@@ -167,7 +168,7 @@ namespace EzDbCodeGen.Core
                             int SameTableCount = 0;
                             foreach (var rg in entity.RelationshipGroups.Values)
                                 if (rg.AsSummary().ToTableName.Equals(relGroupSummary.ToTableName)) SameTableCount++;
-                            if (SameTableCount > 1)
+                            if ((targetTableExists) && (SameTableCount > 1))
                             {
                                 var toGroupRelationshipList = entity.Parent[relGroupSummary.ToTableName].Relationships.GroupByFKName();
                                 if (!toGroupRelationshipList.ContainsKey(fkName)) throw new Exception(string.Format("The inverse of FK {0} ({1}->{2})", fkName, relGroupSummary.FromTableName, relGroupSummary.ToTableName));
@@ -177,10 +178,12 @@ namespace EzDbCodeGen.Core
                                 if (InversePropertyNamePotential.Length > 0) inversePropertyAttribute = string.Format("[InverseProperty(\"{0}\")]", InversePropertyNamePotential);
                             }
 
-                            writer.WriteSafeString(string.Format("\n\n{0}//<summary>{1} {2}</summary>", prefix, relGroupSummary.Name, relGroupSummary.MultiplicityType.AsString()));
+                            if (!targetTableExists) writer.WriteSafeString($"\n\n{prefix}/* NOTE: Target Table {ToTableName} was set to ignore in config file");
+                            writer.WriteSafeString(string.Format("\n{0}//<summary>{1} {2}</summary>", prefix, relGroupSummary.Name, relGroupSummary.MultiplicityType.AsString()));
                             writer.WriteSafeString(string.Format("\n{0}[System.Diagnostics.CodeAnalysis.SuppressMessage(\"Microsoft.Usage\", \"CA2227: CollectionPropertiesShouldBeReadOnly\")]", prefix));
                             if (inversePropertyAttribute.Length > 0) writer.WriteSafeString(string.Format("\n{0}{1}", prefix, inversePropertyAttribute));
                             writer.WriteSafeString(string.Format("\n{0}public virtual ICollection<{1}> {2} {{ get; set; }}", prefix, ToTableName, ToObjectFieldName));
+                            if (!targetTableExists) writer.WriteSafeString($"\n{prefix}*/");
 
                             PreviousOneToManyFields.Add(relGroupSummary.ToTableName);
                         }
@@ -201,7 +204,7 @@ namespace EzDbCodeGen.Core
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context.Value;
                     var entityName = entity.Schema + "." + entity.Name;
-                    if (entityName.Equals("dbo.Projects"))
+                    if (entityName.Equals("dbo.ProjectSubTypes"))
                         entityName = entityName + "";
                     List<string> PreviousManyToOneFields = new List<string>();
 
@@ -257,7 +260,7 @@ namespace EzDbCodeGen.Core
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context.Value;
                     var entityName = entity.Schema + "." + entity.Name;
-                    if (entityName.Equals("dbo.Items"))
+                    if (entityName.Equals("dbo.ProjectSubTypes"))
                         entityName = entityName + "";
 
                     var PreviousOneToOneFields = new List<string>();
@@ -307,7 +310,7 @@ namespace EzDbCodeGen.Core
                     var entityName = entity.Schema + "." + entity.Name;
 
 
-                    if (entityName.Equals("dbo.Areas"))
+                    if (entityName.Equals("dbo.ProjectSubTypes"))
                     {
                         entityName = (entityName + " ").Trim();
                     }

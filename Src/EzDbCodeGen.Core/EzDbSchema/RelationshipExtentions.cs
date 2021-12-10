@@ -599,15 +599,18 @@ namespace EzDbCodeGen.Core
                         }
                         ret.ToColumnName.Add(relationship.ToColumnName);
                         ret.ToFieldName.Add(relationship.ToFieldName);
-                        var ToProperty = relationship.Parent.Parent[relationship.ToTableName].Properties[relationship.ToFieldName];
-                        ret.ToColumnProperties.Add(ToProperty);
-                        ret.ToObjectPropertyName.Add(ToProperty.AsObjectPropertyName());
+                        if (relationship.Parent.Parent.ContainsKey(relationship.ToTableName))
+                        {
+                            var ToProperty = relationship.Parent.Parent[relationship.ToTableName].Properties[relationship.ToFieldName];
+                            ret.ToColumnProperties.Add(ToProperty);
+                            ret.ToObjectPropertyName.Add(ToProperty.AsObjectPropertyName());
+
+                            var FromProperty = !relationship.Parent.Parent.ContainsKey(relationship.ToTableName) ? null : relationship.Parent.Parent[relationship.FromTableName].Properties[relationship.FromFieldName];
+                            ret.FromColumnProperties.Add(FromProperty);
+                            ret.FromObjectPropertyName.Add(FromProperty.AsObjectPropertyName());
+                        }
                         ret.FromColumnName.Add(relationship.FromColumnName);
                         ret.FromFieldName.Add(relationship.FromFieldName);
-                        var FromProperty = relationship.Parent.Parent[relationship.FromTableName].Properties[relationship.FromFieldName];
-                        ret.FromColumnProperties.Add(FromProperty);
-                        ret.FromObjectPropertyName.Add(FromProperty.AsObjectPropertyName());
-
                         ret.MultiplicityTypes.Add(relationship.MultiplicityType);
                         ret.Types.Add(relationship.Type);
                     }

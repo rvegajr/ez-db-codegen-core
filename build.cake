@@ -1,7 +1,7 @@
 #tool nuget:?package=vswhere
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
-var IncrementMinorVersion = false;
+var IncrementMinorVersion = true;
 var NuGetReleaseNotes = new [] {"Added dialog that allows connection string building and directory autorun", "Completed nuget tool port and .net5 upgrade"};
 
 DirectoryPath vsLatest  = VSWhereLatest();

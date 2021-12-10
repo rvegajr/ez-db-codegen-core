@@ -372,6 +372,8 @@ namespace EzDbCodeGen.Core.Config
             {
                 foreach (var entity in this.Entities)
                 {
+                    if (entity.Name.Contains("dbo.DP.*"))
+                        Console.Write("");
                     if (entity.Name.Contains(@"*")) //contains wildcard?
                     {
                         var isMatched = Regex.IsMatch(schemaObjectName.AsFullName(), "^" + Regex.Escape(entity.Name).Replace("\\?", ".").Replace("\\*", ".*") + "$");

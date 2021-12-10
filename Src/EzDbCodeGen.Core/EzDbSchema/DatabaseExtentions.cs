@@ -92,13 +92,17 @@ namespace EzDbCodeGen.Core
 
         public virtual SchemaObjectName Parse(string schemaObjectName)
         {
+            TableName = "";
             SchemaName = this.DefaultSchemaName;
             if (SchemaName.Length == 0) SchemaName = "dbo";
             if (schemaObjectName.Contains("."))
             {
                 var arr = schemaObjectName.Split('.');
                 SchemaName = arr[0];
-                TableName = arr[1];
+                for (int i = 1; i < arr.Length; i++)
+                {
+                    TableName += (TableName.Length>0?".":"") + arr[i];
+                }
             }
             else
             {
@@ -158,12 +162,13 @@ namespace EzDbCodeGen.Core
             }
 
             //Rename the aliases of each to the pattern specified in the AliasNamePattern
-            foreach (var entity in database.Entities.Values)
+            foreach (var entitySchemaName in database.Keys)
             {
+                var entity = database.Entities[entitySchemaName];
                 entity.Alias = Configuration.ReplaceEx(config.Database.AliasNamePattern, new SchemaObjectName(entity)).ToCodeFriendly();
                 foreach (var propertyKey in entity.Properties.Keys)
                 {
-                    if (propertyKey.Equals("WaterNetworkId"))
+                    if (propertyKey.Equals("DP.ProjectTeams"))
                     {
                         var testpropertyKey = propertyKey + "";
                     }
@@ -187,11 +192,6 @@ namespace EzDbCodeGen.Core
                 {
                     foreach (var entity in entitiesMatched)
                     {
-                        if (entity.Name.ToLower().Contains("tempload"))
-                        {
-                            Console.Write("");
-                        }
-
                         //if we have some primary 
                         if (configEntity.Overrides.PrimaryKey.Count > 0)
                         {

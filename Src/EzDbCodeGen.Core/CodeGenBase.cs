@@ -235,6 +235,9 @@ namespace EzDbCodeGen.Core
             string templateFileName = _templateFileName;
             _currentTemplateName = Path.GetFileNameWithoutExtension(templateFileName);
 
+            if (_currentTemplateName.Contains("WebApi"))
+                _currentTemplateName = _currentTemplateName + "";
+
             if (!File.Exists(templateFileName)) templateFileName = ("{ASSEMBLY_PATH}" + templateFileName).ResolvePathVars();
             CurrentTask = "Entering ProcessTemplate";
 			var returnCode = ReturnCode.OkNoAddDels;
