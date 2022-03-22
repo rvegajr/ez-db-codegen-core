@@ -38,13 +38,14 @@ namespace EzDbCodeGen.Core.Classes
         /// </summary>
         /// <param name="ProjectFile">The project file.</param>
         /// <param name="PathToSearchFor">A single filename (that can contain wild cards)</param>
+        /// <param name="clearObjAndBin">Removes the obj and bin files from the Project Path</param>
         /// <returns>true if the project file was modified,  </returns>
-        public bool ModifyClassPath(string ProjectFile, string PathToSearchFor) {
+        public bool ModifyClassPath(string ProjectFile, string PathToSearchFor, bool clearObjAndBin) {
             var list = new Dictionary<string, TemplateFileAction>
             {
                 { PathToSearchFor, TemplateFileAction.Add }
             };
-            return ModifyClassPath(ProjectFile, list);
+            return ModifyClassPath(ProjectFile, list, clearObjAndBin);
         }
 
         /// <summary>
@@ -54,8 +55,9 @@ namespace EzDbCodeGen.Core.Classes
         /// </summary>
         /// <param name="ProjectFile">The project file.</param>
         /// <param name="PathsToSearchFor">A dictionary that contains a list of paths (that can contain wild cards) and File actions</param>
+        /// <param name="clearObjAndBin">Removes the obj and bin files from the Project Path</param>
         /// <returns>true if the project file was modified,  </returns>
-        public bool ModifyClassPath(string ProjectFile, Dictionary<string, TemplateFileAction> PathsToSearchFor)
+        public bool ModifyClassPath(string ProjectFile, Dictionary<string, TemplateFileAction> PathsToSearchFor, bool clearObjAndBin)
         {
             var UpdateXML = false;
             try
@@ -152,6 +154,25 @@ namespace EzDbCodeGen.Core.Classes
                     {
                         nod.ParentNode.RemoveChild(nod);
                         UpdateXML = true;
+                    }
+                }
+                if (clearObjAndBin)
+                {
+                    // Figure out output path and clear all object and bin
+                    var nodeOutputPath = xmldoc.SelectNodes(@"//x:OutputPath", mgr);
+                    foreach (XmlElement nod in nodeOutputPath)
+                    {
+                        var OutputPath = (ProjectPath + nod.InnerText).PathEnds();
+                        var ObjPath = (ProjectPath + "obj").PathEnds();
+                        try
+                        {
+                            if (Directory.Exists(OutputPath)) Directory.Delete(OutputPath, true);
+                            if (Directory.Exists(ObjPath)) Directory.Delete(ObjPath, true);
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Trace.WriteLine($"ModifyClassPath: Clearing {OutputPath}, but {ex.Message}");
+                        }
                     }
                 }
 

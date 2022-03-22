@@ -39,7 +39,7 @@ namespace EzDbCodeGen.Core
 
                     if ((entityName.Contains("dbo.AreaTargetFormations")) && (property.Name.Contains("AreaTypeId")))
                         entityName = (entityName + " ").Trim();
-                    if (entityName.Contains("dbo.ProjectSubTypes")) //&& (property.Name.Contains("")))
+                    if (entityName.Contains("dbo.ProjectTankBatteryParameters")) //&& (property.Name.Contains("")))
                         entityName = (entityName + " ").Trim();
                     if (property.Type == "decimal")
                     {
@@ -74,14 +74,16 @@ namespace EzDbCodeGen.Core
                             var FieldName = entity.GenerateObjectName(FKKeyValue.Key, ObjectNameGeneratedFrom.JoinFromColumnName);
                             //We only will write the ForeignKey if we compound FKs or multiple columns with references to the same table
                             //if ((SameTableCount>1) || (relGroupSummary.ToColumnName.Count>1))
-                            if (((relGroupSummary.ToColumnName.Count > 1) && (!relGroupSummary.FromTableName.Equals(relGroupSummary.ToTableName))) || (relGroupSummary.MultiplicityType == RelationshipMultiplicityType.OneToOne) || (relGroupSummary.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToOne))
+                            var isOneToOneRelation = (relGroupSummary.MultiplicityType == RelationshipMultiplicityType.OneToOne) || (relGroupSummary.MultiplicityType == RelationshipMultiplicityType.ZeroOrOneToOne);
+                            var isCompositeKey = ((relGroupSummary.ToColumnName.Count > 1) && (!relGroupSummary.FromTableName.Equals(relGroupSummary.ToTableName)));
+                            if (isOneToOneRelation || isCompositeKey)
                             {
                                 var ColumnOrder = "";
                                 if (relGroupSummary.ToColumnName.Count > 1)
                                 {
                                     ColumnOrder = string.Format(", Column(Order = {0})", relGroupSummary.ToColumnProperties.Where(p => p.Name.Equals(property.Name)).Select(p => p.KeyOrder).FirstOrDefault());
-                                    fkAttributes += string.Format("[ForeignKey(\"{0}\"){1}]", (FieldName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix).Trim(), ColumnOrder);
                                 }
+                                if (isOneToOneRelation) fkAttributes += string.Format("[ForeignKey(\"{0}\"){1}]", (FieldName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix).Trim(), ColumnOrder);
                             }
                             if (fkAttributes.Length > 0) break;
 

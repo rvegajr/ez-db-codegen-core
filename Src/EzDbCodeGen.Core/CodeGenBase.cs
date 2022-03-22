@@ -571,8 +571,7 @@ namespace EzDbCodeGen.Core
                         }
 
                         CurrentTask = string.Format("Now we modify the project file {0}", this.ProjectPath);
-                        var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset.AsWildCardPaths());
-                        //var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset);
+                        var ret = (new ProjectHelpers()).ModifyClassPath(this.ProjectPath, FileActionsOffset.AsWildCardPaths(), true);
                         if (ret)
                             StatusMessage(string.Format("There were changes to {0},  project will probably have to be reloaded", this.ProjectPath));
                         else
