@@ -39,8 +39,8 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="EzDbSchema" Version="6.0.0" />
-    <PackageReference Include="MartinCostello.SqlLocalDb" Version="3.1.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.0.0" />
+    <PackageReference Include="MartinCostello.SqlLocalDb" Version="3.2.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
       <PrivateAssets>all</PrivateAssets>
@@ -72,7 +72,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="Handlebars.Net" Version="2.0.9" />
+    <PackageReference Update="Handlebars.Net" Version="2.1.2" />
     <PackageReference Update="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Update="System.Data.SqlClient" Version="4.8.3" />
     <PackageReference Update="System.Json" Version="4.7.1" />

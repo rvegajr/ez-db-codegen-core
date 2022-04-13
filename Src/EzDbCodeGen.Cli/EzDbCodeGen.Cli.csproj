@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
@@ -38,7 +38,7 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="3.1.0" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.0.1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\EzDbCodeGen.Core\EzDbCodeGen.Core.csproj" />
@@ -59,7 +59,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Update="EzDbSchema" Version="6.0.0" />
-    <PackageReference Update="Handlebars.Net" Version="2.0.9" />
+    <PackageReference Update="Handlebars.Net" Version="2.1.2" />
     <PackageReference Update="Newtonsoft.Json" Version="13.0.1" />
     <PackageReference Update="System.Data.SqlClient" Version="4.8.3" />
     <PackageReference Update="System.Json" Version="4.7.1" />
