@@ -76,7 +76,7 @@ namespace EzDbCodeGen.Core
             for (int i = 0; i < This.Count; i++)
             {
                 var property = This[i];
-                ret += (i > 0 ? delimiter + @" " : @" ") + prefix + property.Type.ToNetType(true) + elementSet + property.Alias.ToSingular();
+                ret += (i > 0 ? delimiter + @" " : @" ") + prefix + property.Type.ToNetType(property.IsNullable) + elementSet + property.Alias.ToSingular();
             }
             return ret;
 		}

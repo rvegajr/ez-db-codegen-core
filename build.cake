@@ -1,8 +1,8 @@
 #tool nuget:?package=vswhere
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
-var IncrementMinorVersion = true;
-var NuGetReleaseNotes = new [] {"Added dialog that allows connection string building and directory autorun", "Completed nuget tool port and .net5 upgrade"};
+var IncrementMinorVersion = false;
+var NuGetReleaseNotes = new [] {"Fixed Always Null bug on OData Param rendering"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
 FilePath msBuildPathX64 = (vsLatest==null)

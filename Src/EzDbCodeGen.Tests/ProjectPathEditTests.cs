@@ -66,20 +66,20 @@ namespace EzDbCodeGen.Tests
         {
 
             var par = new ProjectHelpers();
-            var retDA = par.ModifyClassPath(this.OldFormatProjectFileName, @"Controllers\Generated\*.cs");
+            var retDA = par.ModifyClassPath(this.OldFormatProjectFileName, @"Controllers\Generated\*.cs", true);
             var oldtext = File.ReadAllText(this.OldFormatProjectFileName);
             Assert.False(oldtext.Contains(@"Controllers\Generated\GenericController.cs"), "GenericController should have been removed");
             Assert.True(oldtext.Contains(@"Controllers\Generated\*.cs"), "Wild card should be present");
-            var retDA2 = par.ModifyClassPath(this.NewFormatProjectFileName, @"Controllers\Generated\*.cs");
+            var retDA2 = par.ModifyClassPath(this.NewFormatProjectFileName, @"Controllers\Generated\*.cs", true);
             var newtext = File.ReadAllText(this.NewFormatProjectFileName);
             Assert.False(newtext.Contains(@"Controllers\Generated\*.cs"), "Wild card should not be present");
 
-            var retDA3 = par.ModifyClassPath(this.OldFormatProjectFileName, @"TestObjects\SimpleObjectWithExtraProperty.cs");
+            var retDA3 = par.ModifyClassPath(this.OldFormatProjectFileName, @"TestObjects\SimpleObjectWithExtraProperty.cs", true);
             var newtext3 = File.ReadAllText(this.OldFormatProjectFileName);
             Assert.True(newtext3.Contains(@"TestObjects\SimpleObjectWithExtraProperty.cs"), "Class name is not present");
             Assert.True(retDA3, "Changes to the file should have been made");
 
-            var retDA4 = par.ModifyClassPath(this.OldFormatProjectFileName, @"TestObjects\SimpleObjectWithExtraPropertyADDED.cs");
+            var retDA4 = par.ModifyClassPath(this.OldFormatProjectFileName, @"TestObjects\SimpleObjectWithExtraPropertyADDED.cs", true);
             var newtext4 = File.ReadAllText(this.OldFormatProjectFileName);
             Assert.True(newtext4.Contains(@"TestObjects\SimpleObjectWithExtraPropertyADDED.cs"), "Class name is not present");
             Assert.True(retDA4, "Changes to the file should have been made");

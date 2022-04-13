@@ -37,13 +37,13 @@ namespace EzDbCodeGen.Core
                     var fkAttributes = "";
                     var identityAttribute = "";
 
-                    if ((entityName.Contains("dbo.AreaTargetFormations")) && (property.Name.Contains("AreaTypeId")))
+                    if ((entityName.Contains("dbo.AdHocTankBatteryArea")) && (property.Name.Contains("AreaTypeId")))
                         entityName = (entityName + " ").Trim();
-                    if (entityName.Contains("dbo.ProjectTankBatteryParameters")) //&& (property.Name.Contains("")))
+                    if (entityName.Contains("AdHocTankBatteryArea")) //&& (property.Name.Contains("")))
                         entityName = (entityName + " ").Trim();
                     if (property.Type == "decimal")
                     {
-                        decimalAttribute = "[DecimalPrecision(" + property.Precision + ", " + property.Scale + ")]";
+                        decimalAttribute = $"\n{prefix}[DecimalPrecision({property.Precision}, {property.Scale})]";
                     }
                     if ((!property.IsIdentity) && (entity.Type == "TABLE"))
                     {
@@ -53,11 +53,11 @@ namespace EzDbCodeGen.Core
                     {
                         if (entity.PrimaryKeys.Count > 1)
                         {
-                            keyAttribute = @"[Key, Column(Order=" + property.KeyOrder + ")" + identityAttribute + "]";
+                            keyAttribute = $"\n{prefix}[Key, Column(Order={property.KeyOrder}){identityAttribute}]";
                         }
                         else
                         {
-                            keyAttribute = "[Key" + identityAttribute + "]";
+                            keyAttribute = $"\n{prefix}[Key{identityAttribute}]";
                         }
                     }
                     if (property.RelatedTo.Count > 0)
@@ -83,7 +83,7 @@ namespace EzDbCodeGen.Core
                                 {
                                     ColumnOrder = string.Format(", Column(Order = {0})", relGroupSummary.ToColumnProperties.Where(p => p.Name.Equals(property.Name)).Select(p => p.KeyOrder).FirstOrDefault());
                                 }
-                                if (isOneToOneRelation) fkAttributes += string.Format("[ForeignKey(\"{0}\"){1}]", (FieldName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix).Trim(), ColumnOrder);
+                                if (isOneToOneRelation) fkAttributes += string.Format("\n{0}[ForeignKey(\"{1}\"){2}]", prefix, (FieldName.Replace(" ", "") + Internal.AppSettings.Instance.Configuration.Database.InverseFKTargetNameCollisionSuffix).Trim(), ColumnOrder);
                             }
                             if (fkAttributes.Length > 0) break;
 
@@ -94,6 +94,7 @@ namespace EzDbCodeGen.Core
                     if (fkAttributes.Length > 0) writer.WriteSafeString(fkAttributes);
                     if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime")) writer.WriteSafeString("[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
                     if (decimalAttribute.Length > 0) writer.WriteSafeString(decimalAttribute);
+                    writer.WriteSafeString($"\n{prefix}");
                 }
                 catch (Exception ex)
                 {
@@ -152,7 +153,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if (fkName.Equals("FK_TankBatteries_AssetTeams")) {
+                        if (fkName.Equals("FK_AreaTargetFormations_AreaTypes")) {
                             fkName = (fkName + " ").Trim();
                         }
                         if (FKToUse.Contains(fkName))
@@ -186,7 +187,7 @@ namespace EzDbCodeGen.Core
                             if (inversePropertyAttribute.Length > 0) writer.WriteSafeString(string.Format("\n{0}{1}", prefix, inversePropertyAttribute));
                             writer.WriteSafeString(string.Format("\n{0}public virtual ICollection<{1}> {2} {{ get; set; }}", prefix, ToTableName, ToObjectFieldName));
                             if (!targetTableExists) writer.WriteSafeString($"\n{prefix}*/");
-
+                            writer.WriteSafeString($"\n{prefix}");
                             PreviousOneToManyFields.Add(relGroupSummary.ToTableName);
                         }
                     }
@@ -217,7 +218,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if ((fkName.Equals("FK_ProjectStatusMatrix_ProjectStatuses")) || (fkName.Equals("FK_AreaTargetFormations_TargetFormations1")))
+                        if ((fkName.Equals("FK_AreaTargetFormations_AreaTypes")) || (fkName.Equals("FK_AreaTargetFormations___TargetFormations1")))
                             fkName = fkName + "";
                         if (FKToUse.Contains(fkName))
                         {
@@ -239,11 +240,18 @@ namespace EzDbCodeGen.Core
                                                         ? string.Join(", ", relGroupSummary.FromColumnName) : ToTableNameSingular);
 
                                 string FieldName = entity.GenerateObjectName(fkName, ObjectNameGeneratedFrom.JoinFromColumnName);
-
+                                var oldPrefix = prefix;
+                                if (relGroupSummary.FromFieldName.Count>1)
+                                {
+                                    prefix += "// ";
+                                    writer.WriteSafeString(string.Format("\n{0} WARNING: Legacy Code generator cannot handle composite Foriegn Keys... commenting out", prefix, fkName));
+                                }
                                 writer.WriteSafeString(string.Format("\n{0}/// <summary>{1}  *->0|1</summary>", prefix, fkName));
                                 writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relGroupSummary.FromFieldName)));
                                 writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
+                                writer.WriteSafeString("\n");
                                 PreviousManyToOneFields.Add(FieldName);
+                                prefix = oldPrefix;
                             }
                         }
                     }
@@ -290,6 +298,7 @@ namespace EzDbCodeGen.Core
                             writer.WriteSafeString(string.Format("\n{0}/// <summary>{1} 1->1</summary>", prefix, relGroupSummary.Name));
                             writer.WriteSafeString(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", relGroupSummary.FromObjectPropertyName)));
                             writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relGroupSummary.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
+                            writer.WriteSafeString("\n");
                             PreviousOneToOneFields.Add(FieldName);
                         }
                     }
@@ -325,7 +334,7 @@ namespace EzDbCodeGen.Core
                     foreach (var fkNameKV in entity.RelationshipGroups)
                     {
                         var fkName = fkNameKV.Key;
-                        if (fkName.Contains("FK_TankBatteries_AssetTeams"))
+                        if (fkName.Contains("FK_AreaTargetFormations_AreaTypes"))
                         {
                             entityName = (entityName + " ").Trim();
                         }
@@ -383,11 +392,12 @@ namespace EzDbCodeGen.Core
                             }
                             else
                             {
-                                if (WriteFKAttribute) AttributeText.Append(string.Format("[ForeignKey(\"{0}\")]", string.Join(", ", fkList.ToList())));
+                                if (WriteFKAttribute) AttributeText.Append(string.Format("\n{0}[ForeignKey(\"{1}\")]", prefix, string.Join(", ", fkList.ToList())));
                                 if (IsRequired) AttributeText.Append("[Required]");
                                 if (AttributeText.Length > 0) writer.WriteSafeString(string.Format("\n{0}{1}", prefix, AttributeText.ToString()));
                                 writer.WriteSafeString(string.Format("\n{0}public virtual {1} {2} {{ get; set; }}", prefix, relationship.ToTableName.Replace(Internal.AppSettings.Instance.Configuration.Database.DefaultSchema + ".", "").ToSingular(), FieldName));
                             }
+                            writer.WriteSafeString($"\n{prefix}");
                             PreviousOneToOneFields.Add(FieldName);
                         }
                     }
