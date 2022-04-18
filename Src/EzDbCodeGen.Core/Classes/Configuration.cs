@@ -48,8 +48,8 @@ namespace EzDbCodeGen.Core.Config
     {
         public string Name { get; set; } = "";
 
-        public string[] Whitelist = (new List<string>()).ToArray();
-        public string[] Blacklist = (new List<string>()).ToArray();
+        public string[] Include = (new List<string>()).ToArray();
+        public string[] Exclude = (new List<string>()).ToArray();
     }
 
     public class PluralSingle
@@ -370,8 +370,8 @@ namespace EzDbCodeGen.Core.Config
 
         public bool IsIgnoredEntityByTemplate(string templateName, string entityNameToCheck)
         {
-            var isWhiteListed = true;
-            var isBlackListed = false;
+            var isIncluded = true;
+            var isExcluded = false;
             foreach (var templateItem in this.Templates)
             {
                 if (entityNameToCheck.Contains("*Constraint*"))
@@ -379,23 +379,23 @@ namespace EzDbCodeGen.Core.Config
                 var isTemplateNameMatched = Regex.IsMatch(templateName, "^" + Regex.Escape(templateItem.Name).Replace("\\?", ".").Replace("\\*", ".*") + "$");
                 if (isTemplateNameMatched)
                 {
-                    isWhiteListed = templateItem.Whitelist.Length == 0;
-                    foreach (var whiteListItem in templateItem.Whitelist)
+                    isIncluded = templateItem.Include.Length == 0;
+                    foreach (var includeItem in templateItem.Include)
                     {
-                        isWhiteListed = Regex.IsMatch(entityNameToCheck, "^" + Regex.Escape(whiteListItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
-                        if (isWhiteListed) break;
+                        isIncluded = Regex.IsMatch(entityNameToCheck, "^" + Regex.Escape(includeItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                        if (isIncluded) break;
                     }
-                    if (isWhiteListed)
+                    if (isIncluded)
                     {
-                        foreach (var blacklistListItem in templateItem.Blacklist)
+                        foreach (var excludeListItem in templateItem.Exclude)
                         {
-                            isBlackListed = Regex.IsMatch(entityNameToCheck, "^" + Regex.Escape(blacklistListItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
-                            if (isBlackListed) break;
+                            isExcluded = Regex.IsMatch(entityNameToCheck, "^" + Regex.Escape(excludeListItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                            if (isExcluded) break;
                         }
                     }
                 }
             }
-            return ((!isWhiteListed) || (isBlackListed && isWhiteListed));
+            return ((!isIncluded) || (isExcluded && isIncluded));
         }
 
         public bool IsIgnoredEntity(string entityNameToCheck)
