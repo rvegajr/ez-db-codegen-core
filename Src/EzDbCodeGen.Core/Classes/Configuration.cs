@@ -44,6 +44,14 @@ namespace EzDbCodeGen.Core.Config
         }
     }
 
+    public class TemplateItem
+    {
+        public string Name { get; set; } = "";
+
+        public string[] Include = (new List<string>()).ToArray();
+        public string[] Exclude = (new List<string>()).ToArray();
+    }
+
     public class PluralSingle
     {
         public string SingleWord { get; set; } = "";
@@ -249,6 +257,8 @@ namespace EzDbCodeGen.Core.Config
         {
         }
         public List<Entity> Entities { get; set; } = new List<Entity>();
+
+        public List<TemplateItem> Templates { get; set; } = new List<TemplateItem>();
         public List<PluralSingle> PluralizerCrossReference { get; set; } = new List<PluralSingle>();
         public Database Database = new Database();
         public static Configuration FromFile(string FileName)
@@ -356,6 +366,36 @@ namespace EzDbCodeGen.Core.Config
                 //else if (columnNameFilterItem.Equals(columnNameToCheck)) return true;
             }
             return computedColumn;
+        }
+
+        public bool IsIgnoredEntityByTemplate(string templateName, string entityNameToCheck)
+        {
+            var isIncluded = true;
+            var isExcluded = false;
+            foreach (var templateItem in this.Templates)
+            {
+                if (entityNameToCheck.Contains("*Constraint*"))
+                    Console.Write("");
+                var isTemplateNameMatched = Regex.IsMatch(templateName, "^" + Regex.Escape(templateItem.Name).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                if (isTemplateNameMatched)
+                {
+                    isIncluded = templateItem.Include.Length == 0;
+                    foreach (var includeItem in templateItem.Include)
+                    {
+                        isIncluded = Regex.IsMatch(entityNameToCheck, "^" + Regex.Escape(includeItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                        if (isIncluded) break;
+                    }
+                    if (isIncluded)
+                    {
+                        foreach (var excludeListItem in templateItem.Exclude)
+                        {
+                            isExcluded = Regex.IsMatch(entityNameToCheck, "^" + Regex.Escape(excludeListItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                            if (isExcluded) break;
+                        }
+                    }
+                }
+            }
+            return ((!isIncluded) || (isExcluded && isIncluded));
         }
 
         public bool IsIgnoredEntity(string entityNameToCheck)

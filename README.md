@@ -1,7 +1,7 @@
-# ez-db-codegen-core
+# ez-db-codegen-cli
 
 EzDbCodeGen now works as a local tool.  
-Easy code generation based on a database schema given by [EZDbSchema](https://github.com/rvegajr/ez-db-schema-core).  The template language this application uses is HandleBars.   T
+Easy code generation based on a database schema given by [EZDbSchema](https://github.com/rvegajr/ez-db-schema-core).  The template language this application uses is HandleBars. 
 
 ## Getting Started
 
@@ -94,3 +94,9 @@ if there is only $p1, then $p1 should be a boolean, otherwise
     $p2 = should be a comparison op >, =, ==, <, !=, <> 
     $p3 = value to
 if the result of the 3 operators is true, it will write from this tag to {{else}} or {{/ifCond}}, if false then code from {{else}} to {{/ifCond}} will be written 
+
+## Changes
+
+V 6.0.14 - Changed names to be more inclusive
+
+V 6.0.13 - Added tge abiltity to WhiteList/Blacklist based on template and entity file name
