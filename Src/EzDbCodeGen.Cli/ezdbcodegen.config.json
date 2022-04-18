@@ -41,6 +41,21 @@
       "dbo.*.NotMappedColumn*"
     ]
   },
+	"Templates": [
+		{
+		  "Name": "TemplateNameWithWildcard*",
+		  "Include": [
+			"*EntityFileNameWithWildcard1*",
+			"*EntityFileNameWithWildcard2*",
+			"*Name3*"
+		  ],  
+		  "Exclude": [
+			"*EntityFileNameWithWildcard3*",
+			"*EntityFileNameWithWildcard4*"
+		  ] 
+		},
+	],  
+  
     /* Entities higher up will be utilized for ignore actions and rename actions.*/
     "Entities": [
         /*
