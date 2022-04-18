@@ -50,6 +50,7 @@ namespace EzDbCodeGen.Core.Enums
         Update,
         Delete,
         Add,
+        Filtered,
         Unknown
     }
 

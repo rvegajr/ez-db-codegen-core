@@ -44,6 +44,14 @@ namespace EzDbCodeGen.Core.Config
         }
     }
 
+    public class TemplateItem
+    {
+        public string Name { get; set; } = "";
+
+        public string[] Whitelist = (new List<string>()).ToArray();
+        public string[] Blacklist = (new List<string>()).ToArray();
+    }
+
     public class PluralSingle
     {
         public string SingleWord { get; set; } = "";
@@ -249,6 +257,8 @@ namespace EzDbCodeGen.Core.Config
         {
         }
         public List<Entity> Entities { get; set; } = new List<Entity>();
+
+        public List<TemplateItem> Templates { get; set; } = new List<TemplateItem>();
         public List<PluralSingle> PluralizerCrossReference { get; set; } = new List<PluralSingle>();
         public Database Database = new Database();
         public static Configuration FromFile(string FileName)
@@ -356,6 +366,36 @@ namespace EzDbCodeGen.Core.Config
                 //else if (columnNameFilterItem.Equals(columnNameToCheck)) return true;
             }
             return computedColumn;
+        }
+
+        public bool IsIgnoredEntityByTemplate(string templateName, string entityNameToCheck)
+        {
+            var isWhiteListed = true;
+            var isBlackListed = false;
+            foreach (var templateItem in this.Templates)
+            {
+                if (entityNameToCheck.Contains("*Constraint*"))
+                    Console.Write("");
+                var isTemplateNameMatched = Regex.IsMatch(templateName, "^" + Regex.Escape(templateItem.Name).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                if (isTemplateNameMatched)
+                {
+                    isWhiteListed = templateItem.Whitelist.Length == 0;
+                    foreach (var whiteListItem in templateItem.Whitelist)
+                    {
+                        isWhiteListed = Regex.IsMatch(entityNameToCheck, "^" + Regex.Escape(whiteListItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                        if (isWhiteListed) break;
+                    }
+                    if (isWhiteListed)
+                    {
+                        foreach (var blacklistListItem in templateItem.Blacklist)
+                        {
+                            isBlackListed = Regex.IsMatch(entityNameToCheck, "^" + Regex.Escape(blacklistListItem).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                            if (isBlackListed) break;
+                        }
+                    }
+                }
+            }
+            return ((!isWhiteListed) || (isBlackListed && isWhiteListed));
         }
 
         public bool IsIgnoredEntity(string entityNameToCheck)

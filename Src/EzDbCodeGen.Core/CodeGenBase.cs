@@ -482,7 +482,7 @@ namespace EzDbCodeGen.Core
 					//Lets now make sure all of those files that should be rendered are there
 					foreach (string fileName in FileListAndContents.ClonePrimaryKeys())
 					{
-						if ((FileActions.ContainsKey(fileName)))
+                        if ((FileActions.ContainsKey(fileName)))
 						{
 							//if the file exists and it is slated to be deleted and if it was going to be a generated,  then mark it as an update
 							if (FileActions[fileName] == TemplateFileAction.Delete)
@@ -494,10 +494,16 @@ namespace EzDbCodeGen.Core
 						{
                             FileActions.Add(fileName, TemplateFileAction.Add);
 						}
-					}
+                        if (EzDbConfig.Templates.Count>0)
+                        {
+                            var isFiltered = EzDbConfig.IsIgnoredEntityByTemplate(Path.GetFileName(templateFileName), Path.GetFileName(fileName));
+                            if (isFiltered) FileActions[fileName] = TemplateFileAction.Filtered;
+                        }
+                    }
 
-					CurrentTask = string.Format("Performing file actions");
-					var Deletes = 0; var Updates = 0; var Adds = 0;
+                    CurrentTask = string.Format("Performing file actions");
+					var Deletes = 0; var Updates = 0; var Adds = 0; var Filtered = 0;
+
 					/* Process File Actions based on which Template File action*/
 					foreach (string fileName in FileActions.Keys.ToList())
 					{
@@ -526,8 +532,13 @@ namespace EzDbCodeGen.Core
 							Adds++;
 							File.WriteAllText(fileName, FileListAndContents[(FileName)fileName]);
 						}
-					}
-					StatusMessage(string.Format("File Action Counts: Adds={0}, Updates={1}, Deletes={2}", Adds, Updates, Deletes), true);
+                        else if (FileActions[fileName] == TemplateFileAction.Filtered)
+                        {
+                            Filtered++;
+                        }
+
+                    }
+					StatusMessage(string.Format("File Action Counts: Adds={0}, Updates={1}, Deletes={2}, Filtered={3}", Adds, Updates, Deletes, Filtered), true);
 					if ((Adds > 0) || (Deletes > 0)) returnCode = ReturnCode.OkAddDels;
 				}
 				else if (!string.IsNullOrEmpty(result))
