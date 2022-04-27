@@ -152,6 +152,7 @@ namespace EzDbCodeGen.Core
             foreach (var entityKey in database.Entities.Keys)
             {
                 if (config.IsIgnoredEntity(entityKey)) DeleteList.Add(entityKey);
+                else if ((database.Entities[entityKey].PrimaryKeys.Count==0) && (!config.IsEntityWithConfigKeyDeclaration(entityKey)) && (config.Database.FilterEntitiesWithNoKey)) DeleteList.Add(entityKey);
             }
             foreach (var keyToDelete in DeleteList)
             {

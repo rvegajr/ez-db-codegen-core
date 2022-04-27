@@ -2,7 +2,7 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = false;
-var NuGetReleaseNotes = new [] {"Added Template WhiteList and BlackList"};
+var NuGetReleaseNotes = new [] {"Added Template WhiteList and BlackList", "Added NoPk Entity Option"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
 FilePath msBuildPathX64 = (vsLatest==null)

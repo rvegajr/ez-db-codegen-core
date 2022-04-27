@@ -208,6 +208,7 @@ namespace EzDbCodeGen.Core
             {
                 this.Schema = (IDatabase)(new T());
                 this.Schema.ShowWarnings = this.VerboseMessages;
+                this.Schema.AutoAddPrimaryKeys = config.Database.AutoAddKeysIfNoPK;
                 this.Schema.Render(this.SchemaName, this.AsConnectionString());
                 return this.Schema.Filter(config);
             }
@@ -316,26 +317,6 @@ namespace EzDbCodeGen.Core
         }
 
         /// <summary>
-        /// Load the Schema as specified in the template class 
-        /// </summary>
-        /// <param name="config">Configuration to Apply which will filter schema objects</param>
-        /// <returns></returns>
-        /*
-        public IDatabase LoadSchema()
-        {
-            try
-            {
-                this.Schema = (new EzDbSchema.MsSql.Database() { ShowWarnings = this.VerboseMessages }).Render(this.SchemaName, this.AsConnectionString());
-                return this.Schema;
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(string.Format("Could not load schema with connection string '{0}'.  " + ex.Message, this.AsConnectionString()), ex);
-            }
-        }
-        */
-
-        /// <summary>
         /// Load the Schema as specified in the template class but will return the object fltered based on the config object passed
         /// </summary>
         /// <param name="config">Configuration to Apply which will filter schema objects</param>
@@ -344,7 +325,7 @@ namespace EzDbCodeGen.Core
         {
             try
             {
-                this.Schema = (new EzDbSchema.MsSql.Database() { ShowWarnings = this.VerboseMessages }).Render(this.SchemaName, this.AsConnectionString());
+                this.Schema = (new EzDbSchema.MsSql.Database() { ShowWarnings = this.VerboseMessages, AutoAddPrimaryKeys = config.Database.AutoAddKeysIfNoPK }).Render(this.SchemaName, this.AsConnectionString());
                 return this.Schema.Filter(config);
             }
             catch (Exception ex)

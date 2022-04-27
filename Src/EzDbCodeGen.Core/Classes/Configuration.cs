@@ -62,6 +62,8 @@ namespace EzDbCodeGen.Core.Config
     {
         public string DefaultSchema { get; set; } = "dbo";
         public string AliasNamePattern { get; set; } = Configuration.OBJECT_NAME;
+        public bool FilterEntitiesWithNoKey { get; set; } = false;
+        public bool AutoAddKeysIfNoPK { get; set; } = false;
         public string SchemaName { get; set; } = "";
         public string PropertyObjectNameCollisionSuffix { get; set; } = "Value";
         public string InverseFKTargetNameCollisionSuffix { get; set; } = "Item";
@@ -423,6 +425,28 @@ namespace EzDbCodeGen.Core.Config
                 }
             }
             return ignoreEntity;
+        }
+
+        /// <summary>
+        /// tthis function will check and see if the entity has any Overrides.PrimaryKey declarations.
+        /// </summary>
+        /// <param name="entityNameToCheck">Can be a wild card to search for enntity names.  Entity names will include schemas</param>
+        /// <returns></returns>
+        public bool IsEntityWithConfigKeyDeclaration(string entityNameToCheck)
+        {
+            var schemaObjectName = new SchemaObjectName(entityNameToCheck);
+            var hasConfigPrimaryKeyDeclarations = false;
+            var configEntityFound = Entities.Find(e => e.Name == entityNameToCheck);
+            if (configEntityFound == null) configEntityFound = Entities.Find(e => e.Name == schemaObjectName.AsFullName());
+                foreach (var entity in this.Entities)
+                {
+                    if ((entity.Name.Contains("ScenarioScheduleGroupings")) || (entity.Name.Contains("ScenarioDatesByWell")))
+                        Console.Write("");
+                    var isMatched = Regex.IsMatch(schemaObjectName.AsFullName(), "^" + Regex.Escape(entity.Name).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                    if (isMatched) hasConfigPrimaryKeyDeclarations = entity.Overrides.PrimaryKey.Count>0;
+                    if (hasConfigPrimaryKeyDeclarations) break;
+                }
+            return hasConfigPrimaryKeyDeclarations;
         }
         /// <summary>
         /// 

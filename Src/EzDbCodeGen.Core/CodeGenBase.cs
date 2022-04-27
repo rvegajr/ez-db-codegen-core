@@ -602,20 +602,8 @@ namespace EzDbCodeGen.Core
 				throw;
 			}
 		}
-
-		private static void HandlePath(string Path, TemplatePathOption option, ITemplateDataInput originalTemplateInputSource, ITemplateDataInput compareToTemplateInputSource)
-		{
-			try
-			{
-
-			}
-			catch (Exception)
-			{
-				throw;
-			}
-		}
-		public static bool ShowWarnings { get; set; } = true;
 	}
+
     public class StatusChangeEventArgs : EventArgs
     {
         public StatusChangeEventArgs(string message) { Message = message; }

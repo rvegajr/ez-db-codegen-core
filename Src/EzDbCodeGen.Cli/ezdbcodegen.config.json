@@ -14,6 +14,8 @@
     "PropertyNameSuffix": "Value", //If a proerty has the same name as its parent Entity,  this is the suffix that will be appended to the Alias name
     "AliasNamePattern": "{SCHEMANAME-P|X'dbo'}{OBJECTNAME-S|X' '|X'tbl_'}", /* Default value is {OBJECTNAME} if blank or not present*/
     "SchemaName": "MyEntities",
+    "FilterEntitiesWithNoKey": false, /* If this is true, objects that have no key will be filtered out */
+    "AutoAddKeysIfNoPK": false, /* If this is true, any objects that do not have primary keys will have all properties added as keys (the only way to guaruntee unique of a record) */
     "DeleteObjectOnFilter": true, /* If this is true, the object will be deleted if filtered out,  if its false, it will be marked with IsEnabled=false */
     "Misc": {
       "Field1": "Value1",
