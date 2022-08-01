@@ -97,11 +97,18 @@
             "Name": "MARSxtra.tempload",
             "Ignore": false,
             "Overrides": {
-                "PrimaryKey": [
-                    { "FieldName": "PeriodId" },
-                    { "FieldName": "Inv Year" },
-                    { "FieldName": "Loan Number" }
-                ]
+              "PrimaryKey": [
+                { "FieldName": "PeriodId" },
+                { "FieldName": "Inv Year" },
+                //{ "FieldName": "Loan Number" }
+              ],
+              "Fields": [
+                {
+                  "DataTyoe": "Custom",
+                  "FieldName": "PeriodId",
+                  "ColumnAttributeTypeName": "geometry"
+                }
+              ]
             }
         },
         {
@@ -183,5 +190,15 @@
             "SingleWord": "ProductCurve",
             "PluralWord": "ProductCurves"
         }
+    ],    
+	"DataTypeMap": [
+        {
+            "DataType": "geometry",
+            "TargetDataType": "DbGeometry"
+        },
+        {
+            "DataType": "geography",
+            "TargetDataType": "DbGeography"
+        }		
     ]
 }

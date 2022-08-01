@@ -14,6 +14,13 @@ using System.Runtime.CompilerServices;
 
 namespace EzDbCodeGen.Core.Config
 {
+    public class Field
+    {
+        public string FieldName { get; set; }
+        public string DataTyoe { get; set; }
+        public string ColumnAttributeTypeName { get; set; }
+    }
+
     public class PrimaryKey
     {
         public string FieldName { get; set; }
@@ -22,6 +29,7 @@ namespace EzDbCodeGen.Core.Config
     public class Overrides
     {
         public List<PrimaryKey> PrimaryKey { get; set; } = new List<PrimaryKey>();
+        public List<Field> Fields { get; set; } = new List<Field>();
     }
 
     public class Entity
@@ -56,6 +64,12 @@ namespace EzDbCodeGen.Core.Config
     {
         public string SingleWord { get; set; } = "";
         public string PluralWord { get; set; } = "";
+    }
+
+    public class DataTypeMap
+    {
+        public string DataType { get; set; } = "";
+        public string TargetDataType { get; set; } = "";
     }
 
     public class Database
@@ -262,6 +276,8 @@ namespace EzDbCodeGen.Core.Config
 
         public List<TemplateItem> Templates { get; set; } = new List<TemplateItem>();
         public List<PluralSingle> PluralizerCrossReference { get; set; } = new List<PluralSingle>();
+        public List<DataTypeMap> DataTypeMap { get; set; } = new List<DataTypeMap>();
+        
         public Database Database = new Database();
         public static Configuration FromFile(string FileName)
         {
@@ -447,6 +463,26 @@ namespace EzDbCodeGen.Core.Config
                     if (hasConfigPrimaryKeyDeclarations) break;
                 }
             return hasConfigPrimaryKeyDeclarations;
+        }
+
+        /// <summary>
+        /// tthis function will check and see if the entity has any Overrides.PrimaryKey declarations.
+        /// </summary>
+        /// <param name="entityNameToCheck">Can be a wild card to search for enntity names.  Entity names will include schemas</param>
+        /// <returns></returns>
+        public List<Entity> FindMatchingConfigEntities(string entityNameToCheck)
+        {
+            var ret = new List<Entity>();
+            var schemaObjectName = new SchemaObjectName(entityNameToCheck);
+            var hasConfigPrimaryKeyDeclarations = false;
+            var configEntityFound = Entities.Find(e => e.Name == entityNameToCheck);
+            if (configEntityFound == null) configEntityFound = Entities.Find(e => e.Name == schemaObjectName.AsFullName());
+            foreach (var entity in this.Entities)
+            {
+                var isMatched = Regex.IsMatch(schemaObjectName.AsFullName(), "^" + Regex.Escape(entity.Name).Replace("\\?", ".").Replace("\\*", ".*") + "$");
+                if (isMatched) ret.Add(entity);
+            }
+            return ret;
         }
         /// <summary>
         /// 

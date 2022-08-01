@@ -252,6 +252,9 @@ namespace EzDbCodeGen.Core
                     EzDbConfig = Configuration.FromFile(ConfigurationFileName);
                     foreach (var item in EzDbConfig.PluralizerCrossReference)
                         Pluralizer.Instance.AddWord(item.SingleWord, item.PluralWord);
+                    foreach (var item in EzDbConfig.DataTypeMap)
+                        StringExtensions.UpdateDotNetDataType(item.DataType, item.TargetDataType);
+                        
                     if (!string.IsNullOrEmpty(EzDbConfig.Database.SchemaName))
                     {
                         CurrentTask = string.Format("Schema name has been changed from {0} to {1} by configuration file.", this.SchemaName, EzDbConfig.Database.SchemaName);

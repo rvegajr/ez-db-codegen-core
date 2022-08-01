@@ -36,8 +36,9 @@ namespace EzDbCodeGen.Core
                     var keyAttribute = "";
                     var fkAttributes = "";
                     var identityAttribute = "";
+                    var columnAttribute = "";
 
-                    if ((entityName.Contains("dbo.AdHocTankBatteryArea")) && (property.Name.Contains("AreaTypeId")))
+                    if ((entityName.Contains("dbo.Wells")) && (property.Name.Contains("Shape")))
                         entityName = (entityName + " ").Trim();
                     if (entityName.Contains("AdHocTankBatteryArea")) //&& (property.Name.Contains("")))
                         entityName = (entityName + " ").Trim();
@@ -89,11 +90,19 @@ namespace EzDbCodeGen.Core
 
                         }
                     }
+                    var configEntityList = Internal.AppSettings.Instance.Configuration.FindMatchingConfigEntities(entityName).ToList().FirstOrDefault();
+                    if (configEntityList != null)
+                    {
+                        var FieldOverride = configEntityList.Overrides.Fields.Find(f => f.FieldName.ToLower().Equals(property.Name.ToLower()));
+                        if ((FieldOverride != null) && (!string.IsNullOrEmpty(FieldOverride.ColumnAttributeTypeName)))
+                            columnAttribute = string.Format("[Column(TypeName=\"{0}\")]", FieldOverride.ColumnAttributeTypeName);
+                    }
 
                     if (keyAttribute.Length > 0) writer.WriteSafeString(keyAttribute);
                     if (fkAttributes.Length > 0) writer.WriteSafeString(fkAttributes);
                     if ((property.Name == "SysStartTime") || (property.Name == "SysEndTime")) writer.WriteSafeString("[DatabaseGenerated(DatabaseGeneratedOption.Computed)]\n");
                     if (decimalAttribute.Length > 0) writer.WriteSafeString(decimalAttribute);
+                    if (columnAttribute.Length > 0) writer.WriteSafeString(columnAttribute);
                     writer.WriteSafeString($"\n{prefix}");
                 }
                 catch (Exception ex)

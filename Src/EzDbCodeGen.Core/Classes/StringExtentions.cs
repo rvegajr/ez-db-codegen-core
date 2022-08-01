@@ -136,6 +136,14 @@ namespace EzDbCodeGen.Core.Extentions.Strings
 
         }
 
+        public static void UpdateDotNetDataType(string dataType, string targetDataType)
+        {
+            if (sQLDataTypeToDotNetDataType.ContainsKey(dataType))
+                sQLDataTypeToDotNetDataType[dataType] = targetDataType;
+            else
+                sQLDataTypeToDotNetDataType.Add(dataType, targetDataType);
+        }
+
         /// <summary>
         /// Truncates string so that it is no longer than the specified number of characters.
         /// </summary>

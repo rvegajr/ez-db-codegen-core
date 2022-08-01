@@ -29,7 +29,7 @@ namespace EzDbCodeGen.Core
                     var entity = property.Parent;
                     var database = entity.Parent;
                     var entityName = entity.Name;
-                    if (entityName.Contains("Gender"))
+                    if (entityName.Contains("Well"))
                     {
                         entityName += "  ";
                         entityName = entityName.Trim();
