@@ -94,8 +94,16 @@ if there is only $p1, then $p1 should be a boolean, otherwise
     $p2 = should be a comparison op >, =, ==, <, !=, <> 
     $p3 = value to
 if the result of the 3 operators is true, it will write from this tag to {{else}} or {{/ifCond}}, if false then code from {{else}} to {{/ifCond}} will be written 
+* `{{ IsAuditableOutput $p1 }}` - This function will output the contents if $p1 if the entity contains any auditable column (Created. CreatedBy, Updated, UpdatedBy) 
+* `{{ IsNotAuditableOutput $p1 }}` - This function will output the contents if $p1 if the entity DOES NOT contain any auditable column (Created. CreatedBy, Updated, UpdatedBy) 
 
 ## Changes
+V 6.0.21 - Added IsNotAuditableOutput template render directive (fixed mispelling)
+
+V 6.0.20 - Added IsNotAuditiableOutput template render directive
+
+V 6.0.19 - Added Data Type Override
+		   Added Field Level Type Name and Nullable Overrides
 
 V 6.0.14 - Changed names to be more inclusive
 

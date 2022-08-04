@@ -34,7 +34,9 @@
       "System.FactCallCenter.Date", //Will filter out Date column for table FactCallCenter in schema System
       "FactCallCenter.ServiceGrade", //Will filter out ServiceGrade column for table FactCallCenter in the Default Schema 
       "Date", //Will filter out every column that equals Date in every table in every schema
-      "AccountCodeAlternateKey" //Will filter out column with a name of AccountCodeAlternateKey in every column and schema
+      "AccountCodeAlternateKey", //Will filter out column with a name of AccountCodeAlternateKey in every column and schema
+	  "dbo.SpatialTable.*Shape", // This will filter out all columns in the table SpatialTable in the dbo schema that end with 'Shape'  
+      "dbo.*.*Shape*" // This will filter out all columns in every table in the dbo schema that contain the word 'Shape'
     ],
     "ColumnNameComputed": [
       "SysUpdateDate*"
@@ -104,9 +106,9 @@
               ],
               "Fields": [
                 {
-                  "DataTyoe": "Custom",
                   "FieldName": "PeriodId",
-                  "ColumnAttributeTypeName": "geometry"
+                  "ColumnAttributeTypeName": "geometry",
+				  "Nullable": false 
                 }
               ]
             }

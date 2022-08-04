@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using EzDbCodeGen.Core.Extentions.Strings;
 using EzDbSchema.Core.Enums;
@@ -61,6 +62,22 @@ namespace EzDbCodeGen.Core
         }
 
         /// <summary>
+        /// This nullable will look in the config file to determine if the propery is nullable overidden and use that
+        /// </summary>
+        /// <returns></returns>
+        internal static bool IsNullableResolved(this IProperty This)
+        {
+            var isNullable = This.IsNullable;
+            var firstConfigEntity = Internal.AppSettings.Instance.Configuration.FindMatchingConfigEntities(new SchemaObjectName(This.Parent).AsFullName()).ToList().FirstOrDefault();
+            if (firstConfigEntity != null)
+            {
+                var FieldOverride = firstConfigEntity.Overrides.Fields.Find(f => f.FieldName.ToLower().Equals(This.Name.ToLower()));
+                if ((FieldOverride != null) && !(FieldOverride.Nullable is null))
+                    isNullable = FieldOverride.Nullable.Value;
+            }
+            return isNullable;
+        }
+        /// <summary>
         /// Useful for rendering the primary keys for a comma delimited parameter list
         /// Will return the primary keys in the following format
         ///   [0]Parm1 (number), Parm2(text), Parm3 (number)
@@ -76,7 +93,7 @@ namespace EzDbCodeGen.Core
             for (int i = 0; i < This.Count; i++)
             {
                 var property = This[i];
-                ret += (i > 0 ? delimiter + @" " : @" ") + prefix + property.Type.ToNetType(property.IsNullable) + elementSet + property.Alias.ToSingular();
+                ret += (i > 0 ? delimiter + @" " : @" ") + prefix + property.Type.ToNetType(property.IsNullableResolved()) + elementSet + property.Alias.ToSingular();
             }
             return ret;
 		}

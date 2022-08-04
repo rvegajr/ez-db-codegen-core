@@ -386,7 +386,7 @@ namespace EzDbCodeGen.Core
                                     var TargetEntityPrimaryKeys = (entityName.Equals(fk.FromTableName) && (!fk.ToTableName.Equals(fk.FromTableName))) ? fk.ToEntity.PrimaryKeys : fk.FromEntity.PrimaryKeys;
                                     var FKFieldExistsOnTargetTablePKs = TargetEntityPrimaryKeys.Any(c => c.Name.Equals(TargetEntityPrimaryKeys));
                                     if (!IsRequired)
-                                        IsRequired = ((entityName.Equals(fk.FromTableName)) && (!fk.ToTableName.Equals(fk.FromTableName))) ? !((Property)fk.FromProperty).IsNullable : !((Property)fk.ToProperty).IsNullable;
+                                        IsRequired = ((entityName.Equals(fk.FromTableName)) && (!fk.ToTableName.Equals(fk.FromTableName))) ? !((Property)fk.FromProperty).IsNullableResolved() : !((Property)fk.ToProperty).IsNullableResolved();
                                     //Because this field exists in the target entity primary keys, then convvention should automatically know to resolve the foriegn key, but if 
                                     // it DOES NOT exist,  then we will need to write the key attribute.. however
                                     /// if this is a one to one relationship to the same table, we will apply the ForiegnKey atttribute to the primary key to the object

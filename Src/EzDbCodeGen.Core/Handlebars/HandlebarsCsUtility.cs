@@ -491,11 +491,40 @@ namespace EzDbCodeGen.Core
             });
 
             Handlebars.RegisterHelper("IsAuditiableOutput", (writer, context, parameters) => {
-                var PROC_NAME = "Handlebars.RegisterHelper('EntityBaseClass')";
+                var PROC_NAME = "Handlebars.RegisterHelper('IsAuditiableOutput')";
                 try
                 {
                     var outputText = parameters.AsString(0);
                     writer.WriteSafeString(((IEntity)context.Value).IsAuditable() ? outputText : "");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
+                }
+            });
+
+
+            Handlebars.RegisterHelper("IsAuditableOutput", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('IsAuditiableOutput')";
+                try
+                {
+                    var outputText = parameters.AsString(0);
+                    writer.WriteSafeString(((IEntity)context.Value).IsAuditable() ? outputText : "");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine(PROC_NAME + "- Error! " + ex.Message);
+                    writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
+                }
+            });
+
+            Handlebars.RegisterHelper("IsNotAuditableOutput", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('IsAuditiableOutput')";
+                try
+                {
+                    var outputText = parameters.AsString(0);
+                    writer.WriteSafeString(!((IEntity)context.Value).IsAuditable() ? outputText : "");
                 }
                 catch (Exception ex)
                 {

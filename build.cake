@@ -2,7 +2,7 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = false;
-var NuGetReleaseNotes = new [] {"Added Template WhiteList and BlackList", "Added NoPk Entity Option"};
+var NuGetReleaseNotes = new [] {"Added IsNotAuditableOutput template render directive", "Fixed spelling of directive", "Added Data Type Override", "Added Field Level Type Name and Nullable Overrides"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
 FilePath msBuildPathX64 = (vsLatest==null)

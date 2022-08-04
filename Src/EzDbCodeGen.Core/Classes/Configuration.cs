@@ -17,8 +17,8 @@ namespace EzDbCodeGen.Core.Config
     public class Field
     {
         public string FieldName { get; set; }
-        public string DataTyoe { get; set; }
         public string ColumnAttributeTypeName { get; set; }
+        public bool? Nullable { get; set; } = null;
     }
 
     public class PrimaryKey

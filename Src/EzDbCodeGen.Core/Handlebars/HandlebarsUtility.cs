@@ -134,7 +134,7 @@ namespace EzDbCodeGen.Core
             });
             Handlebars.RegisterHelper("ToNetType", (writer, context, parameters) => {
                 var property = (IProperty)context.Value;
-                var isNullable = ((parameters.Count() >= 2) && (parameters[1].AsBoolean() != false)) || (property.IsNullable);
+                var isNullable = ((parameters.Count() >= 2) && (parameters[1].AsBoolean() != false)) || (property.IsNullableResolved());
                 if (parameters.Count() >= 1)
                 {
                     writer.WriteSafeString(parameters[0].ToSafeString().ToNetType(isNullable));
@@ -156,7 +156,7 @@ namespace EzDbCodeGen.Core
             });
             Handlebars.RegisterHelper("ToJsType", (writer, context, parameters) => {
 				var property = (IProperty)context.Value;
-                var isNullable = ((parameters.Count() >= 2) && (parameters[1].AsBoolean() != false)) || (property.IsNullable);
+                var isNullable = ((parameters.Count() >= 2) && (parameters[1].AsBoolean() != false)) || (property.IsNullableResolved());
                 if (parameters.Count() >= 1)
                 {
                     writer.WriteSafeString(parameters[0].ToSafeString().ToJsType(isNullable));
