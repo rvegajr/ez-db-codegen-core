@@ -143,6 +143,7 @@ namespace EzDbCodeGen.Core
                 var PROC_NAME = "Handlebars.RegisterHelper('POCOModelFKConstructorInit')";
                 try
                 {
+
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context.Value;
                     if (entity.Name.Contains("Relationship"))
@@ -229,6 +230,7 @@ namespace EzDbCodeGen.Core
                     writer.WriteSafeString("**** ERROR RENDERING " + PROC_NAME + ".  " + ex.Message);
                 }
             });
+
             Handlebars.RegisterHelper("RelationshipGroupAsSummaryField", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('RelationshipGroupAsSummaryField')";
                 try

@@ -98,7 +98,7 @@ if the result of the 3 operators is true, it will write from this tag to {{else}
 * `{{ IsNotAuditableOutput $p1 }}` - This function will output the contents if $p1 if the entity DOES NOT contain any auditable column (Created. CreatedBy, Updated, UpdatedBy) 
 
 ## Changes
-V 6.0.21 - Added IsNotAuditableOutput template render directive (fixed mispelling)
+V 6.0.0  - Added IsNotAuditableOutput template render directive (fixed mispelling)
 
 V 6.0.20 - Added IsNotAuditiableOutput template render directive
 
@@ -108,3 +108,5 @@ V 6.0.19 - Added Data Type Override
 V 6.0.14 - Changed names to be more inclusive
 
 V 6.0.13 - Added tge abiltity to WhiteList/Blacklist based on template and entity file name
+
+V 7.0.0  - Updated to .net 7.0 

@@ -30,6 +30,10 @@ namespace EzDbCodeGen.Core
         public virtual string templateDataInput { get; set; } = "";
         public virtual string OutputPath { get; set; } = "";
         public virtual string ProjectPath { get; set; } = "";
+        /// <summary>
+        /// If this is a file name, the applicaition will dump the schema and then exit
+        /// </summary>
+        public virtual string SchemaDumpFileName { get; set; } = "";
         public virtual string ConnectionString { get; set; } = "";
         public virtual string ConfigurationFileName { get; set; } = "";
         public virtual string TemplateFileNameFilter { get; set; } = "";  //"FileName*,SampleFile*"
@@ -271,6 +275,12 @@ namespace EzDbCodeGen.Core
 				CurrentTask = "Loading Source Schema";
 				IDatabase schema = originalTemplateDataInputSource.LoadSchema(EzDbConfig);
                 schema.Name = this.SchemaName;
+                if (!string.IsNullOrEmpty(this.SchemaDumpFileName))
+                {
+                    schema.ToJsonFile(SchemaDumpFileName);
+                    CurrentTask = string.Format($"Schema was dumped to {SchemaDumpFileName}");
+                    return new ReturnCodes("", ReturnCode.Ok);
+                }
 
                 if (schema == null) throw new Exception(@"originalTemplateInputSource is not a valid template");
 

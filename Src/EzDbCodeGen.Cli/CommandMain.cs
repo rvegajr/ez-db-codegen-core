@@ -239,7 +239,11 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
 
             var sourceSchemaFileNameOption = app.Option("-sf|--schema-file <optionvalue>",
                 "Specify a schema json dump to perform the code generation (as opposed to a connection string).  This parm is optional and parm is present, it will override the appsettings and the -sc app line parm",
-            CommandOptionType.SingleValue);
+                CommandOptionType.SingleValue);
+
+            var sourceSchemaOutputOption = app.Option("-so|--schema-output <optionvalue>",
+                "Specify a filename to dump the database json out.  This parm is optional and parm is present, it will be the only thing this utility will do.  By default, it will dump in the path that this utility is executed in.",
+                CommandOptionType.SingleValue);
 
             var configFileOption = app.Option("-cf|--configfile",
                 "The configuration file this template render will use.  This is optional, the default search path will be in the same path as this assembly of this applicaiton. ",
@@ -324,7 +328,6 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                             AppSettings.Instance.ConfigurationFileName = configFileFound;
                         }
                     }
-
 
                     var Errors = new StringBuilder();
                     var OutputPath = string.Empty;
@@ -445,6 +448,14 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                     else if (compareToConnectionStringOption.HasValue())
                         CompareTo = new TemplateInputDatabaseConnecton(compareToConnectionStringOption.Value());
 
+                    if (sourceSchemaOutputOption.HasValue()) {
+                        var schemaDumpFileName = sourceSchemaOutputOption.Value();
+                        if (string.IsNullOrEmpty(Path.GetDirectoryName(schemaDumpFileName)))
+                        {
+                            schemaDumpFileName = Path.Combine(Environment.CurrentDirectory, "").PathEnds() + schemaDumpFileName;
+                        }
+                        CodeGen.SchemaDumpFileName= schemaDumpFileName;
+                    }
                     if (CompareTo == null)
                     {
                         Source.VerboseMessages = AppSettings.Instance.VerboseMessages;

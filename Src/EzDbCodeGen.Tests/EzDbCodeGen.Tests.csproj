@@ -1,13 +1,13 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework>
     <IsPackable>false</IsPackable>
     <ApplicationIcon />
     <OutputType>Exe</OutputType>
     <StartupObject />
-    <AssemblyVersion>6.0.0.0</AssemblyVersion>
-    <FileVersion>6.0.0.0</FileVersion>
-    <InformationalVersion>6.0.0+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
+    <AssemblyVersion>7.0.0.0</AssemblyVersion>
+    <FileVersion>7.0.0.0</FileVersion>
+    <InformationalVersion>7.0.0+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="Resources\AdventureWorksLT2008.zip" />
@@ -38,11 +38,11 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="6.0.1" />
+    <PackageReference Include="EzDbSchema" Version="7.0.0" />
     <PackageReference Include="MartinCostello.SqlLocalDb" Version="3.2.0" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.1.0" />
-    <PackageReference Include="xunit" Version="2.4.1" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.4.1" />
+    <PackageReference Include="xunit" Version="2.4.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
@@ -72,9 +72,10 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Update="FastMemberMT" Version="7.0.0" />
     <PackageReference Update="Handlebars.Net" Version="2.1.2" />
-    <PackageReference Update="Newtonsoft.Json" Version="13.0.1" />
-    <PackageReference Update="System.Data.SqlClient" Version="4.8.3" />
+    <PackageReference Update="Newtonsoft.Json" Version="13.0.2" />
+    <PackageReference Update="System.Data.SqlClient" Version="4.8.5" />
     <PackageReference Update="System.Json" Version="4.7.1" />
   </ItemGroup>
 </Project>

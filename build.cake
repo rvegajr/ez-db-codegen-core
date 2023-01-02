@@ -2,7 +2,7 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = false;
-var NuGetReleaseNotes = new [] {"Added IsNotAuditableOutput template render directive", "Fixed spelling of directive", "Added Data Type Override", "Added Field Level Type Name and Nullable Overrides"};
+var NuGetReleaseNotes = new [] {"Udpated to .net 7.0"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
 FilePath msBuildPathX64 = (vsLatest==null)
