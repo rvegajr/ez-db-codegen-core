@@ -8,7 +8,7 @@ Easy code generation based on a database schema given by [EZDbSchema](https://gi
 These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system. This nuget package will dump the published cli package for code generation and a powershell script to run it.  The nuget package will dump everything you need for code generation into the project you have selected under the EzDbCodeGen folder.    
 
 ### Prerequisites
-* [Net 5.0+] (https://www.microsoft.com/net/learn/get-started) - You will get everything you need except the sdk!  please download the latest version of this before trying to run the powershell script
+* [Net 8.0+] (https://www.microsoft.com/net/learn/get-started) - You will get everything you need except the sdk!  please download the latest version of this before trying to run the powershell script
 * You will need MSSQL with some database installed.  If you need a sample database,  feel free to look for the [World Wide Importers](https://github.com/Microsoft/sql-server-samples/releases/tag/wide-world-importers-v1.0) samples.
 
 NOTE:  If you have not set your powershell execution remote policy first,  you will need to do this as noted in [Powershell Execution Policy](https://www.pdq.com/blog/powershell-how-to-write-your-first-powershell-script/)
@@ -109,4 +109,6 @@ V 6.0.14 - Changed names to be more inclusive
 
 V 6.0.13 - Added tge abiltity to WhiteList/Blacklist based on template and entity file name
 
-V 7.0.0  - Updated to .net 7.0 
+V 7.0.1  - Updated to .net 7.0 
+
+V 8.0.0  - Updated to .net 8.0 

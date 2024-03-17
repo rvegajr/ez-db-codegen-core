@@ -483,7 +483,8 @@ namespace EzDbCodeGen.Core
                 var PROC_NAME = "Handlebars.RegisterHelper('EntityPrimaryKeysAsParmString')";
                 try
                 {
-                    writer.WriteSafeString(((IEntity)context.Value).PrimaryKeys.AsParmString().Trim());
+                    var fieldPrefix = parameters.AsString(0) ?? " ";
+                    writer.WriteSafeString(((IEntity)context.Value).PrimaryKeys.AsParmString(fieldPrefix, ",", " ").Trim());
                 }
                 catch (Exception ex)
                 {

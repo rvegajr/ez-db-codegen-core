@@ -2,7 +2,7 @@
 #tool nuget:?package=NUnit.ConsoleRunner&version=3.4.0
 
 var IncrementMinorVersion = false;
-var NuGetReleaseNotes = new [] {"Udpated to .net 7.0"};
+var NuGetReleaseNotes = new [] {"Udpated to .net 8.0"};
 
 DirectoryPath vsLatest  = VSWhereLatest();
 FilePath msBuildPathX64 = (vsLatest==null)
@@ -10,7 +10,7 @@ FilePath msBuildPathX64 = (vsLatest==null)
                             : vsLatest.CombineWithFilePath("./MSBuild/Current/bin/msbuild.exe");
 var target = Argument("target", "Default");
 var configuration = Argument("configuration", "Release");
-var framework = Argument("framework", "net6.0");
+var framework = Argument("framework", "net8.0");
 var runtime = Argument("runtime", "Portable");
 
 var binDir = Directory("./bin") ;
@@ -119,7 +119,7 @@ Task("Publish")
     .IsDependentOn("Build")
     .Does(() =>
 {
-	 DoPackage("EzDbCodeGen.Cli", "net6.0", NugetVersion, "portable");
+	 DoPackage("EzDbCodeGen.Cli", "net8.0", NugetVersion, "portable");
 });
 
 Task("Run-Unit-Tests")
