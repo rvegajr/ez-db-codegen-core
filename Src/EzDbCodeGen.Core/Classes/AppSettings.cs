@@ -35,6 +35,10 @@ namespace EzDbCodeGen.Internal
         public bool VerboseMessages { get; set; } = false;
         public string ConnectionString { get; set; } = "";
         public string Version { get; set; } = "";
+        public string SchemaCoreVersion { get; set; } = "";
+        public string SchemaMssqlVersion { get; set; } = "";
+        public string CodeGenCoreVersion { get; set; } = "";
+        public string CodeGenCliVersion { get; set; } = "";
         private static AppSettings instance;
         
 		internal AppSettings()

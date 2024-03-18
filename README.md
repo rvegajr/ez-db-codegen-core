@@ -112,3 +112,5 @@ V 6.0.13 - Added tge abiltity to WhiteList/Blacklist based on template and entit
 V 7.0.1  - Updated to .net 7.0 
 
 V 8.0.0  - Updated to .net 8.0 
+
+V 8.0.1  - Added Config string fix, update sql client to microsoft.

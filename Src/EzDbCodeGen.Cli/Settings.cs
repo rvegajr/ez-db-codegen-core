@@ -4,14 +4,15 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace EzDbCodeGen.Cli
+namespace EzDbCodeGen.Cli;
+
+internal class Settings
 {
-    internal class Settings
-    {
-        public string SchemaName { get; set; } = "MySchema";
-        public string AppName { get; set; } = "MyApp";
-        public string ConnectionString { get; set; }
-        public string TemplateFileNameOrPath { get; set; }
-        public bool AutoRun { get; set; } = false;
-    }
+    public string SchemaName { get; set; } = "MySchema";
+    public string AppName { get; set; } = "MyApp";
+    public string ConnectionString { get; set; }
+    public string TemplateFileNameOrPath { get; set; }
+    public bool AutoRun { get; set; } = false;
+    public bool Verbose { get; set; } = false;
+    public string Config { get; set; } = string.Empty;
 }

@@ -9,6 +9,7 @@ using EzDbSchema.Core.Objects;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using EzDbCodeGen.Core.Config;
+using EzDbCodeGen.Core.Extentions.Objects;
 
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
@@ -231,6 +232,7 @@ namespace EzDbCodeGen.Core
         /// <summary></summary>
         public string Password { get; set; } = "";
 
+        public bool IsTrustedCert { get; set; } = false;
         /// <summary>Rneder the connection string.  the Default format will be MSSQL</summary>
         public string AsConnectionString()
         {
@@ -243,9 +245,9 @@ namespace EzDbCodeGen.Core
             {
                 case DB_MSSQL:
                     if (string.IsNullOrEmpty(UserId) && string.IsNullOrEmpty(Password)) 
-                        return string.Format("Server={0};Database={1};Trusted_Connection = Yes", Server, Database);
+                        return string.Format("Server={0};Database={1};Trusted_Connection=Yes;{2}", Server, Database, (IsTrustedCert? "TrustServerCertificate=True;" : ""));
                     else
-                        return string.Format("Server={0};Database={1};user id={2};password={3}", Server, Database, UserId, Password);
+                        return string.Format("Server={0};Database={1};user id={2};password={3};{4}", Server, Database, UserId, Password, (IsTrustedCert ? "TrustServerCertificate=True;" : ""));
                 case DB_ORACLE:
                     return string.Format("User Id={0};Password={1};Data Source={2};", UserId, Password, Server);
                 default:
@@ -266,6 +268,7 @@ namespace EzDbCodeGen.Core
                 this.Database = GetDatabaseName(connectionString);
                 this.UserId = GetUsername(connectionString);
                 this.Password = GetPassword(connectionString);
+                this.IsTrustedCert = GetTrustCert(connectionString);
                 return true;
             }
             catch (Exception)
@@ -279,6 +282,8 @@ namespace EzDbCodeGen.Core
         private static readonly string[] databaseAliases = { "database", "initial catalog" };
         private static readonly string[] usernameAliases = { "user id", "uid", "username", "user name", "user" };
         private static readonly string[] passwordAliases = { "password", "pwd" };
+        private static readonly string[] trustCertAliases = { "TrustServerCertificate", "Trust Server Certificate" };
+        
 
         private static string GetPassword(string connectionString)
         {
@@ -298,6 +303,11 @@ namespace EzDbCodeGen.Core
         private static string GetServerName(string connectionString)
         {
             return GetValue(connectionString, serverAliases);
+        }
+
+        private static bool GetTrustCert(string connectionString)
+        {
+            return GetValue(connectionString, trustCertAliases).AsBoolean();
         }
 
         private static string GetValue(string connectionString, params string[] keyAliases)

@@ -2,26 +2,30 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-	<Version>8.0.0.0</Version>	
+	<Version>8.0.1.0</Version>	
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>ezdbcg</ToolCommandName>
     <PackageOutputPath>../../artifacts</PackageOutputPath>
-    <AssemblyVersion>8.0.0.0</AssemblyVersion>
-    <FileVersion>8.0.0.0</FileVersion>
-    <InformationalVersion>8.0.0+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
+    <AssemblyVersion>8.0.1.0</AssemblyVersion>
+    <FileVersion>8.0.1.0</FileVersion>
+    <InformationalVersion>8.0.1+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
     <StartupObject>EzDbCodeGen.Cli.Program</StartupObject>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>embedded</DebugType>
     <Copyright>Noctusoft 2018-2024</Copyright>
     <PackageReleaseNotes>Added .net 8.0 target</PackageReleaseNotes>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+	<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <WarningLevel>4</WarningLevel>
-    <Optimize>True</Optimize>
+	  <DebugType>portable</DebugType>
+	  <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <Optimize>False</Optimize>
+	<DebugType>portable</DebugType>
+	<DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="ezdbcodegen.config.json" />
@@ -58,11 +62,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Update="EzDbSchema" Version="8.0.0" />
-    <PackageReference Update="FastMemberMT" Version="8.0.0" />
-    <PackageReference Update="Handlebars.Net" Version="2.1.4" />
-    <PackageReference Update="Newtonsoft.Json" Version="13.0.3" />
-    <PackageReference Update="System.Data.SqlClient" Version="4.8.6" />
-    <PackageReference Update="System.Json" Version="4.7.1" />
+    <PackageReference Include="EzDbSchema" Version="8.0.2" />
+    <PackageReference Include="FastMemberMT" Version="8.0.1" />
+    <PackageReference Include="Handlebars.Net" Version="2.1.4" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+	<PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
+	<PackageReference Include="System.Json" Version="4.7.1" />
   </ItemGroup>
 </Project>
