@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -106,11 +106,12 @@ namespace EzDbCodeGen.Core.Classes
         {
             if (xmldoc == null) return "";
             var xnodes = xmldoc.SelectNodes(XPath);
+            if (xnodes == null) return "";
             var returnValue = "";
-            if (xnodes.Count > 0)
+            if (xnodes?.Count > 0)
             {
                 var firstNode = xnodes[0];
-                returnValue = firstNode.InnerText;
+                returnValue = firstNode?.InnerText ?? string.Empty;
             }
             return returnValue;
         }
@@ -124,16 +125,19 @@ namespace EzDbCodeGen.Core.Classes
         {
             if (xmldoc == null) return "";
             var xnodes = xmldoc.SelectNodes(XPath);
+            if (xnodes == null) return "";
             var returnValue = "";
             if (xnodes.Count > 0)
             {
                 var firstNode = xnodes[0];
-                returnValue = ((XmlElement)firstNode).Attributes[AttributeName].Value;
+                var element = firstNode as XmlElement;
+                var attribute = element?.Attributes[AttributeName];
+                returnValue = attribute?.Value ?? string.Empty;
             }
             return returnValue;
         }
 
-        private XmlDocument xmldoc = null;
+        private XmlDocument? xmldoc;
         private bool ParseAppSettingsFileName(string FileName)
         {
             try
@@ -145,7 +149,8 @@ namespace EzDbCodeGen.Core.Classes
                 if (ext.EndsWith("json"))
                 {
                     isJson = true;
-                    xmldoc = JsonConvert.DeserializeXNode(content, "root").ToXmlDocument();
+                    var xNode = JsonConvert.DeserializeXNode(content, "root");
+                    xmldoc = xNode?.ToXmlDocument();
                 }
                 else if ((ext.EndsWith("xml")) || (ext.EndsWith("config")))
                 {

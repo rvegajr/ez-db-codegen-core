@@ -1,23 +1,21 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-	<Version>8.0.1.0</Version>
-    <TargetFrameworks>netstandard2.0;netstandard2.1;net461;net472;net48;netcoreapp3.1;net5.0;net6.0;net7.0;net8.0</TargetFrameworks>
-    <AssemblyVersion>8.0.1.0</AssemblyVersion>
-    <FileVersion>8.0.1.0</FileVersion>
-    <InformationalVersion>8.0.1+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
+    <Version>8.3.2</Version>
+    <TargetFrameworks>netstandard2.1;net8.0</TargetFrameworks>
+    <AssemblyVersion>8.3.2</AssemblyVersion>
+    <FileVersion>8.3.2</FileVersion>
+    <InformationalVersion>8.3.2</InformationalVersion>
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>embedded</DebugType>
-	<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.0|AnyCPU'">
-    <Optimize>True</Optimize>
-	<DebugType>portable</DebugType>
-	<DebugSymbols>true</DebugSymbols>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|netstandard2.1|AnyCPU'">
     <Optimize>True</Optimize>
-	  <DebugType>portable</DebugType>
-	  <DebugSymbols>true</DebugSymbols>
+	<DebugType>portable</DebugType>
+	<DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net461|AnyCPU'">
     <Optimize>True</Optimize>
@@ -53,11 +51,6 @@
     <Optimize>True</Optimize>
 	  <DebugType>portable</DebugType>
 	  <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.0|AnyCPU'">
-    <Optimize>False</Optimize>
-    <DebugType>portable</DebugType>
-    <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|netstandard2.1|AnyCPU'">
     <Optimize>False</Optimize>
@@ -108,14 +101,31 @@
     <None Remove="ezdbcodegen.config.json" />
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="8.0.2" />
-    <PackageReference Include="Handlebars.Net" Version="2.1.4" />
-    <PackageReference Include="Json.Comparer.Core" Version="0.6.9" />
+    <PackageReference Include="Handlebars.Net" Version="2.1.6" />
+    <PackageReference Include="Json.More.Net" Version="2.1.1" />
+    <PackageReference Include="JsonComparer" Version="1.0.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.CommandLine" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Abstractions" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.FileProviders.Physical" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.FileSystemGlobbing" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.Primitives" Version="9.0.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="Pluralize.NET" Version="1.0.2" />
-	<PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
-    <PackageReference Include="System.Json" Version="4.7.1" />
-    <PackageReference Include="FastMemberMT" Version="8.0.1" />
+    <PackageReference Include="System.Text.Json" Version="9.0.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\ez-db-schema-core\Src\EzDbSchema.Core\EzDbSchema.Core.csproj" />
+    <ProjectReference Include="..\..\..\ez-db-schema-core\Src\EzDbSchema.MsSql\EzDbSchema.MsSql.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="EzDbTemplates\SchemaRender.hbs">
@@ -126,6 +136,11 @@
     </None>
     <None Update="EzDbTemplates\SchemaRenderAsFilesNoOutput.hbs">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="ezdbcodegen.config.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
 </Project>

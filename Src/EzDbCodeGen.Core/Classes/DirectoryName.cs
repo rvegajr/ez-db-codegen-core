@@ -1,5 +1,5 @@
-﻿using System;
-using EzDbCodeGen.Core.Extentions.Strings;
+using System;
+using EzDbCodeGen.Core.Extensions;
 using EzDbSchema.Core.Extentions;
 using System.Runtime.CompilerServices;
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
@@ -26,11 +26,11 @@ namespace EzDbCodeGen.Core
         {
             return _value.GetStableHashCode();
         }
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
-            return Equals(obj as FileName);
+            return Equals(obj as DirectoryName);
         }
-        public bool Equals(FileName obj)
+        public bool Equals(DirectoryName? obj)
         {
             return obj != null && obj.GetHashCode() == this.GetHashCode();
         }

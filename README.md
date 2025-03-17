@@ -97,20 +97,112 @@ if the result of the 3 operators is true, it will write from this tag to {{else}
 * `{{ IsAuditableOutput $p1 }}` - This function will output the contents if $p1 if the entity contains any auditable column (Created. CreatedBy, Updated, UpdatedBy) 
 * `{{ IsNotAuditableOutput $p1 }}` - This function will output the contents if $p1 if the entity DOES NOT contain any auditable column (Created. CreatedBy, Updated, UpdatedBy) 
 
-## Changes
-V 6.0.0  - Added IsNotAuditableOutput template render directive (fixed mispelling)
+## String Extension Methods Reference
 
-V 6.0.20 - Added IsNotAuditiableOutput template render directive
+The following string extension methods are available for use in your templates:
 
-V 6.0.19 - Added Data Type Override
-		   Added Field Level Type Name and Nullable Overrides
+### ToCodeFriendly
+Converts input strings to a code-friendly format by replacing spaces and special characters with underscores.
 
-V 6.0.14 - Changed names to be more inclusive
+```csharp
+// Examples:
+"Hello World".ToCodeFriendly();  // Returns "hello_world"
+"USER_NAME".ToCodeFriendly();    // Returns "user_name"
+"camelCase".ToCodeFriendly();    // Returns "camelCase"
+```
 
-V 6.0.13 - Added tge abiltity to WhiteList/Blacklist based on template and entity file name
+### ToPascalCase
+Converts input strings to PascalCase format, where each word starts with an uppercase letter.
 
-V 7.0.1  - Updated to .net 7.0 
+```csharp
+// Examples:
+"hello world".ToPascalCase();    // Returns "HelloWorld"
+"user_name".ToPascalCase();      // Returns "UserName"
+"camelCase".ToPascalCase();      // Returns "CamelCase"
+```
 
-V 8.0.0  - Updated to .net 8.0 
+### ToCsObjectName
+Converts input strings to proper C# object names in camelCase format.
 
-V 8.0.1  - Added Config string fix, update sql client to microsoft.
+```csharp
+// Examples:
+"HelloWorld".ToCsObjectName();   // Returns "helloWorld"
+"USER_NAME".ToCsObjectName();    // Returns "userName"
+"123Start".ToCsObjectName();     // Returns "start123"
+```
+
+### ToSnakeCase
+Converts input strings to snake_case format, where words are lowercase and separated by underscores.
+
+```csharp
+// Examples:
+"HelloWorld".ToSnakeCase();      // Returns "hello_world"
+"camelCase".ToSnakeCase();       // Returns "camel_case"
+"USER_NAME".ToSnakeCase();       // Returns "user_name"
+```
+
+These methods now handle null inputs gracefully and preserve the appropriate casing based on the input format.
+
+## Changelog
+
+All notable changes to this project will be documented in this section.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+### [8.3.2] - 2025-03-17
+### Enhanced
+- String extension methods for .NET 8.0 compatibility
+- Null input handling in string operations
+
+### Dependencies
+- Core Dependencies
+  - Microsoft.Data.SqlClient to 6.0.1
+  - Microsoft.Extensions.* packages to 9.0.3
+  - System.Text.Json to 9.0.3
+- Test Dependencies
+  - coverlet.collector to 6.0.4
+  - Microsoft.NET.Test.Sdk to 17.13.0
+  - xunit to 2.9.3
+  - xunit.runner.visualstudio to 3.0.2
+
+### Notes
+- Maintained JsonComparer 1.0.0 and ServiceStack.Text 4.0.60 for stability
+- All 25 tests passing successfully
+
+### [8.0.1] - 2024-03-17
+#### Changed
+- Updated SQL client to Microsoft.Data.SqlClient for improved security and performance
+- Added configuration string fixes
+- Updated package dependencies:
+  - EzDbSchema to 8.0.2
+  - Handlebars.Net to 2.1.4
+  - Newtonsoft.Json to 13.0.3
+  - FastMemberMT to 8.0.0
+  - Microsoft.Data.SqlClient to 5.2.0
+
+### [8.0.0]
+#### Added
+- Updated to .NET 8.0
+- Added IsNotAuditableOutput template render directive (fixed misspelling)
+
+### [7.0.1]
+#### Changed
+- Updated to .NET 7.0
+
+### [6.0.20]
+#### Added
+- Added IsNotAuditiableOutput template render directive
+
+### [6.0.19]
+#### Added
+- Added Data Type Override
+- Added Field Level Type Name and Nullable Overrides
+
+### [6.0.14]
+#### Changed
+- Changed names to be more inclusive
+
+### [6.0.13]
+#### Added
+- Added the ability to WhiteList/Blacklist based on template and entity file name

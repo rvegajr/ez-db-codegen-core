@@ -1,4 +1,4 @@
-﻿//  Props to the gentlemen below for this code
+//  Props to the gentlemen below for this code
 // *************************************************
 // Created by Aron Weiler
 // Feel free to use this code in any way you like, 
@@ -25,7 +25,7 @@ namespace EzDbCodeGen.Core
 	/// <typeparam name="K">Primary Key Type</typeparam>
 	/// <typeparam name="L">Sub Key Type</typeparam>
 	/// <typeparam name="V">Value Type</typeparam>
-	internal class MultiKeyDictionary<K, L, V>
+	internal class MultiKeyDictionary<K, L, V> where K : notnull where L : notnull
 	{
         protected  Dictionary<K, V> baseDictionary = new Dictionary<K, V>();
         protected  Dictionary<L, K> subDictionary = new Dictionary<L, K>();

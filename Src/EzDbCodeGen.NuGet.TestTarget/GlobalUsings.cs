@@ -1,0 +1,14 @@
+// Global using directives
+global using System;
+global using System.Collections.Generic;
+global using System.IO;
+global using System.Linq;
+global using System.Text;
+global using System.Threading.Tasks;
+global using System.Text.Json;
+global using System.Text.Json.Serialization;
+global using Microsoft.Data.SqlClient;
+global using Newtonsoft.Json;
+global using EzDbCodeGen.Core;
+global using EzDbCodeGen.Core.Interfaces;
+global using EzDbCodeGen.Core.Objects;

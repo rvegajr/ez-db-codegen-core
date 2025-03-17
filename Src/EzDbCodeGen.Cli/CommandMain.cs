@@ -1,14 +1,15 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using McMaster.Extensions.CommandLineUtils;
 using EzDbCodeGen.Internal;
 using System.Text;
 using EzDbCodeGen.Core;
 using EzDbCodeGen.Core.Enums;
-using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbCodeGen.Core.Extensions;
 using EzDbCodeGen.Core.Classes;
 using Newtonsoft.Json;
 using EzDbSchema.Core.Interfaces;
@@ -195,7 +196,7 @@ public static class CommandMain
         return Environment.ExitCode;
     }
     
-    public static void Enable(CommandLineApplication app) {
+    public static async Task Enable(CommandLineApplication app) {
         app.Name = "ezdb.codegen.cli";
         app.Description = "EzDbCodeGen - Code Generation Utility";
         app.ExtendedHelpText = @"This application will allow you to trigger code generation based on a template file or a list of template files.
@@ -270,7 +271,7 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
             "Option to ignore template file names (seperated by comma, wildcards are acceptable) for those runs where a path is sent through parm -t (or --template).",
             CommandOptionType.SingleValue);
 
-        app.OnExecute(() =>
+        app.OnExecuteAsync(async (token) =>
         {
             var version_ = Assembly.GetAssembly(typeof(CodeGenerator)).GetName().Version;
             if (versionOption.HasValue())
@@ -459,15 +460,37 @@ Notes: step 1 will download the sample templates to this path, step 2 will start
                 var returnCode = new ReturnCodes();
                 ITemplateDataInput Source = null;
                 if (sourceSchemaFileNameOption.HasValue())
-                    Source = new TemplateInputFileSource(sourceSchemaFileNameOption.Value());
+                {
+                    var fileSource = new TemplateInputFileSource(sourceSchemaFileNameOption.Value());
+                    fileSource.Schema = new EzDbSchema.Core.Objects.Database();
+                    fileSource.SchemaName = SchemaName;
+                    Source = fileSource;
+                }
                 else
-                    Source = new TemplateInputDatabaseConnecton(AppSettings.Instance.ConnectionString);
+                {
+                    Source = new TemplateInputDatabaseConnecton(AppSettings.Instance.ConnectionString)
+                    {
+                        SchemaName = SchemaName,
+                        Schema = new EzDbSchema.Core.Objects.Database()
+                    };
+                }
 
                 ITemplateDataInput CompareTo = null;
                 if (compareToSchemaFileNameOption.HasValue())
-                    CompareTo = new TemplateInputFileSource(compareToSchemaFileNameOption.Value());
+                {
+                    var fileSource = new TemplateInputFileSource(compareToSchemaFileNameOption.Value());
+                    fileSource.Schema = new EzDbSchema.Core.Objects.Database();
+                    fileSource.SchemaName = SchemaName;
+                    CompareTo = fileSource;
+                }
                 else if (compareToConnectionStringOption.HasValue())
-                    CompareTo = new TemplateInputDatabaseConnecton(compareToConnectionStringOption.Value());
+                {
+                    CompareTo = new TemplateInputDatabaseConnecton(compareToConnectionStringOption.Value())
+                    {
+                        SchemaName = SchemaName,
+                        Schema = new EzDbSchema.Core.Objects.Database()
+                    };
+                }
 
                 if (sourceSchemaOutputOption.HasValue()) {
                     var schemaDumpFileName = sourceSchemaOutputOption.Value();

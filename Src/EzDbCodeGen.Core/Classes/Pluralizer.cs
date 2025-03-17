@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Runtime.CompilerServices;
@@ -36,7 +36,7 @@ namespace EzDbCodeGen.Core
         {
             return (new Pluralize.NET.Pluralizer().Pluralize(word));
         }
-        public static Pluralizer instance;
+        private static Pluralizer? instance;
 
         public Pluralizer()
         {

@@ -1,4 +1,4 @@
-﻿using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbCodeGen.Core.Extensions;
 using EzDbSchema.Core.Interfaces;
 using Newtonsoft.Json;
 using System;
@@ -16,14 +16,26 @@ namespace EzDbCodeGen.Core.Config
 {
     public class Field
     {
-        public string FieldName { get; set; }
-        public string ColumnAttributeTypeName { get; set; }
+        public required string FieldName { get; set; }
+        public required string ColumnAttributeTypeName { get; set; }
         public bool? Nullable { get; set; } = null;
+        public required string DisplayName { get; set; }
+        public required string PlaceholderText { get; set; }
+        public required string HelpText { get; set; }
+        public required string InputType { get; set; }
+        public bool? IsRequired { get; set; }
+        public int? MaxLength { get; set; }
+        public int? Precision { get; set; }
+        public int? Scale { get; set; }
+        public bool? IsReadOnly { get; set; }
+        public bool? IsHidden { get; set; }
+        public bool? IsVisible { get; set; }
+        public bool? IsEditable { get; set; }
     }
 
     public class PrimaryKey
     {
-        public string FieldName { get; set; }
+        public required string FieldName { get; set; }
     }
 
     public class Overrides
@@ -159,11 +171,11 @@ namespace EzDbCodeGen.Core.Config
                 var strResolved = "";
                 if (template.Contains(Configuration.SCHEMA_NAME.Substring(0, Configuration.SCHEMA_NAME.Length-1)))
                 {
-                    strResolved = ReplaceEx(template, schemaObjectName.SchemaName);
+                    strResolved = ReplaceEx(template, new SchemaObjectName(schemaObjectName.SchemaName, ""));
                     returnString = returnString.Replace(template, strResolved);
                 } else if (template.Contains(Configuration.OBJECT_NAME.Substring(0, Configuration.OBJECT_NAME.Length - 1)))
                 {
-                    strResolved = ReplaceEx(template, schemaObjectName.TableName);
+                    strResolved = ReplaceEx(template, new SchemaObjectName("", schemaObjectName.ObjectName));
                     returnString = returnString.Replace(template, strResolved);
                 }
             }
@@ -282,17 +294,24 @@ namespace EzDbCodeGen.Core.Config
         public static Configuration FromFile(string FileName)
         {
             var ret = JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(FileName));
-            foreach (var e in ret.Entities)
+            if (ret?.Entities != null)
             {
-                if (e.Misc.ContainsKey("PrimaryKey"))
+                foreach (var e in ret.Entities)
                 {
-                    var arrPK = e.Misc["PrimaryKey"].ToString().Split(',');
-                    //Overrides.PrimaryKey overrides Misc,  but if it doesn't exist,  we will use the Misc Primary key list
-                    if (e.Overrides.PrimaryKey.Count==0)
+                    if (e?.Misc != null && e.Misc.ContainsKey("PrimaryKey"))
                     {
-                        foreach(var newPk in arrPK)
+                        var pkValue = e.Misc["PrimaryKey"]?.ToString();
+                        if (!string.IsNullOrEmpty(pkValue))
                         {
-                            e.AddPKOverride(newPk);
+                            var arrPK = pkValue.Split(',');
+                            //Overrides.PrimaryKey overrides Misc,  but if it doesn't exist,  we will use the Misc Primary key list
+                            if (e.Overrides?.PrimaryKey?.Count == 0)
+                            {
+                                foreach(var newPk in arrPK)
+                                {
+                                    e.AddPKOverride(newPk);
+                                }
+                            }
                         }
                     }
                 }
@@ -304,7 +323,13 @@ namespace EzDbCodeGen.Core.Config
 
         public bool IsIgnoredColumn(IProperty property)
         {
-            return (IsIgnoredColumn(property.Parent.Schema, property.Parent.Name, property.Alias) || IsIgnoredColumn(property.Parent.Schema, property.Parent.Name, property.Alias));
+            // In version 8.2.0, IsHidden and ParentEntity are not available
+            // We'll check for ignored columns based on schema, table and property name
+            var schema = property.GetType().GetProperty("DatabaseSchema")?.GetValue(property) as string ?? Database.DefaultSchema;
+            var tableName = property.GetType().GetProperty("TableName")?.GetValue(property) as string ?? string.Empty;
+            var propertyName = property.GetType().GetProperty("Name")?.GetValue(property) as string ?? string.Empty;
+            
+            return IsIgnoredColumn(schema, tableName, propertyName) || IsIgnoredColumn(schema, tableName, propertyName);
         }
         public bool IsIgnoredColumn(string schemaToCheck, string tableCheck, string columnNameToCheck)
         {
@@ -346,7 +371,14 @@ namespace EzDbCodeGen.Core.Config
 
         public bool IsComputedColumn(IProperty property)
         {
-            return (IsComputedColumn(property.Parent.Schema, property.Parent.Name, property.Alias) || IsComputedColumn(property.Parent.Schema, property.Parent.Name, property.Alias));
+            if (property == null) return false;
+            var parentEntity = property.GetType().GetProperty("ParentEntity")?.GetValue(property) as IEntity;
+            if (parentEntity == null) return false;
+            var columnAlias = property.GetType().GetProperty("ColumnAlias")?.GetValue(property) as string ?? string.Empty;
+            var databaseSchema = parentEntity.GetType().GetProperty("DatabaseSchema")?.GetValue(parentEntity) as string ?? Database.DefaultSchema;
+            var tableName = parentEntity.GetType().GetProperty("TableName")?.GetValue(parentEntity) as string ?? string.Empty;
+            return (IsComputedColumn(databaseSchema, tableName, columnAlias) || 
+                    IsComputedColumn(databaseSchema, tableName, columnAlias));
         }
         public bool IsComputedColumn(string schemaToCheck, string tableCheck, string columnNameToCheck)
         {
@@ -520,14 +552,21 @@ namespace EzDbCodeGen.Core.Config
 
         public bool IsNotMappedColumn(IProperty property)
         {
-            return (IsNotMappedColumn(property.Parent.Schema, property.Parent.Name, property.Alias) || IsNotMappedColumn(property.Parent.Schema, property.Parent.Name, property.Alias));
+            if (property == null) return false;
+            var parentEntity = property.GetType().GetProperty("ParentEntity")?.GetValue(property) as IEntity;
+            if (parentEntity == null) return false;
+            var columnAlias = property.GetType().GetProperty("ColumnAlias")?.GetValue(property) as string ?? string.Empty;
+            var databaseSchema = parentEntity.GetType().GetProperty("DatabaseSchema")?.GetValue(parentEntity) as string ?? Database.DefaultSchema;
+            var tableName = parentEntity.GetType().GetProperty("TableName")?.GetValue(parentEntity) as string ?? string.Empty;
+            return (IsNotMappedColumn(databaseSchema, tableName, columnAlias) || 
+                    IsNotMappedColumn(databaseSchema, tableName, columnAlias));
         }
         public bool IsNotMappedColumn(string schemaToCheck, string tableCheck, string columnNameToCheck)
         {
             var notMappedColumn = false;
             foreach (var columnNameNotMappedItem in Database.ColumnNameNotMapped)
             {
-                var SchemaColumnNameNotMappedItem = Database.DefaultSchema; var TableColumnNameNotMappedItem = "*"; var ColumnColumnNameNotMappedItem = "*";
+                var SchemaColumnNameNotMappedItem = "*"; var TableColumnNameNotMappedItem = "*"; var ColumnColumnNameNotMappedItem = "*";
                 var arr = columnNameNotMappedItem.Split('.');
                 if (arr.Length == 3)
                 {

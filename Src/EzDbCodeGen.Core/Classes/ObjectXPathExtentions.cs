@@ -1,9 +1,9 @@
-﻿using FastMember;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -75,7 +75,7 @@ namespace EzDbCodeGen.Core.Extentions
                     AttributeField = _xpathPathQueryString.Substring(hashPos + 1);
                     _xpathPathQueryString = _xpathPathQueryString.Substring(0, hashPos);
                 }
-                var listitems = doc.SelectNodes(_xpathPathQueryString);
+                var listitems = doc.SelectNodes(_xpathPathQueryString) ?? throw new InvalidOperationException($"No nodes found for XPath query: {_xpathPathQueryString}");
 
                 PROC = string.Format("ObjectXPathExtentions.ObjectPropertyAsString( item=[object {0}], _xpathPathQueryString='{1}', pattern={2}, AttributeField={3}, XPathCount={4})", _item.GetType().Name, _xpathPathQueryString, pattern, AttributeField, listitems.Count);
 
@@ -119,12 +119,14 @@ namespace EzDbCodeGen.Core.Extentions
                         {
                             //if it is, lets get the id and then grab the node and set the node, thus evaluating the reference
                             var refid = nod.Attributes["json:ref"].Value;
-                            nod = doc.SelectSingleNode(string.Format("//*[@json:id ='{0}']", refid), nsmgr);
-                            nod = nod.SelectSingleNode(_xpathPathQueryStringChild);
+                            nod = doc.SelectSingleNode(string.Format("//*[@json:id ='{0}']", refid), nsmgr) ?? throw new InvalidOperationException($"Node not found with json:id={refid}");
+                            var childNode = nod.SelectSingleNode(_xpathPathQueryStringChild);
+                            if (childNode != null) nod = childNode;
                         }
                         else
                         {
-                            nod = nod.SelectSingleNode(_xpathPathQueryStringChild);
+                            var childNode = nod.SelectSingleNode(_xpathPathQueryStringChild);
+                            if (childNode != null) nod = childNode;
 
                         }
 

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -9,42 +9,49 @@ using EzDbSchema.Core.Objects;
 using EzDbSchema.Core.Enums;
 using EzDbSchema.Core.Interfaces;
 using EzDbCodeGen.Core.Extentions.Objects;
-using EzDbCodeGen.Core.Extentions.Strings;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
 
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
-namespace EzDbCodeGen.Core
+namespace EzDbCodeGen.Core.Handlebars
 {
     internal static class HandlebarsTsUtility
     {
+        private static IHandlebars? handlebars;
+
+        private static IHandlebars GetHandlebars()
+        {
+            return handlebars ??= HandlebarsDotNet.Handlebars.Create();
+        }
         public static void RegisterHelpers()
         {
-            Handlebars.RegisterHelper("AsTSContructorProperty", (writer, context, parameters) => {
+            GetHandlebars().RegisterHelper("AsTSContructorProperty", (writer, context, parameters) => {
                 var property = (Property)context.Value;
                 var prefix = parameters.AsString(0);
-                if (property.Type.ToJsType(false) == "Date")
+                if (property.DataType.ToJsType(false) == "Date")
                 {
-                    writer.WriteSafeString(string.Format("\n{0}this.{1} = item.{1} ? new Date(item.{1}) : null;", prefix, property.Name));
+                    var propertyName = property.GetType().GetProperty("Name")?.GetValue(property) as string ?? string.Empty;
+                    writer.WriteSafeString(string.Format("\n{0}this.{1} = item.{1} ? new Date(item.{1}) : null;", prefix, propertyName));
                 }
                 else
                 {
-                    writer.WriteSafeString(string.Format("\n{0}this.{1} = item.{1};", prefix, property.Name));
+                    var propertyName = property.GetType().GetProperty("Name")?.GetValue(property) as string ?? string.Empty;
+                    writer.WriteSafeString(string.Format("\n{0}this.{1} = item.{1};", prefix, propertyName));
                 }
             });
 
-            Handlebars.RegisterHelper("TSModelBaseImportDeclarations", (writer, context, parameters) => {
+            GetHandlebars().RegisterHelper("TSModelBaseImportDeclarations", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('TSModelBaseImportDeclarations')";
                 try
                 {
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context.Value;
-                    var entityName = entity.Name;
+                    var entityName = entity.TableName;
 
                     List<string> PreviousManyToOneFields = new List<string>();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne);
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.ManyToZeroOrOne);
                     foreach (Relationship relationship in RelationshipsManyToOne)
                     {
                         if (!PreviousManyToOneFields.Contains(relationship.ToTableName))
@@ -53,7 +60,7 @@ namespace EzDbCodeGen.Core
                             PreviousManyToOneFields.Add(relationship.ToTableName);
                         }
                     }
-                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.ZeroOrOneToMany);
                     foreach (Relationship relationship in RelationshipsOneToMany)
                     {
                         if (!PreviousManyToOneFields.Contains(relationship.ToTableName))
@@ -62,7 +69,7 @@ namespace EzDbCodeGen.Core
                             PreviousManyToOneFields.Add(relationship.ToTableName);
                         }
                     }
-                    var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.OneToOne);
+                    var RelationshipsOneToOne = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.OneToOne);
                     foreach (Relationship relationship in RelationshipsOneToOne)
                     {
                         if (!PreviousManyToOneFields.Contains(relationship.ToTableName))
@@ -80,23 +87,23 @@ namespace EzDbCodeGen.Core
                 }
             });
 
-            Handlebars.RegisterHelper("TSModelBaseRelatedProperties", (writer, context, parameters) => {
+            GetHandlebars().RegisterHelper("TSModelBaseRelatedProperties", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('TSModelBaseRelatedProperties')";
                 try
                 {
                     var prefix = parameters.AsString(0);
-					var entity = (Entity)context.Value;
-                    var entityName = entity.Name;
+					var entity = (EzDbSchema.Core.Objects.Entity)context.Value;
+                    var entityName = entity.TableName;
 
                     List<string> PreviousManyToOneFields = new List<string>();
-                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.ZeroOrOneToMany);
                     foreach (Relationship relationship in RelationshipsOneToMany.ToList())
                     {
                         writer.WriteSafeString(string.Format("\n{0}{1}?: Array<{2}> | null;", prefix, (relationship.ToTableName + "_" + relationship.ToColumnName), relationship.ToTableName.ToSingular()));
                     }
 
                     PreviousManyToOneFields.Clear();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne);
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.ManyToZeroOrOne);
 					foreach (Relationship relationship in RelationshipsManyToOne.ToList())
                     {
 
@@ -108,7 +115,7 @@ namespace EzDbCodeGen.Core
                     }
 
                     PreviousManyToOneFields.Clear();
-                    var RelationshipsOneToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.OneToOne );
+                    var RelationshipsOneToOne = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.OneToOne );
 					foreach (Relationship relationship in RelationshipsOneToOne.ToList())
                     {
 
@@ -126,16 +133,16 @@ namespace EzDbCodeGen.Core
                 }
             });
 
-            Handlebars.RegisterHelper("TSModelBaseConstructorRelatedDefs", (writer, context, parameters) => {
+            GetHandlebars().RegisterHelper("TSModelBaseConstructorRelatedDefs", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('TSModelBaseConstructorRelatedDefs')";
                 try
                 {
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context.Value;
-                    var entityName = entity.Name;
+                    var entityName = entity.TableName;
 
                     List<string> PreviousFieldCheck = new List<string>();
-                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.ZeroOrOneToMany);
 					foreach (Relationship relationship in RelationshipsOneToMany.ToList())
                     {
                         writer.WriteSafeString(string.Format("\n{0}this.{1} = Helpers.createClassArray({2}, item.{3});",
@@ -148,7 +155,7 @@ namespace EzDbCodeGen.Core
                     }
 
                     PreviousFieldCheck.Clear();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne);
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.ManyToZeroOrOne);
 					foreach (Relationship relationship in RelationshipsManyToOne.ToList())
                     {
 
@@ -160,7 +167,7 @@ namespace EzDbCodeGen.Core
                     }
 
                     PreviousFieldCheck.Clear();
-                    var RelationshipsOneToOne2 = entity.Relationships.Fetch(RelationshipMultiplicityType.OneToOne);
+                    var RelationshipsOneToOne2 = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.OneToOne);
 					foreach (Relationship relationship in RelationshipsOneToOne2.ToList())
                     {
 
@@ -179,16 +186,16 @@ namespace EzDbCodeGen.Core
             });
 
 
-            Handlebars.RegisterHelper("TSModelInterfaceImports", (writer, context, parameters) => {
+            GetHandlebars().RegisterHelper("TSModelInterfaceImports", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('TSModelInterfaceImports')";
                 try
                 {
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context.Value;
-                    var entityName = entity.Name;
+                    var entityName = entity.TableName;
 
                     List<string> PreviousManyToOneFields = new List<string>();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne);
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.ManyToZeroOrOne);
 
                     writer.WriteSafeString(string.Format("\n{0}// MANY TO ZERO OR ONE", prefix));
                     foreach (Relationship relationship in RelationshipsManyToOne)
@@ -201,7 +208,7 @@ namespace EzDbCodeGen.Core
                     }
 
                     writer.WriteSafeString(string.Format("\n{0}// ZERO OR ONE TO MANY", prefix));
-                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.ZeroOrOneToMany);
                     foreach (Relationship relationship in RelationshipsOneToMany)
                     {
                         if (!PreviousManyToOneFields.Contains(relationship.ToTableName))
@@ -212,7 +219,7 @@ namespace EzDbCodeGen.Core
                     }
                     writer.WriteSafeString(string.Format("\n{0}// ONE TO ZERO OR ONE", prefix));
 
-                    var RelationshipsOneOne = entity.Relationships.Fetch(RelationshipMultiplicityType.OneToOne);
+                    var RelationshipsOneOne = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.OneToOne);
                     foreach (Relationship relationship in RelationshipsOneOne)
                     {
                         if (!PreviousManyToOneFields.Contains(relationship.ToTableName))
@@ -230,15 +237,15 @@ namespace EzDbCodeGen.Core
                 }
             });
 
-            Handlebars.RegisterHelper("TSModelInterfaceRelatedProperties", (writer, context, parameters) => {
+            GetHandlebars().RegisterHelper("TSModelInterfaceRelatedProperties", (writer, context, parameters) => {
                 var PROC_NAME = "Handlebars.RegisterHelper('TSModelInterfaceRelatedProperties')";
                 try
                 {
                     var prefix = parameters.AsString(0);
                     var entity = (IEntity)context.Value;
-                    var entityName = entity.Name;
+                    var entityName = entity.TableName;
 
-                    var RelationshipsOneToMany = entity.Relationships.Fetch(RelationshipMultiplicityType.ZeroOrOneToMany);
+                    var RelationshipsOneToMany = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.ZeroOrOneToMany);
                     List<string> PreviousFieldCheck = new List<string>();
                     PreviousFieldCheck.Clear();
                     foreach (Relationship relationship in RelationshipsOneToMany)
@@ -249,7 +256,7 @@ namespace EzDbCodeGen.Core
 
 
                     PreviousFieldCheck.Clear();
-                    var RelationshipsManyToOne = entity.Relationships.Fetch(RelationshipMultiplicityType.ManyToZeroOrOne);
+                    var RelationshipsManyToOne = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.ManyToZeroOrOne);
                     foreach (Relationship relationship in RelationshipsManyToOne )
                     {
 
@@ -261,7 +268,7 @@ namespace EzDbCodeGen.Core
                     }
 
                     List<string> PreviousOneToOneFields2 = new List<string>();
-                    var RelationshipsOneToOne2 = entity.Relationships.Fetch(RelationshipMultiplicityType.OneToOne);
+                    var RelationshipsOneToOne2 = entity.Relationships.Fetch(EzDbSchema.Core.Enums.RelationshipMultiplicityType.OneToOne);
                     foreach (Relationship relationship in RelationshipsOneToOne2 )
                     {
 

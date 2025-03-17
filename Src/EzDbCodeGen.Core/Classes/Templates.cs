@@ -1,14 +1,16 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using EzDbSchema.Core.Interfaces;
+using EzDbSchema.MsSql;
 using EzDbCodeGen.Core.Enums;
-using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbCodeGen.Core.Extensions;
 using EzDbSchema.Core.Objects;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using EzDbCodeGen.Core.Config;
+using EzDbCodeGen.Core.Extentions;
 using EzDbCodeGen.Core.Extentions.Objects;
 
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
@@ -70,9 +72,9 @@ namespace EzDbCodeGen.Core
 
     internal class TemplateInputDirectObject : ITemplateDataInput
     {
-        public string SchemaName { get; set; }
+        public string SchemaName { get; set; } = "";
         public bool VerboseMessages { get; set; } = true;
-        public string DatabaseSchemaDumpFileName { get; set; }
+        public string DatabaseSchemaDumpFileName { get; set; } = "";
         public TemplateInputDirectObject()
         {
 
@@ -80,9 +82,10 @@ namespace EzDbCodeGen.Core
         public TemplateInputDirectObject(IDatabase schema)
         {
             Schema = schema;
-
+            SchemaName = schema.Name;
+            DatabaseSchemaDumpFileName = "";
         }
-		public IDatabase Schema { get; set; }
+		public IDatabase Schema { get; set; } = null!;
 
         /// <summary>
         /// Will Load the schema, however,  it is kind of pointless here since you are setting the schema directly.  This is mainly used to satisfy the interface.
@@ -115,9 +118,9 @@ namespace EzDbCodeGen.Core
 
     internal class TemplateInputFileSource : ITemplateDataInput
     {
-        public string SchemaName { get; set; }
+        public string SchemaName { get; set; } = "";
         public bool VerboseMessages { get; set; } = true;
-        public string DatabaseSchemaDumpFileName { get; set; }
+        public string DatabaseSchemaDumpFileName { get; set; } = "";
         public TemplateInputFileSource()
         {
 
@@ -125,9 +128,9 @@ namespace EzDbCodeGen.Core
         public TemplateInputFileSource(string databaseSchemaDumpFileNameToLoad)
         {
             DatabaseSchemaDumpFileName = databaseSchemaDumpFileNameToLoad;
-
+            SchemaName = Path.GetFileNameWithoutExtension(databaseSchemaDumpFileNameToLoad);
         }
-		public IDatabase Schema { get; set; }
+		public IDatabase Schema { get; set; } = null!;
 
         /// <summary>
         /// Loads the schema filtered by Configuration 
@@ -137,13 +140,18 @@ namespace EzDbCodeGen.Core
         {
             try
             {
-				this.Schema = (IDatabase)JsonConvert.DeserializeObject<T>(File.ReadAllText(DatabaseSchemaDumpFileName),
+				var deserializedObject = JsonConvert.DeserializeObject<T>(File.ReadAllText(DatabaseSchemaDumpFileName),
                     new JsonSerializerSettings
                     {
                         PreserveReferencesHandling = PreserveReferencesHandling.All,
                         TypeNameHandling = TypeNameHandling.All
                     });
-                return this.Schema.Filter(config);
+                if (deserializedObject is IDatabase database)
+                {
+                    this.Schema = database;
+                    return this.Schema.Filter(config);
+                }
+                throw new InvalidOperationException("Deserialized object is not of type IDatabase");
             }
             catch (Exception ex)
             {
@@ -161,8 +169,12 @@ namespace EzDbCodeGen.Core
                         PreserveReferencesHandling = PreserveReferencesHandling.All,
                         TypeNameHandling = TypeNameHandling.All
                     });
-                this.Schema = (IDatabase)db;
-                return this.Schema.Filter(config);
+                if (db is IDatabase database)
+                {
+                    this.Schema = database;
+                    return this.Schema.Filter(config);
+                }
+                throw new InvalidOperationException("Deserialized object is not of type IDatabase");
             }
             catch (Exception ex)
             {
@@ -176,7 +188,7 @@ namespace EzDbCodeGen.Core
     /// </summary>
 	public class TemplateInputDatabaseConnecton : ITemplateDataInput
     {
-        public string SchemaName { get; set; }
+        public string SchemaName { get; set; } = "";
         public bool VerboseMessages { get; set; } = true;
         /// <summary>
         /// Initializes a new instance of the TemplateInputDatabaseConnecton" class.
@@ -192,13 +204,14 @@ namespace EzDbCodeGen.Core
         public TemplateInputDatabaseConnecton(string connectionString)
         {
             this.ParseConnectionString(connectionString);
+            SchemaName = GetDatabaseName(connectionString);
         }
 
         /// <summary>
         /// Gets or sets the schema
         /// </summary>
         /// <value>The schema object</value>
-		public IDatabase Schema { get; set; }
+		public IDatabase Schema { get; set; } = null!;
         /// <summary>
         /// Loads the schema based on the connection string provided
         /// </summary>
@@ -333,9 +346,14 @@ namespace EzDbCodeGen.Core
         /// <returns></returns>
         public IDatabase LoadSchema(Configuration config)
         {
+            if (config == null)
+            {
+                throw new ArgumentNullException(nameof(config));
+            }
+
             try
             {
-                this.Schema = (new EzDbSchema.MsSql.Database() { ShowWarnings = this.VerboseMessages, AutoAddPrimaryKeys = config.Database.AutoAddKeysIfNoPK }).Render(this.SchemaName, this.AsConnectionString());
+                this.Schema = (new EzDbSchema.MsSql.Database() { ShowWarnings = this.VerboseMessages, AutoAddPrimaryKeys = config.Database?.AutoAddKeysIfNoPK ?? false }).Render(this.SchemaName, this.AsConnectionString());
                 return this.Schema.Filter(config);
             }
             catch (Exception ex)

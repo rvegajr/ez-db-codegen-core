@@ -1,0 +1,22 @@
+// Global using directives
+global using System;
+global using System.Collections.Generic;
+global using System.IO;
+global using System.Linq;
+global using System.Text;
+global using System.Threading.Tasks;
+global using System.Text.Json;
+global using System.Text.Json.Serialization;
+global using Microsoft.Data.SqlClient;
+global using Newtonsoft.Json;
+global using HandlebarsDotNet;
+global using EzDbCodeGen.Core.Extensions;
+global using EzDbSchema.Core;
+global using EzDbSchema.Core.Interfaces;
+global using EzDbSchema.Core.Objects;
+global using EzDbSchema.Core.Enums;
+global using EzDbSchema.Core.Extentions;
+global using CoreInterfaces = EzDbSchema.Core.Interfaces;
+global using CoreEnums = EzDbSchema.Core.Enums;
+global using CoreObjects = EzDbSchema.Core.Objects;
+global using CoreExtentions = EzDbSchema.Core.Extentions;

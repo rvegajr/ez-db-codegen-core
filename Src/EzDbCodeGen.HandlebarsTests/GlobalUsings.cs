@@ -1,0 +1,15 @@
+global using Xunit;
+global using System;
+global using System.Collections.Generic;
+global using System.Linq;
+global using System.Text;
+global using System.Threading.Tasks;
+global using HandlebarsDotNet;
+global using HandlebarsDotNet.IO;
+global using Pluralize.NET;
+global using EzDbCodeGen.HandlebarsTests;
+global using Moq;
+global using EzDbSchema.Core.Interfaces;
+global using EzDbSchema.Core.Objects;
+global using EzDbSchema.Core.Enums;
+global using System.ComponentModel.DataAnnotations;

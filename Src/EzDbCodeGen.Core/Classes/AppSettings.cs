@@ -1,4 +1,4 @@
-﻿using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbCodeGen.Core.Extensions;
 using EzDbSchema.Core.Extentions.Json;
 using System;
 using System.IO;
@@ -16,7 +16,7 @@ namespace EzDbCodeGen.Internal
     {
         /// <summary></summary>
         public string ConfigurationFileName { get; set; } = "";
-        private Configuration configuration;
+        private Configuration? configuration;
         public Configuration Configuration
         {
             get
@@ -39,7 +39,7 @@ namespace EzDbCodeGen.Internal
         public string SchemaMssqlVersion { get; set; } = "";
         public string CodeGenCoreVersion { get; set; } = "";
         public string CodeGenCliVersion { get; set; } = "";
-        private static AppSettings instance;
+        private static AppSettings? instance;
         
 		internal AppSettings()
         {
