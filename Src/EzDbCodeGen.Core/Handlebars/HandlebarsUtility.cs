@@ -1,26 +1,28 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using HandlebarsDotNet;
-using HandlebarsDotNet.IO;
-using Newtonsoft.Json;
 using System.Runtime.CompilerServices;
 using System.Diagnostics;
-using EzDbCodeGen.Core.Extensions;
-
-[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
-[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
+using System.Text.Json;
+using Newtonsoft.Json;
+using HandlebarsDotNet;
 
 namespace EzDbCodeGen.Core.Handlebars
 {
+    /// <summary>
+    /// Provides utility methods for Handlebars templates, including helper registration.
+    /// </summary>
     public static class HandlebarsUtility
     {
         private static string? _currentSwitchValue;
         private static bool _currentSwitchMatched;
 
+        /// <summary>
+        /// Compares two values for equality or comparison.
+        /// </summary>
         private static int CompareValues(object value1, object value2)
         {
             if (value1 == null && value2 == null) return 0;
@@ -48,11 +50,11 @@ namespace EzDbCodeGen.Core.Handlebars
                 catch
                 {
                     // If comparison fails, fall back to string comparison
-                    return (value1?.ToString() ?? string.Empty).CompareTo(value2?.ToString() ?? string.Empty);
+                    return value1.ToString().CompareTo(value2.ToString());
                 }
             }
 
-            return (value1?.ToString() ?? string.Empty).CompareTo(value2?.ToString() ?? string.Empty);
+            return value1.ToString().CompareTo(value2.ToString());
         }
 
         /// <summary>
@@ -61,14 +63,18 @@ namespace EzDbCodeGen.Core.Handlebars
         /// <param name="handlebars">The Handlebars instance to register helpers with.</param>
         public static void RegisterHelpers(IHandlebars? handlebars = null)
         {
-            if (handlebars == null)
-                handlebars = HandlebarsDotNet.Handlebars.Create();
+            handlebars ??= HandlebarsDotNet.Handlebars.Create();
             
             RegisterBasicHelpers(handlebars);
             RegisterStringFormatHelpers(handlebars);
             RegisterTypeConversionHelpers(handlebars);
             RegisterContextHelpers(handlebars);
             RegisterComparisonHelpers(handlebars);
+            
+            // Register other helper categories
+            HandlebarsForeignKeyHelpers.RegisterHelpers(handlebars);
+            HandlebarsModelPropertyHelpers.RegisterHelpers(handlebars);
+            HandlebarsSchemaHelpers.RegisterHelpers(handlebars);
         }
 
         /// <summary>
@@ -96,8 +102,8 @@ namespace EzDbCodeGen.Core.Handlebars
                 if (parameters.Length > 0 && parameters[0] != null)
                 {
                     var indented = parameters.Length > 1 && parameters[1] is bool b && b;
-                    var formatting = indented ? Formatting.Indented : Formatting.None;
-                    var json = JsonConvert.SerializeObject(parameters[0], formatting);
+                    var formatting = indented ? Newtonsoft.Json.Formatting.Indented : Newtonsoft.Json.Formatting.None;
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(parameters[0], formatting);
                     writer.WriteSafeString(json);
                 }
             });
@@ -110,11 +116,24 @@ namespace EzDbCodeGen.Core.Handlebars
         {
             // Convert database type to .NET type
             handlebars.RegisterHelper("ToNetType", (writer, context, parameters) => {
-                if (parameters.Length > 0 && parameters[0] != null)
+                if (context.Value is null) 
                 {
-                    var dbType = parameters[0]?.ToString() ?? string.Empty;
-                    writer.WriteSafeString(dbType.ToNetType());
+                    writer.WriteSafeString("object");
+                    return;
                 }
+                string dbType = context.Value.ToString() ?? string.Empty;
+                writer.WriteSafeString(dbType.ToNetType());
+            });
+
+            // Convert database type to JavaScript type
+            handlebars.RegisterHelper("ToJsType", (writer, context, parameters) => {
+                if (context.Value is null) 
+                {
+                    writer.WriteSafeString("Object");
+                    return;
+                }
+                string dbType = context.Value.ToString() ?? string.Empty;
+                writer.WriteSafeString(dbType.ToJsType());
             });
 
             // Convert to nullable type if needed
@@ -147,56 +166,145 @@ namespace EzDbCodeGen.Core.Handlebars
         {
             // Convert to PascalCase
             handlebars.RegisterHelper("ToPascalCase", (writer, context, parameters) => {
-                if (parameters.Length > 0 && parameters[0] != null)
+                if (context.Value is null) 
                 {
-                    var input = parameters[0]?.ToString() ?? string.Empty;
-                    writer.WriteSafeString(input.ToPascalCase());
+                    writer.WriteSafeString(string.Empty);
+                    return;
                 }
+                string input = context.Value.ToString() ?? string.Empty;
+                writer.WriteSafeString(input.ToPascalCase());
             });
 
             // Convert to camelCase
             handlebars.RegisterHelper("ToCamelCase", (writer, context, parameters) => {
-                if (parameters.Length > 0 && parameters[0] != null)
+                if (context.Value is null) 
                 {
-                    var input = parameters[0]?.ToString() ?? string.Empty;
-                    writer.WriteSafeString(input.ToCamelCase());
+                    writer.WriteSafeString(string.Empty);
+                    return;
                 }
+                string input = context.Value.ToString() ?? string.Empty;
+                writer.WriteSafeString(input.ToCamelCase());
             });
 
             // Convert to snake_case
             handlebars.RegisterHelper("ToSnakeCase", (writer, context, parameters) => {
-                if (parameters.Length > 0 && parameters[0] != null)
+                if (context.Value is null) 
                 {
-                    var input = parameters[0]?.ToString() ?? string.Empty;
-                    writer.WriteSafeString(input.ToSnakeCase());
+                    writer.WriteSafeString(string.Empty);
+                    return;
                 }
+                string input = context.Value.ToString() ?? string.Empty;
+                writer.WriteSafeString(input.ToSnakeCase());
+            });
+
+            // Convert to singular form
+            handlebars.RegisterHelper("ToSingular", (writer, context, parameters) => {
+                if (context.Value is null) 
+                {
+                    writer.WriteSafeString(string.Empty);
+                    return;
+                }
+                string input = context.Value.ToString() ?? string.Empty;
+                writer.WriteSafeString(input.ToSingular());
+            });
+
+            // Convert to plural form
+            handlebars.RegisterHelper("ToPlural", (writer, context, parameters) => {
+                if (context.Value is null) 
+                {
+                    writer.WriteSafeString(string.Empty);
+                    return;
+                }
+                string input = context.Value.ToString() ?? string.Empty;
+                writer.WriteSafeString(input.ToPlural());
+            });
+
+            // Convert to code-friendly format
+            handlebars.RegisterHelper("ToCodeFriendly", (writer, context, parameters) => {
+                if (context.Value is null) 
+                {
+                    writer.WriteSafeString(string.Empty);
+                    return;
+                }
+                string input = context.Value.ToString() ?? string.Empty;
+                writer.WriteSafeString(input.ToCodeFriendly());
             });
 
             // Extract table name from schema.table format
             handlebars.RegisterHelper("ExtractTableName", (writer, context, parameters) => {
-                if (parameters.Length > 0 && parameters[0] != null)
+                if (context.Value is null) 
                 {
-                    var input = parameters[0]?.ToString() ?? string.Empty;
-                    writer.WriteSafeString(input.ExtractTableName());
+                    writer.WriteSafeString(string.Empty);
+                    return;
                 }
+                string schemaTableName = context.Value.ToString() ?? string.Empty;
+                writer.WriteSafeString(schemaTableName.ExtractTableName());
             });
 
             // Extract schema name from schema.table format
             handlebars.RegisterHelper("ExtractSchemaName", (writer, context, parameters) => {
-                if (parameters.Length > 0 && parameters[0] != null)
+                if (context.Value is null) 
                 {
-                    var input = parameters[0]?.ToString() ?? string.Empty;
-                    writer.WriteSafeString(input.ExtractSchemaName());
+                    writer.WriteSafeString(string.Empty);
+                    return;
                 }
+                string schemaTableName = context.Value.ToString() ?? string.Empty;
+                writer.WriteSafeString(schemaTableName.ExtractSchemaName());
             });
 
             // Format name by removing common suffixes
             handlebars.RegisterHelper("AsFormattedName", (writer, context, parameters) => {
-                if (parameters.Length > 0 && parameters[0] != null)
+                if (context.Value is null) 
                 {
-                    var input = parameters[0]?.ToString() ?? string.Empty;
-                    writer.WriteSafeString(input.AsFormattedName());
+                    writer.WriteSafeString(string.Empty);
+                    return;
                 }
+                string name = context.Value.ToString() ?? string.Empty;
+                writer.WriteSafeString(name.AsFormattedName());
+            });
+
+            // Add prefix to string
+            handlebars.RegisterHelper("Prefix", (writer, context, parameters) => {
+                if (parameters.Length < 2) return;
+                
+                var prefix = parameters[0]?.ToString() ?? "";
+                var value = parameters[1]?.ToString() ?? "";
+                
+                writer.WriteSafeString($"{prefix}{value}");
+            });
+
+            // Apply multiple string formats
+            handlebars.RegisterHelper("StringFormat", (writer, context, parameters) => {
+                if (parameters.Length < 2) return;
+                
+                var input = parameters[0]?.ToString();
+                if (string.IsNullOrEmpty(input)) return;
+                
+                var result = input;
+                
+                for (int i = 1; i < parameters.Length; i++)
+                {
+                    var format = parameters[i]?.ToString();
+                    if (string.IsNullOrEmpty(format)) continue;
+                    
+                    result = format.ToLower() switch
+                    {
+                        "pascal" => result.ToPascalCase(),
+                        "camel" => result.ToCamelCase(),
+                        "snake" => result.ToSnakeCase(),
+                        "singular" => result.ToSingular(),
+                        "plural" => result.ToPlural(),
+                        "upper" => result.ToUpper(),
+                        "lower" => result.ToLower(),
+                        "codefriendly" => result.ToCodeFriendly(),
+                        "tablename" => result.ExtractTableName(),
+                        "schemaname" => result.ExtractSchemaName(),
+                        "formatted" => result.AsFormattedName(),
+                        _ => result
+                    };
+                }
+                
+                writer.WriteSafeString(result);
             });
         }
 
@@ -210,19 +318,79 @@ namespace EzDbCodeGen.Core.Handlebars
                 try
                 {
                     var indented = parameters.Length > 0 && parameters[0] is bool b && b;
-                    var formatting = indented ? Formatting.Indented : Formatting.None;
-                    var settings = new JsonSerializerSettings
+                    var formatting = indented ? Newtonsoft.Json.Formatting.Indented : Newtonsoft.Json.Formatting.None;
+                    var settings = new Newtonsoft.Json.JsonSerializerSettings
                     {
-                        PreserveReferencesHandling = PreserveReferencesHandling.Objects,
-                        ReferenceLoopHandling = ReferenceLoopHandling.Ignore
+                        PreserveReferencesHandling = Newtonsoft.Json.PreserveReferencesHandling.Objects,
+                        ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
                     };
                     
-                    var json = JsonConvert.SerializeObject(context, formatting, settings);
+                    var json = Newtonsoft.Json.JsonConvert.SerializeObject(context, formatting, settings);
                     writer.WriteSafeString(json);
                 }
                 catch (Exception ex)
                 {
                     writer.WriteSafeString($"Error serializing context: {ex.Message}");
+                }
+            });
+
+            // Check if property exists in context
+            handlebars.RegisterHelper("IfPropertyExists", (writer, options, context, parameters) => {
+                if (parameters.Length < 1) return;
+                
+                var propertyName = parameters[0]?.ToString();
+                if (string.IsNullOrEmpty(propertyName)) return;
+                
+                bool exists = false;
+                
+                try
+                {
+                    var contextType = context.GetType();
+                    var property = contextType.GetProperty(propertyName);
+                    exists = property != null;
+                }
+                catch
+                {
+                    exists = false;
+                }
+                
+                if (exists)
+                {
+                    options.Template(writer, context);
+                }
+                else
+                {
+                    options.Inverse(writer, context);
+                }
+            });
+
+            // Check if function exists
+            handlebars.RegisterHelper("IfFunctionExists", (writer, options, context, parameters) => {
+                if (parameters.Length < 1) return;
+                
+                var functionName = parameters[0]?.ToString();
+                if (string.IsNullOrEmpty(functionName)) return;
+                
+                bool exists = false;
+                
+                try
+                {
+                    var contextType = context.GetType();
+                    var method = contextType.GetMethod(functionName);
+                    exists = method != null;
+                }
+                catch
+                {
+                    exists = false;
+                }
+                
+                if (exists)
+                {
+                    options.Template(writer, context);
+                }
+                else
+                {
+                    options.Inverse(writer, context);
                 }
             });
         }
@@ -233,12 +401,13 @@ namespace EzDbCodeGen.Core.Handlebars
         private static void RegisterComparisonHelpers(IHandlebars handlebars)
         {
             // If condition helper
-            handlebars.RegisterHelper("IfCond", (output, options, context, arguments) => {
-                if (arguments.Length < 3) return;
+            handlebars.RegisterHelper("IfCond", (writer, options, context, parameters) => {
+                if (parameters.Length < 3) return;
                 
-                var left = arguments[0];
-                var op = arguments[1]?.ToString();
-                var right = arguments[2];
+                var left = parameters[0];
+                var op = parameters[1]?.ToString();
+                var right = parameters[2];
+                
                 bool condition = false;
                 
                 switch (op)
@@ -277,42 +446,42 @@ namespace EzDbCodeGen.Core.Handlebars
                 
                 if (condition)
                 {
-                    options.Template(output, context);
+                    options.Template(writer, context);
                 }
                 else
                 {
-                    options.Inverse(output, context);
+                    options.Inverse(writer, context);
                 }
             });
 
             // Switch/case helper
-            handlebars.RegisterHelper("Switch", (output, options, context, arguments) => {
-                if (arguments.Length < 1) return;
+            handlebars.RegisterHelper("Switch", (writer, options, context, parameters) => {
+                if (parameters.Length < 1) return;
                 
-                _currentSwitchValue = arguments[0]?.ToString();
+                _currentSwitchValue = parameters[0]?.ToString();
                 _currentSwitchMatched = false;
                 
-                options.Template(output, context);
+                options.Template(writer, context);
             });
 
-            handlebars.RegisterHelper("Case", (output, options, context, arguments) => {
+            handlebars.RegisterHelper("Case", (writer, options, context, parameters) => {
                 if (_currentSwitchValue == null || _currentSwitchMatched) return;
                 
-                for (int i = 0; i < arguments.Length; i++)
+                for (int i = 0; i < parameters.Length; i++)
                 {
-                    if (arguments[i]?.ToString() == _currentSwitchValue)
+                    if (parameters[i]?.ToString() == _currentSwitchValue)
                     {
                         _currentSwitchMatched = true;
-                        options.Template(output, context);
+                        options.Template(writer, context);
                         break;
                     }
                 }
             });
 
-            handlebars.RegisterHelper("Default", (output, options, context, arguments) => {
+            handlebars.RegisterHelper("Default", (writer, options, context, parameters) => {
                 if (_currentSwitchValue == null || _currentSwitchMatched) return;
                 
-                options.Template(output, context);
+                options.Template(writer, context);
             });
         }
     }

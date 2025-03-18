@@ -1,6 +1,14 @@
+using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
 using EzDbCodeGen.Core.Classes;
-using EzDbCodeGen.Core;
+using EzDbCodeGen.Core.Config;
+using EzDbCodeGen.Core.Enums;
+using EzDbCodeGen.Core.Extensions;
+using EzDbSchema.Core.Extentions;
+using EzDbSchema.Core.Interfaces;
+using EzDbSchema.Core.Objects;
 
 namespace EzDbCodeGen.Core
 {
@@ -40,7 +48,7 @@ namespace EzDbCodeGen.Core
         public virtual bool VerboseMessages { get; set; } = true;
         public virtual string SchemaName { get; set; } = "MyEzSchema";
         public IDatabase? Schema { get; set; }
-        public static Config.Configuration RzDbConfig = Internal.AppSettings.Instance.Configuration;
+        public static Config.Configuration RzDbConfig = EzDbCodeGen.Internal.AppSettings.LoadFrom("appsettings.json").Configuration;
         public string[] AllowedKeys(IDatabase model)
         {
             return model.Keys.Where(k => !k.EndsWith("_Archive", StringComparison.OrdinalIgnoreCase)).ToArray();
@@ -96,9 +104,7 @@ namespace EzDbCodeGen.Core
         /// </summary>
         /// <param name="TemplateFileNameOrPath">The file name of a handlebars template or a path that contains handlebars templates. If no path is specified,  the app will prepend the assembly path in front of the text and search there</param>
         /// <param name="templateInput">The template input class,  could be an object of type IDatabase or if type schema</param>
-        /// <param name="OutputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  
-        /// if there is a file specifier,  then it will write to the file resolved between the FILE tags.  Note that you can specify and OUTPUT_PATH xml tag
-        /// in order to specify and output target (which will override the the path passed through this paramter)</param>
+        /// <param name="OutputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  if there is a file specifier,  then it will write to the file resolved between the FILE tags</param>
         /// <returns>A return code </returns>
         /// <exception cref="Exception"></exception>
         public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateDataInput templateDataInput, string outputPath)
@@ -120,9 +126,7 @@ namespace EzDbCodeGen.Core
         /// <param name="TemplateFileNameOrPath">The file name of a handlebars template or a path that contains handlebars templates. If no path is specified,  the app will prepend the assembly path in front of the text and search there</param>
         /// <param name="originalTemplateInputSource">The template input class,  could be an object of type IDatabase or if type schema</param>
         /// <param name="compareToTemplateInputSource">The template input class to compare to,  will only change the difference</param>
-        /// <param name="OutputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  
-        /// if there is a file specifier,  then it will write to the file resolved between the FILE tags.  Note that you can specify and OUTPUT_PATH xml tag
-        /// in order to specify and output target (which will override the the path passed through this paramter)</param>
+        /// <param name="OutputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  if there is a file specifier,  then it will write to the file resolved between the FILE tags</param>
         /// <returns>A return code </returns>
         public ReturnCodes ProcessTemplate(string TemplateFileNameOrPath, ITemplateDataInput originalTemplateInputSource, ITemplateDataInput? compareToTemplateInputSource, string outputPath)
         {
@@ -156,7 +160,7 @@ namespace EzDbCodeGen.Core
         }
 
         /// <summary>
-        /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings. There needs to be a  &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  
+        /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings.
         /// </summary>
         /// <returns><c>true</c>, if template was processed, <c>false</c> otherwise.</returns>
         /// <param name="TemplateFileNameOrPath">The file name of a handlebars template or a path that contains handlebars templates. If no path is specified,  the app will prepend the assembly path in front of the text and search there</param>
@@ -253,7 +257,7 @@ namespace EzDbCodeGen.Core
 			var returnCode = EzDbCodeGen.Core.Enums.ReturnCode.OkNoAddDels;
 			try
 			{
-                if (string.IsNullOrEmpty(ConfigurationFileName)) ConfigurationFileName = Internal.AppSettings.Instance?.Configuration?.SourceFileName ?? string.Empty;
+                if (string.IsNullOrEmpty(ConfigurationFileName)) ConfigurationFileName = EzDbCodeGen.Internal.AppSettings.Instance?.Configuration?.SourceFileName ?? string.Empty;
                 if (string.IsNullOrEmpty(ConfigurationFileName)) throw new ArgumentNullException(nameof(ConfigurationFileName), "Could not determine ConfigurationFileName. Make sure it is passed to the code generator object.");
                 CurrentTask = string.Format("Trying to find Config file at {0}", ConfigurationFileName);
                 if (File.Exists(ConfigurationFileName))
@@ -265,7 +269,7 @@ namespace EzDbCodeGen.Core
                         Pluralizer.Instance.AddWord(item.SingleWord, item.PluralWord);
                     if (EzDbConfig?.DataTypeMap != null)
                     foreach (var item in EzDbConfig.DataTypeMap)
-                        StringExtensions.UpdateDotNetDataType(item.DataType, item.TargetDataType);
+                        EzDbCodeGen.Core.Extensions.DataTypeExtensions.UpdateDotNetDataType(item.DataType, item.TargetDataType);
                         
                     if (!string.IsNullOrEmpty(EzDbConfig?.Database?.SchemaName))
                     {
@@ -470,9 +474,10 @@ namespace EzDbCodeGen.Core
 					{
 						StatusMessage("Path Option is set to 'SyncDiff'");
 						if (schemaToCompareTo == null) throw new ArgumentNullException(nameof(schemaToCompareTo));
-						var SchemaDiffs = schema.CompareTo(schemaToCompareTo);
-						StatusMessage(string.Format("There where {0} differences between the schemas", SchemaDiffs.Count));
-						if (SchemaDiffs.Count > 0)
+						var SchemaDiffs = DatabaseSchemaExtensions.CompareTo(schema, schemaToCompareTo);
+						var diffCount = SchemaDiffs.Count;
+						StatusMessage(string.Format("There where {0} differences between the schemas", diffCount));
+						if (diffCount > 0)
 						{
 							foreach (var schemaDiff in SchemaDiffs)
 							{
@@ -656,7 +661,7 @@ namespace EzDbCodeGen.Core
         public static CodeGenBase WithConfiguration(this CodeGenBase codeGenBase, Configuration configuration)
         {
             //codeGenBase.Se = configuration;
-            AppSettings.Instance.Configuration = configuration;
+            EzDbCodeGen.Internal.AppSettings.Instance.Configuration = configuration;
             return codeGenBase;
         }
         public static CodeGenBase WithConfiguration(this CodeGenBase codeGenBase, string configurationFileName)

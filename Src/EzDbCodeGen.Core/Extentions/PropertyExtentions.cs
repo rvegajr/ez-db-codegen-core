@@ -1,15 +1,21 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Runtime.CompilerServices;
+using EzDbCodeGen.Core.Config;
 using EzDbCodeGen.Core.Extensions;
 using EzDbSchema.Core.Enums;
+using EzDbSchema.Core.Extentions;
 using EzDbSchema.Core.Interfaces;
 using EzDbSchema.Core.Objects;
+using CoreInterfaces = EzDbSchema.Core.Interfaces;
 
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
-namespace EzDbCodeGen.Core.Extentions
+namespace EzDbCodeGen.Core.Extensions
 {
 
     /// <summary>
@@ -93,7 +99,7 @@ namespace EzDbCodeGen.Core.Extentions
             for (int i = 0; i < This.Count; i++)
             {
                 var property = This[i];
-                ret += (i > 0 ? delimiter + @" " : @" ") + prefix + property.DataType.ToNetType(property.IsNullableResolved()) + elementSet + EzDbCodeGen.Core.Extensions.StringExtensions.ToSingular(property.ColumnAlias);
+                ret += (i > 0 ? delimiter + @" " : @" ") + prefix + EzDbCodeGen.Core.Extensions.DataTypeExtensions.ToNetType(property.DataType, property.IsNullableResolved()) + elementSet + EzDbSchema.Core.Extentions.StringExtensions.ToSingular(property.ColumnAlias);
             }
             return ret;
 		}
@@ -158,7 +164,7 @@ namespace EzDbCodeGen.Core.Extentions
                 var property = This[i];
                 var parentEntity = property.GetType().GetProperty("ParentEntity")?.GetValue(property) as IEntity;
                 var entityName = parentEntity?.TableName ?? string.Empty;
-                ret += (i > 0 ? delimiter + @" " : @" ") + prefix + (prefix.Length > 0 ? "." : "") + property.AsObjectPropertyName() + elementSet + prefixSetter + (prefixSetter.Length > 0 ? "." : "") + EzDbCodeGen.Core.Extensions.StringExtensions.ToSingular(property.ColumnAlias);
+                ret += (i > 0 ? delimiter + @" " : @" ") + prefix + (prefix.Length > 0 ? "." : "") + property.AsObjectPropertyName() + elementSet + prefixSetter + (prefixSetter.Length > 0 ? "." : "") + EzDbSchema.Core.Extentions.StringExtensions.ToSingular(property.ColumnAlias);
             }
             return ret;
         }

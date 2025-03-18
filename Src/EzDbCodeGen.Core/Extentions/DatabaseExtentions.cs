@@ -1,17 +1,26 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using EzDbCodeGen.Core.Config;
-using EzDbCodeGen.Core.Extensions;
-using EzDbCodeGen.Core.Extensions;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Runtime.CompilerServices;
-using EzDbCodeGen.Internal;
+using EzDbSchema.Core.Interfaces;
+using EzDbSchema.Core.Objects;
+using EzDbSchema.Core.Enums;
+using EzDbSchema.Core.Extentions;
+using EzDbCodeGen.Core.Config;
+using EzDbCodeGen.Core.Interfaces;
+using CoreInterfaces = EzDbSchema.Core.Interfaces;
+using DbConfig = EzDbCodeGen.Core.Config.Database;
+using DbCore = EzDbSchema.Core.Objects.Database;
+using EzDbCodeGen.Core.Extensions;
+
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
-namespace EzDbCodeGen.Core.Extentions
+namespace EzDbCodeGen.Core.Extensions
 {
     internal class SchemaObjectColumnName : SchemaObjectName
     {
@@ -33,6 +42,7 @@ namespace EzDbCodeGen.Core.Extentions
         {
             this.Parse(schemaObjectName);
         }
+
         public override SchemaObjectName Parse(string schemaObjectName)
         {
             if (string.IsNullOrEmpty(schemaObjectName))
@@ -65,31 +75,27 @@ namespace EzDbCodeGen.Core.Extentions
             return this;
         }
 
-
-        /// <summary>
-        /// Will return this object as a fully qualified string SchemaName.ObjectName
-        /// </summary>
-        /// <returns></returns>
         public override string AsFullName()
         {
-            return SchemaName + "." + TableName + ColumnName;
+            return $"{SchemaName}.{TableName}.{ColumnName}";
         }
     }
 
     public class SchemaObjectName
     {
+        protected string DefaultSchemaName = string.Empty;
+        public string SchemaName = string.Empty;
+        public string TableName = string.Empty;
+
         public SchemaObjectName()
         {
-
         }
-        public string SchemaName = "";
-        public string TableName = "";
-        protected string DefaultSchemaName = "";
-        public SchemaObjectName(CoreInterfaces.IEntity entity)
+
+        public SchemaObjectName(CoreInterfaces.IEntity? entity)
         {
-            DefaultSchemaName = Internal.AppSettings.Instance.Configuration.Database.DefaultSchema;
+            DefaultSchemaName = EzDbCodeGen.Internal.AppSettings.Instance.Configuration.Database.DefaultSchema;
             SchemaName = entity?.GetType().GetProperty("DatabaseSchema")?.GetValue(entity)?.ToString() ?? DefaultSchemaName;
-            TableName = entity?.GetType().GetProperty("TableName")?.GetValue(entity)?.ToString() ?? "";
+            TableName = entity?.GetType().GetProperty("TableName")?.GetValue(entity)?.ToString() ?? string.Empty;
         }
 
         public SchemaObjectName(string schemaObjectName)
@@ -124,47 +130,38 @@ namespace EzDbCodeGen.Core.Extentions
             return this;
         }
 
-
-        /// <summary>
-        /// Will return this object as a fully qualified string SchemaName.ObjectName
-        /// </summary>
-        /// <returns></returns>
         public virtual string AsFullName()
         {
-            return SchemaName + "." + TableName;
+            return $"{SchemaName}.{TableName}";
         }
     }
 
-    public static class DatabaseExtentions
+    public static class DatabaseExtensions
     {
+        private static readonly JsonSerializerSettings DefaultJsonSettings = new()
+        {
+            Formatting = Formatting.Indented,
+            NullValueHandling = NullValueHandling.Ignore,
+            DefaultValueHandling = DefaultValueHandling.Ignore,
+            TypeNameHandling = TypeNameHandling.Auto,
+            PreserveReferencesHandling = PreserveReferencesHandling.Objects
+        };
+
         /// <summary>
         /// Filters the specified database using the internal configuration file.  The config file will remove those objects 
         /// that the config marked as deleted, alter primary keys and rename Alias fields
         /// </summary>
         /// <param name="database">The database.</param>
-        /// <returns></returns>
-        /// 
-        /*
-        public static IDatabase Filter(this IDatabase database)
-        {
-            return database.Filter(Configuration.Instance);
-        }
-        */
-        /// <summary>
-        /// This will filter a schema based on the a passed configuration file.  This will remove entites that will need to be ignored and alter primary keys based
-        /// on the parameters passed 
-        /// </summary>
-        /// <returns>An altered copy of the database</returns>
-        /// <param name="database">Database.</param>
         /// <param name="config">Configuration file</param>
+        /// <returns></returns>
         public static IDatabase Filter(this IDatabase database, Configuration config)
         {
             if (database == null) throw new ArgumentNullException(nameof(database));
             if (config == null) throw new ArgumentNullException(nameof(config));
 
-            if (!string.IsNullOrEmpty(config.SourceFileName) && config.SourceFileName != AppSettings.Instance.ConfigurationFileName)
+            if (!string.IsNullOrEmpty(config.SourceFileName) && config.SourceFileName != EzDbCodeGen.Internal.AppSettings.Instance.ConfigurationFileName)
             {
-                AppSettings.Instance.ConfigurationFileName = config.SourceFileName;
+                EzDbCodeGen.Internal.AppSettings.Instance.ConfigurationFileName = config.SourceFileName;
             }
 
             // Use config settings to remove filtered entities
@@ -186,191 +183,79 @@ namespace EzDbCodeGen.Core.Extentions
                 }
             }
 
-            // Process entities to delete
-            foreach (var keyToDelete in entitiesToDelete)
+            // Create a deep copy of the database
+            var databaseCopy = DeepClone(database);
+
+            // Remove filtered entities from the copy
+            foreach (var entityKey in entitiesToDelete.Where(key => databaseCopy.ContainsKey(key)))
             {
-                if (database.Entities.TryGetValue(keyToDelete, out var entity))
-                {
-                    if (config.Database?.DeleteObjectOnFilter == true)
-                    {
-                        entity.Properties?.Clear();
-                        entity.Relationships?.Clear();
-                        entity.RelationshipGroups?.Clear();
-                        entity.PrimaryKeys?.Clear();
-                        database.Entities.Remove(keyToDelete);
-                    }
-                    else
-                    {
-                        entity.IsEnabled = false;
-                    }
-                }
+                databaseCopy.Entities.Remove(entityKey);
             }
 
-            // Update entity aliases based on pattern
-            foreach (var entitySchemaName in database.Keys)
+            // Process remaining entities
+            foreach (var entityKey in databaseCopy.Entities.Keys.ToList())
             {
-                if (string.IsNullOrEmpty(entitySchemaName)) continue;
+                if (string.IsNullOrEmpty(entityKey)) continue;
 
-                if (database.Entities.TryGetValue(entitySchemaName, out var entity) && entity != null)
-                {
-                    var aliasPattern = config.Database?.AliasNamePattern ?? string.Empty;
-                    var databaseObjectName = entity.DatabaseObjectName ?? string.Empty;
-                    entity.TableAlias = StringExtensions.ToCodeFriendly(Configuration.ReplaceEx(aliasPattern, databaseObjectName));
-                    if (entity.Properties == null) continue;
-
-                    foreach (var propertyKey in entity.Properties.Keys.ToList())
-                    {
-                        if (string.IsNullOrEmpty(propertyKey)) continue;
-
-                        if (entity.Properties.TryGetValue(propertyKey, out var property) && property != null)
-                        {
-                            if (config.IsNotMappedColumn(property))
-                            {
-                                property.Set("NotMapped", true);
-                            }
-
-                            if (config.IsComputedColumn(property))
-                            {
-                                property.Set("Computed", true);
-                            }
-
-                            if (config.IsIgnoredColumn(property) || config.IsObjectNameFiltered(new SchemaObjectName(entity).AsFullName(), propertyKey))
-                            {
-                                if (config.Database?.DeleteObjectOnFilter == true)
-                                {
-                                    entity.Properties.Remove(propertyKey);
-                                }
-                                else
-                                {
-                                    property.IsEnabled = false;
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Process entity overrides
-            if (config.Entities != null)
-            {
-                foreach (var configEntity in config.Entities)
-                {
-                    if (configEntity == null || string.IsNullOrEmpty(configEntity.Name)) continue;
-
-                    var entitiesMatched = database.FindEntities(configEntity.Name);
-                    if (entitiesMatched?.Count > 0)
-                    {
-                        foreach (var entity in entitiesMatched)
-                        {
-                            if (entity == null) continue;
-
-                            // Process primary key overrides
-                            if (configEntity.Overrides?.PrimaryKey?.Count > 0)
-                            {
-                                if (entity.PrimaryKeys != null)
-                                {
-                                    foreach (var pkCol in entity.PrimaryKeys)
-                                    {
-                                        if (pkCol != null)
-                                        {
-                                            pkCol.IsPrimaryKey = false;
-                                            pkCol.PrimaryKeyOrder = 0;
-                                        }
-                                    }
-                                    entity.PrimaryKeys.Clear();
-
-                                    var order = 0;
-                                    foreach (var pkOverride in configEntity.Overrides.PrimaryKey)
-                                    {
-                                        if (pkOverride == null || string.IsNullOrEmpty(pkOverride.FieldName)) continue;
-
-                                        order++;
-                                        if (entity.Properties?.ContainsKey(pkOverride.FieldName) == true)
-                                        {
-                                            var property = entity.Properties[pkOverride.FieldName];
-                                            if (property != null)
-                                            {
-                                                property.IsPrimaryKey = true;
-                                                property.PrimaryKeyOrder = order;
-                                                entity.PrimaryKeys.Add(property);
-                                            }
-                                        }
-                                        else
-                                        {
-                                            throw new ArgumentException($"Column '{pkOverride.FieldName}' not found in entity '{configEntity.Name}'.");
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Process relationships
-            foreach (var entity in database.Entities.Values)
-            {
+                var entity = databaseCopy.Entities[entityKey];
                 if (entity == null) continue;
-                if (entity.Relationships == null) continue;
 
-                var relationshipsToDelete = new List<string>();
-                foreach (var relationship in entity.Relationships)
+                // Apply configuration changes to the entity
+                ApplyConfigurationToEntity(entity, config);
+            }
+
+            return databaseCopy;
+        }
+
+        private static void ApplyConfigurationToEntity(IEntity entity, Configuration config)
+        {
+            var entityConfig = EzDbCodeGen.Core.Extensions.ConfigurationExtensions.GetEntityConfiguration(config, entity.TableName);
+            if (entityConfig == null) return;
+
+            // Apply primary key overrides
+            if (entityConfig.Overrides.PrimaryKey.Any())
+            {
+                entity.PrimaryKeys.Clear();
+                foreach (var pkOverride in entityConfig.Overrides.PrimaryKey)
                 {
-                    if (relationship == null) continue;
-
-                    // Disable relationships for disabled entities
-                    if (!entity.IsEnabled && !config.Database.DeleteObjectOnFilter)
+                    if (entity.Properties.TryGetValue(pkOverride.FieldName, out var property))
                     {
-                        relationship.IsEnabled = false;
-                        continue;
-                    }
-
-                    // Process enabled relationships
-                    if (relationship.IsEnabled)
-                    {
-                        var constraintName = relationship.ConstraintName;
-                        if (!string.IsNullOrEmpty(constraintName) && 
-                            config.IsObjectNameFiltered(new SchemaObjectName(entity).AsFullName(), constraintName))
-                        {
-                            relationship.IsEnabled = false;
-
-                            if (entity.RelationshipGroups?.ContainsKey(constraintName) == true)
-                            {
-                                entity.RelationshipGroups.IsEnabled = false;
-                            }
-
-                            relationshipsToDelete.Add(constraintName);
-                        }
-                    }
-                }
-
-                // Process relationships to delete
-                if (config.Database?.DeleteObjectOnFilter == true && relationshipsToDelete.Any())
-                {
-                    foreach (var relToDelete in relationshipsToDelete)
-                    {
-                        if (string.IsNullOrEmpty(relToDelete)) continue;
-
-                        // Remove relationships
-                        var relationsToRemove = entity.Relationships
-                            .Where(r => r != null && relToDelete.Equals(r.ConstraintName))
-                            .ToList();
-
-                        foreach (var rel in relationsToRemove)
-                        {
-                            entity.Relationships.Remove(rel);
-                        }
-
-                        // Remove relationship groups
-                        if (entity.RelationshipGroups?.ContainsKey(relToDelete) == true)
-                        {
-                            entity.RelationshipGroups.Remove(relToDelete);
-                        }
+                        entity.PrimaryKeys.Add(property);
                     }
                 }
             }
 
-            return database;
+            // Apply field overrides
+            foreach (var fieldOverride in entityConfig.Overrides.Fields)
+            {
+                if (entity.Properties.TryGetValue(fieldOverride.FieldName, out var property))
+                {
+                    // Apply overrides to the property
+                    ApplyFieldOverrides(property, fieldOverride);
+                }
+            }
+        }
+
+        private static void ApplyFieldOverrides(IProperty property, Field fieldOverride)
+        {
+            // Apply field overrides to the property
+            if (!string.IsNullOrEmpty(fieldOverride.ColumnAttributeTypeName))
+            {
+                property.DataType = fieldOverride.ColumnAttributeTypeName;
+            }
+
+            if (fieldOverride.Nullable.HasValue)
+            {
+                property.IsNullable = fieldOverride.Nullable.Value;
+            }
+
+            // Additional field overrides can be applied here
+        }
+
+        private static IDatabase DeepClone(IDatabase database)
+        {
+            var json = JsonConvert.SerializeObject(database, DefaultJsonSettings);
+            return JsonConvert.DeserializeObject<DbCore>(json, DefaultJsonSettings) ?? throw new InvalidOperationException("Failed to clone database");
         }
 
         /// <summary>
@@ -455,6 +340,95 @@ namespace EzDbCodeGen.Core.Extentions
             }
 
             return matchedEntities;
+        }
+
+        public static IDatabase ApplyFilters(this IDatabase database, IEnumerable<IFilter> filters)
+        {
+            if (database == null)
+            {
+                throw new ArgumentNullException(nameof(database));
+            }
+
+            if (filters == null)
+            {
+                throw new ArgumentNullException(nameof(filters));
+            }
+
+            var clonedDatabase = database.DeepClone();
+
+            foreach (var filter in filters)
+            {
+                if (filter == null) continue;
+
+                try
+                {
+                    filter.Apply(clonedDatabase);
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException($"Error applying filter {filter.GetType().Name}", ex);
+                }
+            }
+
+            return clonedDatabase;
+        }
+
+        public static string ToJson(this IDatabase database)
+        {
+            if (database == null)
+                throw new ArgumentNullException(nameof(database));
+
+            return JsonConvert.SerializeObject(database, DefaultJsonSettings);
+        }
+
+        public static void SaveToJson(this IDatabase database, string filePath)
+        {
+            var json = database.ToJson();
+            File.WriteAllText(filePath, json);
+        }
+
+        public static IDatabase LoadFromJson(string filePath)
+        {
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException($"Database schema file not found: {filePath}");
+
+            var json = File.ReadAllText(filePath);
+            var database = JsonConvert.DeserializeObject<EzDbSchema.Core.Objects.Database>(json, DefaultJsonSettings);
+
+            if (database == null)
+                throw new InvalidOperationException("Failed to deserialize database schema");
+
+            return database;
+        }
+
+        public static IDictionary<string, object> ToDictionary(this IDatabase database)
+        {
+            if (database == null)
+                throw new ArgumentNullException(nameof(database));
+
+            var jsonString = JsonConvert.SerializeObject(database, DefaultJsonSettings);
+            var dictionary = JsonConvert.DeserializeObject<Dictionary<string, object>>(jsonString, DefaultJsonSettings);
+
+            if (dictionary == null)
+                throw new InvalidOperationException("Failed to convert database to dictionary");
+
+            return dictionary;
+        }
+
+        public static IDictionary<string, T> ToDictionary<T>(this IDatabase database, Func<IEntity, T> selector)
+        {
+            return database.Values.ToDictionary(
+                entity => entity.DatabaseObjectName,
+                entity => selector(entity)
+            );
+        }
+
+        public static IDictionary<string, T> ToDictionary<T>(this IDatabase database, Func<IEntity, string> keySelector, Func<IEntity, T> valueSelector)
+        {
+            return database.Values.ToDictionary(
+                entity => keySelector(entity),
+                entity => valueSelector(entity)
+            );
         }
     }
 }
