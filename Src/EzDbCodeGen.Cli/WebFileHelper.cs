@@ -1,8 +1,9 @@
-using System.Net.Http;
+using System;
 using System.IO;
 using System.IO.Compression;
-using System;
+using System.Net.Http;
 using System.Threading.Tasks;
+
 namespace EzDbCodeGen.Cli;
 
 public static class WebFileHelper
@@ -28,7 +29,18 @@ public static class WebFileHelper
     {
         if (FileToRenameTo.Length == 0) FileToRenameTo = FileToCopy;
         var targetFileName = $"{targetPath}{FileToRenameTo}";
-        System.IO.Directory.CreateDirectory(Path.GetDirectoryName(targetFileName));
+        if (!string.IsNullOrEmpty(targetPath))
+        {
+            string? directoryName = Path.GetDirectoryName(targetFileName);
+            if (!string.IsNullOrEmpty(directoryName))
+            {
+                System.IO.Directory.CreateDirectory(directoryName);
+            }
+        }
+        else
+        {
+            throw new ArgumentException("Target path cannot be null or empty", nameof(targetPath));
+        }
         File.Copy($"{sourcePath}{FileToCopy}", targetFileName, true);
         System.Console.WriteLine($"Copying {FileToCopy} into {targetFileName}", FileToCopy, targetFileName);
         return targetFileName;
@@ -40,14 +52,35 @@ public static class WebFileHelper
         return FileToChange;
     }
 
-    private static readonly HttpClient httpClient = new HttpClient();
+    // Factory for HttpClient to make testing easier
+    private static Func<HttpClient> _httpClientFactory = () => new HttpClient();
+
+    // For testing purposes only
+    public static void SetHttpClientFactory(Func<HttpClient> factory)
+    {
+        _httpClientFactory = factory ?? throw new ArgumentNullException(nameof(factory));
+    }
+
+    // Reset the factory to default (for cleanup after tests)
+    public static void ResetHttpClientFactory()
+    {
+        _httpClientFactory = () => new HttpClient();
+    }
 
     public static async Task<string> CurlGitRepoZip(string destinationPath, string user="rvegajr", string repo="ez-db-codegen-core", string branch="master")
     {
         var sourceUrl = string.Format("https://github.com/{0}/{1}/archive/{2}.zip", user, repo, branch);
-        System.IO.Directory.CreateDirectory(destinationPath);
+        if (!string.IsNullOrEmpty(destinationPath))
+        {
+            System.IO.Directory.CreateDirectory(destinationPath);
+        }
+        else
+        {
+            throw new ArgumentException("Destination path cannot be null or empty", nameof(destinationPath));
+        }
         var targetGitRepoZip = destinationPath + repo + ".zip";
 
+        using (var httpClient = _httpClientFactory())
         using (var response = await httpClient.GetAsync(sourceUrl, HttpCompletionOption.ResponseHeadersRead))
         {
             response.EnsureSuccessStatusCode();
@@ -63,10 +96,12 @@ public static class WebFileHelper
         System.Console.WriteLine("Git repo downloaded and extracted");
         return destinationPath;
     }
+    
     public static async Task DownloadFile(string sourceURL, string destinationPath)
     {
         var fileMode = File.Exists(destinationPath) ? FileMode.Append : FileMode.Create;
         
+        using (var httpClient = _httpClientFactory())
         using (var response = await httpClient.GetAsync(sourceURL, HttpCompletionOption.ResponseHeadersRead))
         {
             response.EnsureSuccessStatusCode();

@@ -1,13 +1,14 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using EzDbSchema.Core.Interfaces;
 using EzDbSchema.MsSql;
 using EzDbCodeGen.Core.Enums;
 using EzDbCodeGen.Core.Extensions;
 using EzDbSchema.Core.Objects;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using EzDbCodeGen.Core.Config;
 using EzDbCodeGen.Core.Extentions;
@@ -132,6 +133,15 @@ namespace EzDbCodeGen.Core
         }
 		public IDatabase Schema { get; set; } = null!;
 
+        private static readonly JsonSerializerSettings DefaultJsonSettings = new()
+        {
+            Formatting = Formatting.Indented,
+            NullValueHandling = NullValueHandling.Ignore,
+            DefaultValueHandling = DefaultValueHandling.Ignore,
+            TypeNameHandling = TypeNameHandling.Auto,
+            PreserveReferencesHandling = PreserveReferencesHandling.Objects
+        };
+
         /// <summary>
         /// Loads the schema filtered by Configuration 
         /// </summary>
@@ -140,15 +150,17 @@ namespace EzDbCodeGen.Core
         {
             try
             {
-				var deserializedObject = JsonConvert.DeserializeObject<T>(File.ReadAllText(DatabaseSchemaDumpFileName),
-                    new JsonSerializerSettings
-                    {
-                        PreserveReferencesHandling = PreserveReferencesHandling.All,
-                        TypeNameHandling = TypeNameHandling.All
-                    });
-                if (deserializedObject is IDatabase database)
+				var jsonContent = File.ReadAllText(DatabaseSchemaDumpFileName);
+                var database = JsonConvert.DeserializeObject<T>(jsonContent, DefaultJsonSettings);
+                
+                if (database == null)
                 {
-                    this.Schema = database;
+                    throw new InvalidOperationException($"Failed to deserialize database from file: {DatabaseSchemaDumpFileName}");
+                }
+
+                if (database is IDatabase db)
+                {
+                    this.Schema = db;
                     return this.Schema.Filter(config);
                 }
                 throw new InvalidOperationException("Deserialized object is not of type IDatabase");
@@ -163,22 +175,20 @@ namespace EzDbCodeGen.Core
         {
             try
             {
-               var db = JsonConvert.DeserializeObject(File.ReadAllText(DatabaseSchemaDumpFileName),
-                    new JsonSerializerSettings
-                    {
-                        PreserveReferencesHandling = PreserveReferencesHandling.All,
-                        TypeNameHandling = TypeNameHandling.All
-                    });
-                if (db is IDatabase database)
+                var jsonContent = File.ReadAllText(DatabaseSchemaDumpFileName);
+                var database = JsonConvert.DeserializeObject<EzDbSchema.MsSql.Database>(jsonContent, DefaultJsonSettings);
+                
+                if (database == null)
                 {
-                    this.Schema = database;
-                    return this.Schema.Filter(config);
+                    throw new InvalidOperationException($"Failed to deserialize database from file: {DatabaseSchemaDumpFileName}");
                 }
-                throw new InvalidOperationException("Deserialized object is not of type IDatabase");
+
+                this.Schema = database;
+                return this.Schema.Filter(config);
             }
             catch (Exception ex)
             {
-                throw new Exception(string.Format("Failed on reading Schema Data File '{0}'.  Please make sure this file exists or is the proper format.  {1}", DatabaseSchemaDumpFileName, ex.Message), ex);
+                throw new Exception(string.Format("Failed to read Schema Data File '{0}'. Please make sure this file exists and is in the proper format. {1}", DatabaseSchemaDumpFileName, ex.Message), ex);
             }
         }
     }

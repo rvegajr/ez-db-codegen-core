@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Collections.Generic;
 using EzDbCodeGen.Core.Classes;
 using EzDbCodeGen.Core.Config;
 using EzDbCodeGen.Core.Enums;
@@ -42,13 +43,45 @@ namespace EzDbCodeGen.Core
         public virtual string SchemaDumpFileName { get; set; } = "";
         public virtual string ConnectionString { get; set; } = "";
         public virtual string ConfigurationFileName { get; set; } = "";
-        public virtual string TemplateFileNameFilter { get; set; } = "";  //"FileName*,SampleFile*"
+        public virtual string TemplateFileNameFilter { get; set; } = ""; // "FileName*,SampleFile*";
 
         public TemplatePathOption TemplatePathOption { get; set; } = TemplatePathOption.Auto;
         public virtual bool VerboseMessages { get; set; } = true;
         public virtual string SchemaName { get; set; } = "MyEzSchema";
         public IDatabase? Schema { get; set; }
-        public static Config.Configuration RzDbConfig = EzDbCodeGen.Internal.AppSettings.LoadFrom("appsettings.json").Configuration;
+        
+        // Initialize with a default configuration that doesn't require a file
+        public static Config.Configuration CodeGenConfiguration { get; set; } = InitializeDefaultConfiguration();
+        
+        private static Config.Configuration InitializeDefaultConfiguration()
+        {
+            try
+            {
+                // Try to load from appsettings.json if it exists
+                if (File.Exists("appsettings.json"))
+                {
+                    return EzDbCodeGen.Internal.AppSettings.LoadFrom("appsettings.json").Configuration;
+                }
+                
+                // Otherwise create a default configuration
+                var config = new Config.Configuration();
+                config.SourceFileName = "default-config";
+                return config;
+            }
+            catch (Exception)
+            {
+                // Fallback to a new configuration if loading fails
+                var config = new Config.Configuration();
+                config.SourceFileName = "default-config";
+                return config;
+            }
+        }
+        
+        /// <summary>
+        /// Custom file writer delegate that can be used to override the default file writing behavior
+        /// </summary>
+        public Action<string, string>? FileWriter { get; set; }
+        
         public string[] AllowedKeys(IDatabase model)
         {
             return model.Keys.Where(k => !k.EndsWith("_Archive", StringComparison.OrdinalIgnoreCase)).ToArray();
@@ -103,7 +136,7 @@ namespace EzDbCodeGen.Core
         /// Processes the template using passed Template Inputs and the handlebars template name.  These inputs can be from a variety of sources including direct schema (useful for caching scenarios), filename and connection strings.
         /// </summary>
         /// <param name="TemplateFileNameOrPath">The file name of a handlebars template or a path that contains handlebars templates. If no path is specified,  the app will prepend the assembly path in front of the text and search there</param>
-        /// <param name="templateInput">The template input class,  could be an object of type IDatabase or if type schema</param>
+        /// <param name="templateDataInput">The template input class,  could be an object of type IDatabase or if type schema</param>
         /// <param name="OutputPath">The output path.  If there is no &lt;FILE&gt;FILENAMEHERE&lt;/FILE&gt; specifier, then this should be a file name,  if there is a file specifier,  then it will write to the file resolved between the FILE tags</param>
         /// <returns>A return code </returns>
         /// <exception cref="Exception"></exception>
@@ -460,7 +493,7 @@ namespace EzDbCodeGen.Core
 						EffectivePathOption = TemplatePathOption.Clear;
 						if ((compareToTemplateDataInputSource != null) && (hasEntityKeySpecifier))
 						{
-							schemaToCompareTo = compareToTemplateDataInputSource.LoadSchema(EzDbConfig);
+							schemaToCompareTo = compareToTemplateDataInputSource.LoadSchema(CodeGenConfiguration);
 							if (schemaToCompareTo == null) throw new Exception(@"schemaToCompareTo is not a valid template");
 							EffectivePathOption = TemplatePathOption.SyncDiff;
 						}
@@ -535,9 +568,9 @@ namespace EzDbCodeGen.Core
 						{
                             FileActions.Add(fileName, TemplateFileAction.Add);
 						}
-                        if (EzDbConfig.Templates.Count>0)
+                        if (CodeGenConfiguration.Templates.Count>0)
                         {
-                            var isFiltered = EzDbConfig.IsIgnoredEntityByTemplate(Path.GetFileName(templateFileName), Path.GetFileName(fileName));
+                            var isFiltered = CodeGenConfiguration.IsIgnoredEntityByTemplate(Path.GetFileName(templateFileName), Path.GetFileName(fileName));
                             if (isFiltered) FileActions[fileName] = TemplateFileAction.Filtered;
                         }
                     }
@@ -565,13 +598,13 @@ namespace EzDbCodeGen.Core
 							{
 								Updates++;
 								//if (File.Exists(fileName)) File.Delete(fileName);
-								File.WriteAllText(fileName, FileListAndContents[(FileName)fileName]);
+								WriteFile(fileName, FileListAndContents[(FileName)fileName]);
 							}
 						}
 						else if (FileActions[fileName] == TemplateFileAction.Add)
 						{
 							Adds++;
-							File.WriteAllText(fileName, FileListAndContents[(FileName)fileName]);
+							WriteFile(fileName, FileListAndContents[(FileName)fileName]);
 						}
                         else if (FileActions[fileName] == TemplateFileAction.Filtered)
                         {
@@ -585,7 +618,7 @@ namespace EzDbCodeGen.Core
 				else if (!string.IsNullOrEmpty(result))
 				{
 					if (File.Exists(OutputPath)) File.Delete(OutputPath);
-					File.WriteAllText(OutputPath, result);
+					WriteFile(OutputPath, result);
 				}
 				else
 				{
@@ -643,7 +676,31 @@ namespace EzDbCodeGen.Core
 				throw;
 			}
 		}
-	}
+
+        /// <summary>
+        /// Writes content to a file, using the custom FileWriter if provided, otherwise using File.WriteAllText
+        /// </summary>
+        /// <param name="path">Path to write to</param>
+        /// <param name="content">Content to write</param>
+        protected virtual void WriteFile(string path, string content)
+        {
+            if (FileWriter != null)
+            {
+                FileWriter(path, content);
+            }
+            else
+            {
+                // Ensure the directory exists
+                string? directory = Path.GetDirectoryName(path);
+                if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
+                
+                File.WriteAllText(path, content);
+            }
+        }
+    }
 
     public class StatusChangeEventArgs : EventArgs
     {
@@ -658,17 +715,20 @@ namespace EzDbCodeGen.Core
             codeGenBase.OriginalTemplateDataInputSource = templateInputToUse;
             return codeGenBase;
         }
+        
         public static CodeGenBase WithConfiguration(this CodeGenBase codeGenBase, Configuration configuration)
         {
             //codeGenBase.Se = configuration;
             EzDbCodeGen.Internal.AppSettings.Instance.Configuration = configuration;
             return codeGenBase;
         }
+        
         public static CodeGenBase WithConfiguration(this CodeGenBase codeGenBase, string configurationFileName)
         {
             codeGenBase.ConfigurationFileName = configurationFileName;
             return codeGenBase;
         }
+        
         public static CodeGenBase WithOutputPath(this CodeGenBase codeGenBase, string outputPath)
         {
             codeGenBase.OutputPath = outputPath;

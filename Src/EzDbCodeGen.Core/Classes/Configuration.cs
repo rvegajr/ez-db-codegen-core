@@ -1,16 +1,17 @@
-using EzDbCodeGen.Core.Extensions;
-using EzDbSchema.Core.Interfaces;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
-[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
+using JsonException = Newtonsoft.Json.JsonException;
+using EzDbCodeGen.Core.Config;
+using EzDbCodeGen.Core.Interfaces;
+using EzDbSchema.Core.Extentions;
+using EzDbSchema.Core.Interfaces;
+using EzDbSchema.Core.Objects;
 
 namespace EzDbCodeGen.Core.Config
 {
@@ -137,70 +138,207 @@ namespace EzDbCodeGen.Core.Config
 
     public class Configuration
     {
-        /// <summary>
-        /// A Replacement that is geared to specific templates and some simple string maniplation capabilities
-        /// 
-        ///  You can use the following variables here {SCHEMANAME}, {OBJECTNAME} with replace patterns after the instructions, for example:
-        /// Lets say the Schema name is "CUSTOMER" and the Object name is "tbl_Address" 
-        ///    You have the following one letter codes to modify the string after the name seperated by "|"
-        ///        U=Upper Case, L = Lower Case, P=Proper Case, X'<String to remove>'= Clear String, R'Old string'=>'New String'
-        ///  After Filtering, the following patterns will yield that following names:
-        /// "{SCHEMANAME}{OBJECTNAME}" = "CUSTOMERtbl_Address"
-        /// "{SCHEMANAME}{OBJECTNAME-U}" = "CUSTOMERTBL_ADDRESS"
-        /// "{SCHEMANAME-L}{OBJECTNAME-L|X'tbl_'}" = "customeraddress"
-        /// "{SCHEMANAME-P}{OBJECTNAME-P|X'tbl_'}" ="CustomerAddress"
-        /// </summary>
-        /// <param name="TemplatePattern">The template pattern which can be {##-U|L|P|X''|R''=>''} where ## can be SCHEMANAME or OBJECTNAME</param>
-        /// <param name="schemaObjectName">Name of the SchemaObjectName that will rename the string.</param>
-        /// <returns>The String replace with formatted</returns>
+        private static readonly JsonSerializerSettings DefaultJsonSerializerSettings = new()
+        {
+            Formatting = Newtonsoft.Json.Formatting.Indented,
+            NullValueHandling = NullValueHandling.Ignore,
+            DefaultValueHandling = DefaultValueHandling.Ignore,
+            TypeNameHandling = TypeNameHandling.Auto,
+            PreserveReferencesHandling = PreserveReferencesHandling.Objects
+        };
+
+        private readonly Dictionary<string, object> _configSettings;
+
+        public Configuration()
+        {
+            _configSettings = new Dictionary<string, object>();
+            PluralizerCrossReference = new List<PluralSingle>();
+            NotMappedColumns = new List<string>();
+            NotMappedTables = new List<string>();
+            NotMappedSchemas = new List<string>();
+            NotMappedTypes = new List<string>();
+            TypeAliases = new Dictionary<string, string>();
+            Templates = new List<string>();
+            TemplateFileNameFilter = new List<string>();
+            VerboseMessages = false;
+            AutoRun = false;
+        }
+
+        public T GetConfigValue<T>(string configKey)
+        {
+            if (!_configSettings.TryGetValue(configKey, out var configValue))
+                throw new KeyNotFoundException($"Configuration key '{configKey}' not found");
+
+            try
+            {
+                if (configValue is T typedConfigValue)
+                    return typedConfigValue;
+
+                var jsonToken = JToken.FromObject(configValue);
+                return jsonToken.ToObject<T>() ?? throw new InvalidOperationException($"Failed to convert value for key '{configKey}' to type {typeof(T).Name}");
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error converting value for key '{configKey}' to type {typeof(T).Name}", ex);
+            }
+        }
+
+        public bool TryGetConfigValue<T>(string configKey, out T configValue)
+        {
+            configValue = default;
+
+            if (!_configSettings.TryGetValue(configKey, out var rawConfigValue))
+                return false;
+
+            try
+            {
+                if (rawConfigValue is T typedConfigValue)
+                {
+                    configValue = typedConfigValue;
+                    return true;
+                }
+
+                var jsonToken = JToken.FromObject(rawConfigValue);
+                var converted = jsonToken.ToObject<T>();
+                if (converted != null)
+                {
+                    configValue = converted;
+                    return true;
+                }
+            }
+            catch
+            {
+                // Conversion failed
+            }
+
+            return false;
+        }
+
+        public void SetConfigValue<T>(string configKey, T configValue)
+        {
+            _configSettings[configKey] = configValue;
+        }
+
+        public bool HasConfigValue(string configKey)
+        {
+            return _configSettings.ContainsKey(configKey);
+        }
+
+        public void RemoveConfigValue(string configKey)
+        {
+            _configSettings.Remove(configKey);
+        }
+
+        public void ClearConfig()
+        {
+            _configSettings.Clear();
+        }
+
+        public T GetValue<T>(string key) => GetConfigValue<T>(key);
+        public bool TryGetValue<T>(string key, out T value) => TryGetConfigValue(key, out value);
+        public void SetValue<T>(string key, T value) => SetConfigValue(key, value);
+        public bool HasValue(string key) => HasConfigValue(key);
+        public void RemoveValue(string key) => RemoveConfigValue(key);
+        public void Clear() => ClearConfig();
+
+        public static Configuration FromFile(string fileName)
+        {
+            if (string.IsNullOrEmpty(fileName))
+                throw new ArgumentException("File name cannot be null or empty", nameof(fileName));
+
+            if (!File.Exists(fileName))
+                throw new FileNotFoundException($"Configuration file not found: {fileName}");
+
+            try
+            {
+                var jsonString = File.ReadAllText(fileName);
+                var config = JsonConvert.DeserializeObject<Configuration>(jsonString, DefaultJsonSerializerSettings);
+                if (config == null)
+                    throw new InvalidOperationException($"Failed to deserialize configuration from {fileName}");
+
+                config.SourceFileName = fileName;
+                return config;
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidOperationException($"Error parsing configuration file {fileName}: {ex.Message}", ex);
+            }
+        }
+
+        public void SaveToFile(string filePath)
+        {
+            try
+            {
+                var json = JsonConvert.SerializeObject(this, DefaultJsonSerializerSettings);
+                File.WriteAllText(filePath, json);
+            }
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error saving configuration to file: {ex.Message}", ex);
+            }
+        }
+
+        public IDictionary<string, object> ToDictionary()
+        {
+            return new Dictionary<string, object>(_configSettings);
+        }
+
+        public void Merge(Configuration other)
+        {
+            if (other == null)
+                throw new ArgumentNullException(nameof(other));
+
+            foreach (var kvp in other._configSettings)
+            {
+                _configSettings[kvp.Key] = kvp.Value;
+            }
+        }
+
+        public List<Entity> Entities { get; set; } = new List<Entity>();
+        public List<TemplateItem> TemplatesList { get; set; } = new List<TemplateItem>();
+        public List<PluralSingle> PluralizerCrossReferenceList { get; set; } = new List<PluralSingle>();
+        public List<DataTypeMap> DataTypeMapList { get; set; } = new List<DataTypeMap>();
+        public List<DataTypeMap> DataTypeMap { get; set; } = new();
+        public Database? Database { get; set; }
+        public string? ConnectionString { get; set; }
+        public List<PluralSingle> PluralizerCrossReference { get; set; } = new();
+        public List<string>? NotMappedColumns { get; set; }
+        public List<string>? NotMappedTables { get; set; }
+        public List<string>? NotMappedSchemas { get; set; }
+        public List<string>? NotMappedTypes { get; set; }
+        public Dictionary<string, string>? TypeAliases { get; set; }
+        public List<string>? Templates { get; set; }
+        public List<string>? TemplateFileNameFilter { get; set; }
+        public string? OutputPath { get; set; }
+        public bool VerboseMessages { get; set; }
+        public bool AutoRun { get; set; }
+
+        public string? SourceFileName 
+        { 
+            get 
+            {
+                if (string.IsNullOrEmpty(_sourceFileName)) 
+                    throw new ArgumentNullException(nameof(SourceFileName), "Need to set SourceFileName to a valid file name");
+                return _sourceFileName;
+            }
+            set => _sourceFileName = value;
+        }
+        private string? _sourceFileName;
+
+        public const string SCHEMA_NAME = "{SCHEMANAME}";
+        public const string OBJECT_NAME = "{OBJECTNAME}";
+        public const string OP_UPPER_CASE = "U";
+        public const string OP_LOWER_CASE = "L";
+        public const string OP_PROPER_CASE = "P";
+        public const string OP_STRING_REMOVE = "X"; // X'<String to remove>'
+        public const string OP_STRING_REPLACE = "R"; // R'Old string'=>'New String'
+        public const string OP_SINGULARIZE = "S";
+        public const string OP_PLURALIZE = "M";
+        public const string OP_TITLE_CASE = "T";
+
         public static string ReplaceEx(string TemplatePattern, SchemaObjectName schemaObjectName)
         {
             var returnString = TemplatePattern;
-            var TemplatePatternArr = TemplatePattern.Split(new string[] { "}" }, StringSplitOptions.RemoveEmptyEntries);
-            for (int i = 0; i < TemplatePatternArr.Count(); i++)
-            {
-                TemplatePatternArr[i] = TemplatePatternArr[i] + "}";
-            }
-            foreach (var _template in TemplatePatternArr)
-            {
-                var template = _template;
-                if (!template.StartsWith("{"))  //Looks like there is text between the next template token,  lets just grab the token
-                {
-                    template = "{" + template.Pluck("{", "}") + "}";
-                } 
-                var strResolved = "";
-                if (template.Contains(Configuration.SCHEMA_NAME.Substring(0, Configuration.SCHEMA_NAME.Length-1)))
-                {
-                    strResolved = ReplaceEx(template, new SchemaObjectName(schemaObjectName.SchemaName, ""));
-                    returnString = returnString.Replace(template, strResolved);
-                } else if (template.Contains(Configuration.OBJECT_NAME.Substring(0, Configuration.OBJECT_NAME.Length - 1)))
-                {
-                    strResolved = ReplaceEx(template, new SchemaObjectName("", schemaObjectName.ObjectName));
-                    returnString = returnString.Replace(template, strResolved);
-                }
-            }
-            return returnString;
-        }
-
-        /// <summary>
-        /// A Replacement that is geared to specific templates and some simple string maniplation capabilities
-        /// 
-        ///  You can use the following variables here {SCHEMANAME}, {OBJECTNAME} with replace patterns after the instructions, for example:
-        /// Lets say the Schema name is "CUSTOMER" and the Object name is "tbl_Address" 
-        ///    You have the following one letter codes to modify the string after the name seperated by "|"
-        ///        U=Upper Case, L = Lower Case, P=Proper Case, X'<String to remove>'= Clear String, R'Old string'=>'New String'
-        ///  After Filtering, the following patterns will yield that following names:
-        /// "{SCHEMANAME}{OBJECTNAME}" = "CUSTOMERtbl_Address"
-        /// "{SCHEMANAME}{OBJECTNAME-U}" = "CUSTOMERTBL_ADDRESS"
-        /// "{SCHEMANAME-L}{OBJECTNAME-L|X'tbl_'}" = "customeraddress"
-        /// "{SCHEMANAME-P}{OBJECTNAME-P|X'tbl_'}" ="CustomerAddress"
-        /// </summary>
-        /// <param name="TemplatePattern">The template pattern which can be {##-U|L|P|X''|R''=>''} where ## can be SCHEMANAME or OBJECTNAME</param>
-        /// <param name="StringWithPatternToReplace">The string that will replace the patter when found</param>
-        /// <returns>The String replace with formatted</returns>
-        public static string ReplaceEx(string TemplatePattern, string StringWithPatternToReplace)
-        {
-            var returnString = StringWithPatternToReplace;
             var templatePattern = TemplatePattern;
             var operandList = "";
             if (templatePattern.Contains("-"))
@@ -208,7 +346,8 @@ namespace EzDbCodeGen.Core.Config
                 var arr = templatePattern.Split('-');
                 templatePattern = arr[0];
                 operandList = arr[1];
-                if (operandList.EndsWith("}")) operandList = operandList.Substring(0, operandList.Length - 1);
+                if (operandList.EndsWith("}")) 
+                    operandList = operandList[..^1];
                 var OperandArray = operandList.Split('|');
                 foreach(var operand in OperandArray)
                 {
@@ -226,11 +365,11 @@ namespace EzDbCodeGen.Core.Config
                     }
                     else if (operand.StartsWith(Configuration.OP_SINGULARIZE))
                     {
-                        returnString = returnString.ToSingular();
+                        returnString = EzDbSchema.Core.Extentions.StringExtensions.ToSingular(returnString);
                     }
                     else if (operand.StartsWith(Configuration.OP_PLURALIZE))
                     {
-                        returnString = returnString.ToPlural();
+                        returnString = EzDbSchema.Core.Extentions.StringExtensions.ToPlural(returnString);
                     }
                     else if (operand.StartsWith(Configuration.OP_TITLE_CASE))
                     {
@@ -238,87 +377,81 @@ namespace EzDbCodeGen.Core.Config
                     }
                     else if (operand.StartsWith(Configuration.OP_STRING_REMOVE))
                     {
-                        var StrToReplace = "";
-                        if (!operand.StartsWith(Configuration.OP_STRING_REMOVE + "'")) throw new Exception("OP_STRING_REMOVE should have X'????' where X is immediately followed by a single quote and closed by a another single quote");
-                        StrToReplace = operand.Substring(2);
-                        if (operand.EndsWith("'")) StrToReplace = StrToReplace.Substring(0, StrToReplace.Length - 1);
-                        returnString = Regex.Replace(returnString, StrToReplace, "", RegexOptions.IgnoreCase);
+                        if (!operand.StartsWith(Configuration.OP_STRING_REMOVE + "'")) 
+                            throw new Exception("OP_STRING_REMOVE should have X'????' where X is immediately followed by a single quote and closed by a another single quote");
+                        var strToReplace = operand[2..];
+                        if (operand.EndsWith("'")) 
+                            strToReplace = strToReplace[..^1];
+                        returnString = Regex.Replace(returnString, strToReplace, "", RegexOptions.IgnoreCase);
                     }
                     else if (operand.StartsWith(Configuration.OP_STRING_REPLACE))
                     {
-                        var operandArr = operand.Split(new string[] { "=>" }, StringSplitOptions.RemoveEmptyEntries);
-                        operandArr[0] = operandArr[0].Substring(1);
+                        var operandArr = operand.Split(new[] { "=>" }, StringSplitOptions.RemoveEmptyEntries);
+                        operandArr[0] = operandArr[0][1..];
                         returnString = Regex.Replace(returnString, operandArr[0].Unquote(), operandArr[1].Unquote(), RegexOptions.IgnoreCase);
                     }
                 }
             }
             return returnString;
         }
-        public const string SCHEMA_NAME = "{SCHEMANAME}";
-        public const string OBJECT_NAME = "{OBJECTNAME}";
-        public const string OP_UPPER_CASE = "U";
-        public const string OP_LOWER_CASE = "L";
-        public const string OP_PROPER_CASE = "P";
-        public const string OP_TITLE_CASE = "T";
-        public const string OP_STRING_REMOVE = "X"; // X'<String to remove>'
-        public const string OP_STRING_REPLACE = "R"; // R'Old string'=>'New String'
-        public const string OP_SINGULARIZE = "S";
-        public const string OP_PLURALIZE = "M";
-        /// <summary>
-        /// Gets or sets the name of the source file.  This will also cause the reload of the config file
-        /// </summary>
-        /// <value>
-        /// The name of the source file.
-        /// </value>
-        public string SourceFileName { 
-            get {
-                if (string.IsNullOrEmpty(_sourceFileName)) throw new ArgumentNullException("Need to set SourceFileName to a valid file name");
-                return _sourceFileName;
-            }
-            set
-            {
-                _sourceFileName = value;
-            }
-        }
-        private string _sourceFileName = "";
-        public Configuration()
-        {
-        }
-        public List<Entity> Entities { get; set; } = new List<Entity>();
 
-        public List<TemplateItem> Templates { get; set; } = new List<TemplateItem>();
-        public List<PluralSingle> PluralizerCrossReference { get; set; } = new List<PluralSingle>();
-        public List<DataTypeMap> DataTypeMap { get; set; } = new List<DataTypeMap>();
-        
-        public Database Database = new Database();
-        public static Configuration FromFile(string FileName)
+        public static string ReplaceEx(string TemplatePattern, string StringWithPatternToReplace)
         {
-            var ret = JsonConvert.DeserializeObject<Configuration>(File.ReadAllText(FileName));
-            if (ret?.Entities != null)
+            var returnString = StringWithPatternToReplace;
+            var templatePattern = TemplatePattern;
+            var operandList = "";
+            if (templatePattern.Contains("-"))
             {
-                foreach (var e in ret.Entities)
+                var arr = templatePattern.Split('-');
+                templatePattern = arr[0];
+                operandList = arr[1];
+                if (operandList.EndsWith("}")) 
+                    operandList = operandList[..^1];
+                var OperandArray = operandList.Split('|');
+                foreach(var operand in OperandArray)
                 {
-                    if (e?.Misc != null && e.Misc.ContainsKey("PrimaryKey"))
+                    if (operand.StartsWith(Configuration.OP_LOWER_CASE))
                     {
-                        var pkValue = e.Misc["PrimaryKey"]?.ToString();
-                        if (!string.IsNullOrEmpty(pkValue))
-                        {
-                            var arrPK = pkValue.Split(',');
-                            //Overrides.PrimaryKey overrides Misc,  but if it doesn't exist,  we will use the Misc Primary key list
-                            if (e.Overrides?.PrimaryKey?.Count == 0)
-                            {
-                                foreach(var newPk in arrPK)
-                                {
-                                    e.AddPKOverride(newPk);
-                                }
-                            }
-                        }
+                        returnString = returnString.ToLower();
+                    }
+                    else if (operand.StartsWith(Configuration.OP_PROPER_CASE))
+                    {
+                        returnString = returnString.ToTitleCase();
+                    }
+                    else if (operand.StartsWith(Configuration.OP_UPPER_CASE))
+                    {
+                        returnString = returnString.ToUpper();
+                    }
+                    else if (operand.StartsWith(Configuration.OP_SINGULARIZE))
+                    {
+                        returnString = EzDbSchema.Core.Extentions.StringExtensions.ToSingular(returnString);
+                    }
+                    else if (operand.StartsWith(Configuration.OP_PLURALIZE))
+                    {
+                        returnString = EzDbSchema.Core.Extentions.StringExtensions.ToPlural(returnString);
+                    }
+                    else if (operand.StartsWith(Configuration.OP_TITLE_CASE))
+                    {
+                        returnString = returnString.ToTitleCase();
+                    }
+                    else if (operand.StartsWith(Configuration.OP_STRING_REMOVE))
+                    {
+                        if (!operand.StartsWith(Configuration.OP_STRING_REMOVE + "'")) 
+                            throw new Exception("OP_STRING_REMOVE should have X'????' where X is immediately followed by a single quote and closed by a another single quote");
+                        var strToReplace = operand[2..];
+                        if (operand.EndsWith("'")) 
+                            strToReplace = strToReplace[..^1];
+                        returnString = Regex.Replace(returnString, strToReplace, "", RegexOptions.IgnoreCase);
+                    }
+                    else if (operand.StartsWith(Configuration.OP_STRING_REPLACE))
+                    {
+                        var operandArr = operand.Split(new[] { "=>" }, StringSplitOptions.RemoveEmptyEntries);
+                        operandArr[0] = operandArr[0][1..];
+                        returnString = Regex.Replace(returnString, operandArr[0].Unquote(), operandArr[1].Unquote(), RegexOptions.IgnoreCase);
                     }
                 }
             }
-            if (ret.Database.AliasNamePattern.Length == 0) ret.Database.AliasNamePattern = Configuration.OBJECT_NAME;
-            ret.SourceFileName = FileName;
-            return ret;
+            return returnString;
         }
 
         public bool IsIgnoredColumn(IProperty property)
@@ -422,7 +555,7 @@ namespace EzDbCodeGen.Core.Config
         {
             var isIncluded = true;
             var isExcluded = false;
-            foreach (var templateItem in this.Templates)
+            foreach (var templateItem in this.TemplatesList)
             {
                 if (entityNameToCheck.Contains("*Constraint*"))
                     Console.Write("");
@@ -536,6 +669,8 @@ namespace EzDbCodeGen.Core.Config
             {
                 foreach (var entity in this.Entities)
                 {
+                    if (entity.Name.Contains("dbo.DP.*"))
+                        Console.Write("");
                     if (entity.Name.Contains(@"*")) //contains wildcard?
                     {
                         var isMatched = Regex.IsMatch(schemaObjectName.AsFullName(), "^" + Regex.Escape(entity.Name).Replace("\\?", ".").Replace("\\*", ".*") + "$");

@@ -68,7 +68,7 @@ namespace EzDbCodeGen.Tests.EFCore
             {
                 // Skip entities marked as secured
                 var entitySecurity = _configuration.EntitySecurity();
-                if (entitySecurity != null && entitySecurity.TryGetValue(entity.TableName, out var security) && security.Secured)
+                if (entitySecurity != null && entitySecurity.TryGetValue(entity.TableName, out var security) && security.Enabled)
                 {
                     Console.WriteLine($"Skipping secured entity: {entity.TableName}");
                     continue;
@@ -186,7 +186,7 @@ namespace EzDbCodeGen.Tests.EFCore
             {
                 // Skip entities marked as secured
                 var entitySecurity = _configuration.EntitySecurity();
-                if (entitySecurity != null && entitySecurity.TryGetValue(entity.TableName, out var security) && security.Secured)
+                if (entitySecurity != null && entitySecurity.TryGetValue(entity.TableName, out var security) && security.Enabled)
                 {
                     Console.WriteLine($"Skipping secured entity: {entity.TableName}");
                     continue;

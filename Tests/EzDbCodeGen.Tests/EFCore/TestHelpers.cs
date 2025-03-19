@@ -57,7 +57,7 @@ namespace EzDbCodeGen.Tests.EFCore
         /// </summary>
         public static string Namespace(this EzDbCodeGen.Core.Config.Configuration config)
         {
-            return config.HasValue("Namespace") ? config.GetValue<string>("Namespace") : "DefaultNamespace";
+            return config.HasConfigValue("Namespace") ? config.GetConfigValue<string>("Namespace") : "DefaultNamespace";
         }
 
         /// <summary>
@@ -65,8 +65,8 @@ namespace EzDbCodeGen.Tests.EFCore
         /// </summary>
         public static Dictionary<string, EntitySecurity> EntitySecurity(this EzDbCodeGen.Core.Config.Configuration config)
         {
-            return config.HasValue("EntitySecurity") 
-                ? config.GetValue<Dictionary<string, EntitySecurity>>("EntitySecurity") 
+            return config.HasConfigValue("EntitySecurity") 
+                ? config.GetConfigValue<Dictionary<string, EntitySecurity>>("EntitySecurity") 
                 : new Dictionary<string, EntitySecurity>();
         }
     }
@@ -206,7 +206,7 @@ namespace EzDbCodeGen.Tests.EFCore
                 foreach (var entity in database.Values)
                 {
                     // Skip entities with security enabled
-                    var entitySecurity = _configuration.GetValue<Dictionary<string, EntitySecurity>>("EntitySecurity");
+                    var entitySecurity = _configuration.GetConfigValue<Dictionary<string, EntitySecurity>>("EntitySecurity");
                     if (entitySecurity != null && 
                         entitySecurity.TryGetValue(entity.TableName, out var security) && 
                         !security.Enabled)
@@ -223,7 +223,7 @@ namespace EzDbCodeGen.Tests.EFCore
                     // Create the template data
                     var templateData = new
                     {
-                        Namespace = _configuration.GetValue<string>("Namespace"),
+                        Namespace = _configuration.GetConfigValue<string>("Namespace"),
                         TableName = entity.TableName,
                         Entity = entity,
                         Database = database

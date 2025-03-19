@@ -1,9 +1,10 @@
 using System;
-using System.Reflection;
+using System.Linq;
 using System.Threading.Tasks;
-using EzDbCodeGen.Core.Enums;
-using EzDbCodeGen.Internal;
 using McMaster.Extensions.CommandLineUtils;
+using EzDbCodeGen.Core;
+using EzDbCodeGen.Core.Config;
+using EzDbCodeGen.Core.Enums;
 
 namespace EzDbCodeGen.Cli;
 
@@ -14,35 +15,51 @@ namespace EzDbCodeGen.Cli;
 ///         -t "TemplatePAth" -sc "Server=localhost;Database=WideWorldImportersDW;user id=sa;password=sa" -cf "configPath"
 /// </summary>
 
-    class Program
+public class Program
+{
+    public static int Main(string[] args)
     {
-        private static CommandLineApplication App = new CommandLineApplication();
-        static async Task<int> Main(string[] args)
+        try
         {
-            try
+            // Special handling for version and help arguments
+            if (args.Contains("--version") || args.Contains("-v"))
             {
-                LoadSettings();
-                await CommandMain.Enable(App);
-                return App.Execute(args);
+                var version = typeof(Program).Assembly.GetName().Version;
+                Console.WriteLine($"EzDbCodeGen Tool Version {version}");
+                return (int)ReturnCode.Ok;
             }
-            catch (CommandParsingException ex)
+            
+            if (args.Contains("--help") || args.Contains("-h") || args.Contains("-?"))
             {
-                Console.WriteLine(ex.Message);
-                return (int)ReturnCode.Error;
+                var app = new CommandLineApplication<CommandMain>();
+                app.Conventions.UseDefaultConventions();
+                app.ShowHelp();
+                return (int)ReturnCode.Ok;
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Unable to execute application: {0}", ex.Message);
-                return (int)ReturnCode.Error;
-            }
+            
+            // Normal command processing
+            var cmdApp = new CommandLineApplication<CommandMain>();
+            cmdApp.Conventions.UseDefaultConventions();
+            return cmdApp.Execute(args);
         }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error: {ex.Message}");
+            return (int)ReturnCode.Error;
+        }
+    }
 
     static void LoadSettings()
     {
-        AppSettings.Instance.SchemaCoreVersion = typeof(EzDbSchema.Core.Objects.Entity).Assembly.GetName().Version.ToString();
-        AppSettings.Instance.SchemaMssqlVersion = typeof(EzDbSchema.MsSql.Database).Assembly.GetName().Version.ToString();
-        AppSettings.Instance.CodeGenCliVersion = typeof(EzDbCodeGen.Cli.Program).Assembly.GetName().Version.ToString();
-        AppSettings.Instance.CodeGenCoreVersion = typeof(EzDbCodeGen.Core.CodeGenBase).Assembly.GetName().Version.ToString();
+        var schemaCoreVersion = typeof(EzDbSchema.Core.Objects.Entity).Assembly.GetName().Version;
+        var schemaMssqlVersion = typeof(EzDbSchema.MsSql.Database).Assembly.GetName().Version;
+        var codeGenCliVersion = typeof(EzDbCodeGen.Cli.Program).Assembly.GetName().Version;
+        var codeGenCoreVersion = typeof(EzDbCodeGen.Core.CodeGenBase).Assembly.GetName().Version;
+        
+        AppSettings.Instance.SchemaCoreVersion = schemaCoreVersion?.ToString() ?? "0.0.0.0";
+        AppSettings.Instance.SchemaMssqlVersion = schemaMssqlVersion?.ToString() ?? "0.0.0.0";
+        AppSettings.Instance.CodeGenCliVersion = codeGenCliVersion?.ToString() ?? "0.0.0.0";
+        AppSettings.Instance.CodeGenCoreVersion = codeGenCoreVersion?.ToString() ?? "0.0.0.0";
         AppSettings.Instance.Version = AppSettings.Instance.CodeGenCliVersion;
     }
 }

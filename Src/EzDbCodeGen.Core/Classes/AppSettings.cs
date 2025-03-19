@@ -28,21 +28,47 @@ namespace EzDbCodeGen.Internal
         /// </summary>
         public string ConfigurationFileName { get; set; } = "";
 
-        private Configuration? configuration;
+        private Configuration? codeGenConfiguration;
         /// <summary>
-        /// Gets or sets the configuration.
+        /// Gets or sets the code generation configuration.
         /// </summary>
         public Configuration Configuration
         {
             get
             {
-                if (configuration == null) configuration = EzDbCodeGen.Core.Config.Configuration.FromFile(ConfigurationFileName);
-                if (configuration.SourceFileName != this.ConfigurationFileName) configuration = EzDbCodeGen.Core.Config.Configuration.FromFile(ConfigurationFileName);
-                return configuration;
+                if (codeGenConfiguration == null)
+                {
+                    // Try to load from file if it exists, otherwise create a default configuration
+                    if (!string.IsNullOrEmpty(ConfigurationFileName) && File.Exists(ConfigurationFileName))
+                    {
+                        codeGenConfiguration = EzDbCodeGen.Core.Config.Configuration.FromFile(ConfigurationFileName);
+                    }
+                    else
+                    {
+                        codeGenConfiguration = new Configuration();
+                        codeGenConfiguration.SourceFileName = ConfigurationFileName;
+                    }
+                }
+                
+                // Update source filename if it changed
+                if (!string.IsNullOrEmpty(ConfigurationFileName) && 
+                    codeGenConfiguration.SourceFileName != this.ConfigurationFileName)
+                {
+                    if (File.Exists(ConfigurationFileName))
+                    {
+                        codeGenConfiguration = EzDbCodeGen.Core.Config.Configuration.FromFile(ConfigurationFileName);
+                    }
+                    else
+                    {
+                        codeGenConfiguration.SourceFileName = ConfigurationFileName;
+                    }
+                }
+                
+                return codeGenConfiguration;
             }
             set 
             {
-                configuration = value;
+                codeGenConfiguration = value;
             }
         }
 
@@ -81,6 +107,7 @@ namespace EzDbCodeGen.Internal
         /// </summary>
         internal AppSettings()
         {
+            // Use a default config path but don't require it to exist
             this.ConfigurationFileName = "{ASSEMBLY_PATH}ezdbcodegen.config.json".ResolvePathVars(Environment.GetEnvironmentVariable);
         }
 
@@ -105,9 +132,11 @@ namespace EzDbCodeGen.Internal
                 throw new ArgumentException("Configuration file name cannot be null or empty.", nameof(configurationFileName));
             }
 
+            // If file doesn't exist, create a default AppSettings instance
             if (!File.Exists(configurationFileName))
             {
-                throw new FileNotFoundException($"Configuration file '{configurationFileName}' not found.", configurationFileName);
+                var defaultSettings = new AppSettings(configurationFileName);
+                return defaultSettings;
             }
 
             var appsettingsText = File.ReadAllText(configurationFileName);

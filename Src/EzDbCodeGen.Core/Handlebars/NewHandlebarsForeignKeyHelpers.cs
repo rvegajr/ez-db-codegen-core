@@ -1,8 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using HandlebarsDotNet;
-using System.Diagnostics;
 using EzDbSchema.Core.Interfaces;
 using EzDbSchema.Core.Enums;
-using EzDbCodeGen.Core.Extensions;
+using EzDbSchema.Core.Extentions;
+
+[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
+[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
 namespace EzDbCodeGen.Core.Handlebars
 {
@@ -12,133 +18,114 @@ namespace EzDbCodeGen.Core.Handlebars
 
         public NewHandlebarsForeignKeyHelpers(IHandlebars handlebars)
         {
-            _handlebars = handlebars;
+            _handlebars = handlebars ?? throw new ArgumentNullException(nameof(handlebars));
         }
 
         public void RegisterHelpers()
         {
-            // Generate POCO model properties for foreign keys
-            _handlebars.RegisterHelper("POCOModelFKProperties", (writer, context, parameters) =>
-            {
-                var PROC_NAME = "Handlebars.RegisterHelper('POCOModelFKProperties')";
-                try
+            _handlebars.RegisterHelper("GetForeignKeyProperties", (writer, context, parameters) => {
+                if (context.Value is null)
                 {
-                    var entity = (IEntity)context.Value;
-                    var prefix = parameters.Length > 0 ? parameters[0]?.ToString() ?? "" : "";
-                    var fkNameToSelect = parameters.Length > 1 ? parameters[1]?.ToString() : null;
+                    writer.WriteSafeString(string.Empty);
+                    return;
+                }
 
-                    var oneToOneRelationships = entity.Relationships?
-                        .Where(r => r.MultiplicityType == RelationshipMultiplicityType.OneToOne)
-                        .ToList() ?? new List<IRelationship>();
+                if (context.Value is not IEntity entity)
+                {
+                    writer.WriteSafeString(string.Empty);
+                    return;
+                }
 
-                    foreach (var relationship in oneToOneRelationships)
+                var prefix = parameters.Length > 0 ? parameters[0]?.ToString() ?? string.Empty : string.Empty;
+                var fkNameToSelect = parameters.Length > 1 ? parameters[1]?.ToString() : string.Empty;
+
+                if (entity.Relationships == null || !entity.Relationships.Any())
+                {
+                    return;
+                }
+
+                var relationships = entity.Relationships.Where(r => 
+                    r.MultiplicityType == RelationshipMultiplicityType.ManyToOne || 
+                    r.MultiplicityType == RelationshipMultiplicityType.ManyToZeroOrOne).ToList();
+
+                foreach (var relationship in relationships)
+                {
+                    if (string.IsNullOrEmpty(fkNameToSelect) || relationship.ConstraintName == fkNameToSelect)
                     {
-                        if (string.IsNullOrEmpty(fkNameToSelect) || relationship.ConstraintName == fkNameToSelect)
-                        {
-                            var tableAlias = relationship.ToTableName.Replace($"{entity.DatabaseSchema}.", "");
-                            var propertyName = relationship.ToPropertyName;
-
-                            writer.WriteSafeString($"\n{prefix}public virtual {tableAlias.ToSingular()} {propertyName} {{ get; set; }}");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"{PROC_NAME}: {ex.Message}");
-                    throw;
-                }
-            });
-
-            // Generate POCO model properties for many-to-zero-or-one relationships
-            _handlebars.RegisterHelper("POCOModelFKManyToZeroToOne", (writer, context, parameters) =>
-            {
-                var PROC_NAME = "Handlebars.RegisterHelper('POCOModelFKManyToZeroToOne')";
-                try
-                {
-                    var entity = (IEntity)context.Value;
-                    var prefix = parameters.Length > 0 ? parameters[0]?.ToString() ?? "" : "";
-                    var fkNameToSelect = parameters.Length > 1 ? parameters[1]?.ToString() : null;
-
-                    var manyToZeroOrOneRelationships = entity.Relationships?
-                        .Where(r => r.MultiplicityType == RelationshipMultiplicityType.ManyToZeroOrOne)
-                        .ToList() ?? new List<IRelationship>();
-
-                    foreach (var relationship in manyToZeroOrOneRelationships)
-                    {
-                        if (string.IsNullOrEmpty(fkNameToSelect) || relationship.ConstraintName == fkNameToSelect)
-                        {
-                            var tableAlias = relationship.ToTableName.Replace($"{entity.DatabaseSchema}.", "");
-                            var propertyName = relationship.ToPropertyName;
-
-                            writer.WriteSafeString($"\n{prefix}public virtual {tableAlias.ToSingular()} {propertyName} {{ get; set; }}");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"{PROC_NAME}: {ex.Message}");
-                    throw;
-                }
-            });
-
-            // Generate POCO model properties for many-to-one relationships
-            _handlebars.RegisterHelper("POCOModelFKManyToOne", (writer, context, parameters) =>
-            {
-                var PROC_NAME = "Handlebars.RegisterHelper('POCOModelFKManyToOne')";
-                try
-                {
-                    var entity = (IEntity)context.Value;
-                    var prefix = parameters.Length > 0 ? parameters[0]?.ToString() ?? "" : "";
-                    var fkNameToSelect = parameters.Length > 1 ? parameters[1]?.ToString() : null;
-
-                    var manyToOneRelationships = entity.Relationships?
-                        .Where(r => r.MultiplicityType == RelationshipMultiplicityType.ManyToOne)
-                        .ToList() ?? new List<IRelationship>();
-
-                    foreach (var relationship in manyToOneRelationships)
-                    {
-                        if (string.IsNullOrEmpty(fkNameToSelect) || relationship.ConstraintName == fkNameToSelect)
-                        {
-                            var tableAlias = relationship.ToTableName.Replace($"{entity.DatabaseSchema}.", "");
-                            var propertyName = relationship.ToPropertyName;
-
-                            writer.WriteSafeString($"\n{prefix}public virtual {tableAlias.ToSingular()} {propertyName} {{ get; set; }}");
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"{PROC_NAME}: {ex.Message}");
-                    throw;
-                }
-            });
-
-            // Generate POCO model properties for collection navigation properties
-            _handlebars.RegisterHelper("POCOModelCollectionProperties", (writer, context, parameters) =>
-            {
-                var PROC_NAME = "Handlebars.RegisterHelper('POCOModelCollectionProperties')";
-                try
-                {
-                    var entity = (IEntity)context.Value;
-                    var prefix = parameters.Length > 0 ? parameters[0]?.ToString() ?? "" : "";
-
-                    var collectionRelationships = entity.Relationships?
-                        .Where(r => r.MultiplicityType == RelationshipMultiplicityType.OneToMany ||
-                                  r.MultiplicityType == RelationshipMultiplicityType.OneToMany)
-                        .ToList() ?? new List<IRelationship>();
-
-                    foreach (var relationship in collectionRelationships)
-                    {
-                        var tableAlias = relationship.FromTableName?.Replace($"{entity.DatabaseSchema}.", "") ?? string.Empty;
+                        var tableAlias = relationship.ToTableName.Replace($"{entity.DatabaseSchema}.", "");
                         var propertyName = relationship.FromPropertyName;
-
-                        writer.WriteSafeString($"\n{prefix}public virtual ICollection<{tableAlias}> {propertyName} {{ get; set; }} = new HashSet<{tableAlias}>();");
+                        var singularTableName = EzDbSchema.Core.Extentions.StringExtensions.ToSingular(tableAlias);
+                        writer.WriteSafeString($"\n{prefix}public virtual {singularTableName} {propertyName} {{ get; set; }}");
                     }
                 }
-                catch (Exception ex)
+            });
+
+            _handlebars.RegisterHelper("GetOneToOneReferences", (writer, context, parameters) => {
+                if (context.Value is null)
                 {
-                    Debug.WriteLine($"{PROC_NAME}: {ex.Message}");
-                    throw;
+                    writer.WriteSafeString(string.Empty);
+                    return;
+                }
+
+                if (context.Value is not IEntity entity)
+                {
+                    writer.WriteSafeString(string.Empty);
+                    return;
+                }
+
+                var prefix = parameters.Length > 0 ? parameters[0]?.ToString() ?? string.Empty : string.Empty;
+                var fkNameToSelect = parameters.Length > 1 ? parameters[1]?.ToString() : string.Empty;
+                
+                if (entity.Relationships == null || !entity.Relationships.Any())
+                {
+                    return;
+                }
+                
+                var relationships = entity.Relationships.Where(r => r.MultiplicityType == RelationshipMultiplicityType.OneToOne).ToList();
+
+                foreach (var relationship in relationships)
+                {
+                    if (string.IsNullOrEmpty(fkNameToSelect) || relationship.ConstraintName == fkNameToSelect)
+                    {
+                        var tableAlias = EzDbSchema.Core.Extentions.StringExtensions.ToSingular(relationship.ToTableName.Replace($"{entity.DatabaseSchema}.", ""));
+                        var propertyName = relationship.ToPropertyName;
+                        writer.WriteSafeString($"\n{prefix}public virtual {tableAlias} {propertyName} {{ get; set; }}");
+                    }
+                }
+            });
+
+            _handlebars.RegisterHelper("GetForeignKeyCollectionsForEntity", (writer, context, parameters) => {
+                if (context.Value is null)
+                {
+                    writer.WriteSafeString(string.Empty);
+                    return;
+                }
+
+                if (context.Value is not IEntity entity)
+                {
+                    writer.WriteSafeString(string.Empty);
+                    return;
+                }
+
+                var prefix = parameters.Length > 0 ? parameters[0]?.ToString() ?? string.Empty : string.Empty;
+                var fkNameToSelect = parameters.Length > 1 ? parameters[1]?.ToString() : string.Empty;
+                
+                if (entity.Relationships == null || !entity.Relationships.Any())
+                {
+                    return;
+                }
+                
+                var relationships = entity.Relationships.Where(r => r.MultiplicityType == RelationshipMultiplicityType.OneToMany).ToList();
+
+                foreach (var relationship in relationships)
+                {
+                    if (string.IsNullOrEmpty(fkNameToSelect) || relationship.ConstraintName == fkNameToSelect)
+                    {
+                        var tableAlias = relationship.FromTableName.Replace($"{entity.DatabaseSchema}.", "");
+                        var singularName = EzDbSchema.Core.Extentions.StringExtensions.ToSingular(tableAlias);
+                        var pluralName = EzDbSchema.Core.Extentions.StringExtensions.ToPlural(relationship.ToPropertyName);
+                        writer.WriteSafeString($"\n{prefix}public virtual ICollection<{singularName}> {pluralName} {{ get; set; }} = new List<{singularName}>();");
+                    }
                 }
             });
         }

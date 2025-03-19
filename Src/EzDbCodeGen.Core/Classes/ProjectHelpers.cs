@@ -3,10 +3,12 @@ using EzDbCodeGen.Core.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Xsl;
 using System.Runtime.CompilerServices;
+
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 

@@ -10,7 +10,6 @@ global using System.Text.Json.Serialization;
 global using System.Reflection;
 global using System.Runtime.CompilerServices;
 global using Microsoft.Data.SqlClient;
-global using Newtonsoft.Json;
 global using McMaster.Extensions.CommandLineUtils;
 global using EzDbCodeGen.Core;
 global using EzDbCodeGen.Core.Classes;

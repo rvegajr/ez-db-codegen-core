@@ -234,8 +234,8 @@ namespace {{Namespace}}.Controllers
             {
                 OutputPath = _outputPath
             };
-            _configuration.SetValue("TemplatesPath", _templatePath);
-            _configuration.SetValue("Namespace", "TestApp");
+            _configuration.SetConfigValue("TemplatesPath", _templatePath);
+            _configuration.SetConfigValue("Namespace", "TestApp");
             _configuration.SourceFileName = Path.Combine(_outputPath, "ezdbcodegen.config.json");
             _configuration.SaveToFile(_configuration.SourceFileName);
         }
@@ -276,12 +276,12 @@ namespace {{Namespace}}.Controllers
         public void GenerateEFCoreApplication_ShouldHandleEntitySecurity()
         {
             // Arrange
-            var entitySecurity = new Dictionary<string, EntitySecurity>
+            var entitySecurity = new Dictionary<string, TestHelpers.EntitySecurity>
             {
-                { "Customer", new EntitySecurity { Secured = true } },
-                { "Order", new EntitySecurity { Secured = false } }
+                { "Customer", new TestHelpers.EntitySecurity { Enabled = true } },
+                { "Order", new TestHelpers.EntitySecurity { Enabled = false } }
             };
-            _configuration.SetValue("EntitySecurity", entitySecurity);
+            _configuration.SetConfigValue("EntitySecurity", entitySecurity);
             
             var templateDataInput = new TemplateDataInput(_mockDatabase);
             

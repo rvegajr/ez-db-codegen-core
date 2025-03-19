@@ -229,8 +229,8 @@ namespace {{Namespace}}.Controllers
             {
                 OutputPath = _outputPath
             };
-            _configuration.SetValue("TemplatesPath", _templatePath);
-            _configuration.SetValue("Namespace", "TestApp");
+            _configuration.SetConfigValue("TemplatesPath", _templatePath);
+            _configuration.SetConfigValue("Namespace", "TestApp");
             _configuration.SourceFileName = Path.Combine(_outputPath, "ezdbcodegen.config.json");
             _configuration.SaveToFile(_configuration.SourceFileName);
         }

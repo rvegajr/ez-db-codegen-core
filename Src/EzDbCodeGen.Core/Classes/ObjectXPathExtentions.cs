@@ -1,176 +1,135 @@
-using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using Microsoft.Data.SqlClient;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-
-using System.Runtime.CompilerServices;
-using Newtonsoft.Json;
 using System.Xml;
+using System.Xml.Linq;
+using System.Xml.XPath;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
-[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
-[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
-
-namespace EzDbCodeGen.Core.Extentions
+namespace EzDbCodeGen.Core.Classes
 {
-    internal static class ObjectXPathExtentions
+    public static class ObjectXPathExtensions
     {
-        /// <summary>
-        /// Will return a formatted string that is based on Xpath query but adds a couple of extra commands to interrogate different properties of the XmlNode object.  This function is most useful if you want to return
-        /// a string list from an array of objects.  This function works by first turning it into a JSON object and then turning it into an XML object. I chose this because XPATH has a richer and more well known syntax
-        /// than JsonPath.
-        /// </summary>
-        /// <typeparam name="T">This allows this to be used with an object passed to it</typeparam>
-        /// <param name="_item">The object you want to search and stringify</param>
-        /// <param name="xpathPathQueryString">The XPath query that will be used to query the object.  You can end this with a custom Hash string of 1 of 4 values: #Name, #Value, #InnerXml, #InnerText. 
-        /// The function will obtain the value from this property of the XmlNode Object and format based on the pattern.  The default property will be InnerText.
-        /// If you just include one of the 4 hash parms, then xpathPathQueryString will automatically prepend a "/*/*" which will search only all direct child nodes
-        /// If the first character of this string is ">", then it will substitute "/*/*| " which means direct child node
-        /// You can chain an xpath to take affect after a selection by using the | operator... so you can do this > | /Name#InnerText will select all child nodes and then get all Name elements and get the InnerText from each child
-        /// </param>
-        /// <param name="pattern">Default is "%1,%2" where %1=first item, %2 are all subsequent items.. so %1,%2 is comma delimited</param>
-        /// <returns></returns>
-        public static string ObjectPropertyAsString<T>(this T _item, string xpathPathQueryString= "/*/*#InnerText", string pattern = "%1,%2") where T : new()
+        private static readonly JsonSerializerSettings DefaultJsonSettings = new()
         {
-            var PROC = string.Format("ObjectXPathExtentions.ObjectPropertyAsString( item=[object {0}], xpathPathQueryString='{1}', pattern={2}, AttributeField={3})", _item.GetType().Name, xpathPathQueryString, pattern, "??");
-            var xml = "";
+            Formatting = Newtonsoft.Json.Formatting.Indented,
+            NullValueHandling = NullValueHandling.Ignore,
+            DefaultValueHandling = DefaultValueHandling.Ignore,
+            TypeNameHandling = TypeNameHandling.Auto,
+            PreserveReferencesHandling = PreserveReferencesHandling.Objects
+        };
+
+        /// <summary>
+        /// Converts an object to XML and evaluates an XPath expression against it.
+        /// </summary>
+        /// <param name="obj">The object to evaluate.</param>
+        /// <param name="xpath">The XPath expression.</param>
+        /// <returns>The value found at the XPath location, or null if not found.</returns>
+        public static string? EvaluateXPath(this object obj, string xpath)
+        {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
+            }
+
+            if (string.IsNullOrEmpty(xpath))
+            {
+                throw new ArgumentException("XPath expression cannot be null or empty", nameof(xpath));
+            }
+
+            var json = JsonConvert.SerializeObject(obj, DefaultJsonSettings);
+            var jsonObj = JObject.Parse(json);
+            var xml = ConvertJsonToXml(jsonObj);
+
             try
             {
-                //if the first character is the direct child short cut ">" and we do not already have the 
-                if ((xpathPathQueryString.StartsWith(">")) && (!xpathPathQueryString.StartsWith(">|"))) xpathPathQueryString = ">|" + xpathPathQueryString.Substring(1);
-                var xpathPathQueryStringChild = "";
-                if (xpathPathQueryString.Contains("|"))
-                {
-                    var arrXpathPathQueryString = xpathPathQueryString.Split('|');
-                    xpathPathQueryString = arrXpathPathQueryString[0].Trim();
-                    xpathPathQueryStringChild = arrXpathPathQueryString[1].Trim();
-                }
-                string json = Newtonsoft.Json.JsonConvert.SerializeObject(_item, Newtonsoft.Json.Formatting.Indented
-                    , new JsonSerializerSettings
-                    {
-                        PreserveReferencesHandling = PreserveReferencesHandling.All,
-                        TypeNameHandling = TypeNameHandling.All
-                    });
-                XmlDocument doc = (XmlDocument)JsonConvert.DeserializeXmlNode(json, _item.GetType().Name);
-                XmlNode root = doc.DocumentElement;
-                xml = doc.OuterXml;
-
-                // Add the namespace.  
-                XmlNamespaceManager nsmgr = new XmlNamespaceManager(doc.NameTable);
-                nsmgr.AddNamespace("json", "http://james.newtonking.com/projects/json");
-
-                var AttributeField = "InnerText";
-                var _xpathPathQueryString = xpathPathQueryString;
-                if (_xpathPathQueryString.StartsWith("#")) _xpathPathQueryString = "/*/*" + _xpathPathQueryString;
-                if (_xpathPathQueryString.Equals("")) _xpathPathQueryString = "/*/*";
-                if (_xpathPathQueryString.StartsWith(">")) _xpathPathQueryString = "/*/*" + _xpathPathQueryString.Substring(1);
-                if (_xpathPathQueryString.Contains("#"))
-                {
-                    var hashPos = _xpathPathQueryString.IndexOf("#");
-                    AttributeField = _xpathPathQueryString.Substring(hashPos + 1);
-                    _xpathPathQueryString = _xpathPathQueryString.Substring(0, hashPos);
-                }
-                var listitems = doc.SelectNodes(_xpathPathQueryString) ?? throw new InvalidOperationException($"No nodes found for XPath query: {_xpathPathQueryString}");
-
-                PROC = string.Format("ObjectXPathExtentions.ObjectPropertyAsString( item=[object {0}], _xpathPathQueryString='{1}', pattern={2}, AttributeField={3}, XPathCount={4})", _item.GetType().Name, _xpathPathQueryString, pattern, AttributeField, listitems.Count);
-
-                string firstPrefix = "";
-                string otherPrefix = "";
-                string otherSuffix = "";
-                var pos = 0;
-                if (pattern.Contains("%1"))
-                {
-                    firstPrefix = pattern.Substring(pos, pattern.IndexOf("%1") - pos);
-                    pos = pattern.IndexOf("%1") + 2;
-                }
-                if (pattern.Contains("%2"))
-                {
-                    otherPrefix = pattern.Substring(pos, pattern.IndexOf("%2") - pos);
-                    pos = pattern.IndexOf("%2") + 2;
-                }
-                if (pos > 0)
-                {
-                    otherSuffix = pattern.Substring(pos);
-                }
-                var itemCount = 0;
-                var sb = new StringBuilder();
-                foreach (var item in listitems)
-                {
-
-                    var nod = ((XmlNode)item);
-                    if (xpathPathQueryStringChild.Length>0)
-                    {
-                        var _xpathPathQueryStringChild = xpathPathQueryStringChild;
-                        if (_xpathPathQueryStringChild.StartsWith("#")) _xpathPathQueryStringChild = "/*/*" + _xpathPathQueryStringChild;
-                        if (_xpathPathQueryStringChild.Equals("")) _xpathPathQueryStringChild = "/*/*";
-                        if (_xpathPathQueryStringChild.StartsWith(">")) _xpathPathQueryStringChild = "/*/*/" + _xpathPathQueryStringChild.Substring(1);
-                        if (_xpathPathQueryStringChild.Contains("#"))
-                        {
-                            var hashPos = _xpathPathQueryStringChild.IndexOf("#");
-                            AttributeField = _xpathPathQueryStringChild.Substring(hashPos + 1);
-                            _xpathPathQueryStringChild = _xpathPathQueryStringChild.Substring(0, hashPos);
-                        }
-                        if (nod.Attributes["json:ref"] != null)
-                        {
-                            //if it is, lets get the id and then grab the node and set the node, thus evaluating the reference
-                            var refid = nod.Attributes["json:ref"].Value;
-                            nod = doc.SelectSingleNode(string.Format("//*[@json:id ='{0}']", refid), nsmgr) ?? throw new InvalidOperationException($"Node not found with json:id={refid}");
-                            var childNode = nod.SelectSingleNode(_xpathPathQueryStringChild);
-                            if (childNode != null) nod = childNode;
-                        }
-                        else
-                        {
-                            var childNode = nod.SelectSingleNode(_xpathPathQueryStringChild);
-                            if (childNode != null) nod = childNode;
-
-                        }
-
-                        //Check and see if this is a reference to another node
-                    }
-                    if (nod != null)
-                    {
-                        var text = "";
-                        switch (AttributeField.ToUpper())
-                        {
-                            case "NAME":
-                                text = nod.Name;
-                                break;
-                            case "VALUE":
-                                text = nod.Value;
-                                break;
-                            case "INNERTEXT":
-                                text = nod.InnerText;
-                                break;
-                            case "INNERXML":
-                                text = nod.InnerXml;
-                                break;
-                        }
-                        if (itemCount == 0)
-                        {
-                            sb.Append(firstPrefix);
-                            sb.Append(text);
-                        }
-                        else
-                        {
-                            sb.Append(otherPrefix);
-                            sb.Append(text);
-                            sb.Append(otherSuffix);
-                        }
-                        itemCount++;
-                    }
-                }
-                return sb.ToString();
+                return xml.XPathSelectElement(xpath)?.Value;
             }
-            catch (Exception ex)
+            catch
             {
-                throw new Exception(PROC + ": ERROR! " + ex.Message, ex);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Evaluates multiple XPath expressions against an object and returns a dictionary of results.
+        /// </summary>
+        /// <param name="obj">The object to evaluate.</param>
+        /// <param name="xpaths">The XPath expressions to evaluate.</param>
+        /// <returns>A dictionary containing the XPath expressions and their corresponding values.</returns>
+        public static Dictionary<string, string?> EvaluateXPaths(this object obj, IEnumerable<string> xpaths)
+        {
+            if (obj == null)
+            {
+                throw new ArgumentNullException(nameof(obj));
             }
 
+            if (xpaths == null)
+            {
+                throw new ArgumentNullException(nameof(xpaths));
+            }
+
+            var results = new Dictionary<string, string?>();
+            var json = JsonConvert.SerializeObject(obj, DefaultJsonSettings);
+            var jsonObj = JObject.Parse(json);
+            var xml = ConvertJsonToXml(jsonObj);
+
+            foreach (var xpath in xpaths)
+            {
+                if (string.IsNullOrEmpty(xpath)) continue;
+
+                try
+                {
+                    var value = xml.XPathSelectElement(xpath)?.Value;
+                    results[xpath] = value;
+                }
+                catch
+                {
+                    results[xpath] = null;
+                }
+            }
+
+            return results;
+        }
+
+        private static XDocument ConvertJsonToXml(JToken token)
+        {
+            var doc = new XDocument();
+            var root = new XElement("root");
+            ConvertJsonNodeToXml(token, root);
+            doc.Add(root);
+            return doc;
+        }
+
+        private static void ConvertJsonNodeToXml(JToken token, XElement parent)
+        {
+            switch (token.Type)
+            {
+                case JTokenType.Object:
+                    foreach (var property in ((JObject)token).Properties())
+                    {
+                        var element = new XElement(property.Name);
+                        ConvertJsonNodeToXml(property.Value, element);
+                        parent.Add(element);
+                    }
+                    break;
+
+                case JTokenType.Array:
+                    foreach (var item in (JArray)token)
+                    {
+                        var element = new XElement("item");
+                        ConvertJsonNodeToXml(item, element);
+                        parent.Add(element);
+                    }
+                    break;
+
+                case JTokenType.Null:
+                    break;
+
+                default:
+                    parent.Value = token.ToString();
+                    break;
+            }
         }
     }
 }

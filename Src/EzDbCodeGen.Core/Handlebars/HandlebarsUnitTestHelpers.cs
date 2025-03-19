@@ -1,5 +1,6 @@
 using HandlebarsDotNet;
 using System.Diagnostics;
+using EzDbSchema.Core.Interfaces;
 
 namespace EzDbCodeGen.Core.Handlebars
 {
@@ -26,7 +27,7 @@ namespace EzDbCodeGen.Core.Handlebars
                                 if (relationshipGroup != null)
                                 {
                                     var relationship = relationshipGroup.FirstOrDefault();
-                                    if (relationship is CoreInterfaces.IRelationship coreRelationship)
+                                    if (relationship is EzDbSchema.Core.Interfaces.IRelationship coreRelationship)
                                     {
                                         string expandColumnName = coreRelationship.FromPropertyName != null ? string.Join("", coreRelationship.FromPropertyName) : (coreRelationship.FromTableName ?? string.Empty);
                                         writer.WriteSafeString($"\n{prefix}using (var response = await HttpClient.GetAsync(\"http://testserver/api/{tableAlias}?%24expand={expandColumnName}&%24top=10\")) ");

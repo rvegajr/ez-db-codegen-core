@@ -1,38 +1,63 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Runtime.CompilerServices;
 using EzDbCodeGen.Core.Extensions;
 using EzDbSchema.Core.Extentions;
-using System.Runtime.CompilerServices;
+
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
-namespace EzDbCodeGen.Core
+namespace EzDbCodeGen.Core.Classes
 {
-    public class DirectoryName
+    public class DirectoryName : IEquatable<DirectoryName>
     {
-        readonly string _value;
-        public DirectoryName(string value)
+        private string _value;
+        private int _hashCode;
+
+        public DirectoryName(string d)
         {
-            this._value = value;
+            _value = d;
+            _hashCode = d.GetStableHashCode();
         }
-        public static implicit operator string(DirectoryName d)
-        {
-            return d._value;
-        }
+
         public static implicit operator DirectoryName(string d)
         {
             return new DirectoryName(d);
         }
-        public override int GetHashCode()
+
+        public static implicit operator string(DirectoryName d)
         {
-            return _value.GetStableHashCode();
+            return d._value;
         }
+
         public override bool Equals(object? obj)
         {
-            return Equals(obj as DirectoryName);
+            if (obj is DirectoryName other)
+            {
+                return Equals(other);
+            }
+            return false;
         }
-        public bool Equals(DirectoryName? obj)
+
+        public bool Equals(DirectoryName? other)
         {
-            return obj != null && obj.GetHashCode() == this.GetHashCode();
+            if (other is null)
+            {
+                return false;
+            }
+            return _hashCode == other._hashCode;
+        }
+
+        public override int GetHashCode()
+        {
+            return _hashCode;
+        }
+
+        public override string ToString()
+        {
+            return _value;
         }
     }
 }
