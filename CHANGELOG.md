@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [8.5.1] - 2025-03-19
+
+### Changed
+- Enhanced interface documentation in README.md and AI_USAGE.md
+- Improved template examples for interface-based code generation
+- Added comprehensive interface usage patterns and best practices
+- Updated documentation for EzDbSchema.Core integration
+
 ## [8.4.0] - 2025-03-17
 
 ### Changed

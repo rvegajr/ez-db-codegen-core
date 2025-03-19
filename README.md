@@ -111,6 +111,163 @@ codeGenerator.ProcessModelTemplate("Templates/EFCoreModel.hbs", templateDataInpu
 codeGenerator.ProcessControllerTemplate("Templates/EFCoreController.hbs", templateDataInput, outputPath);
 ```
 
+## Core Interfaces
+
+EzDbCodeGen is built around the core interfaces from [EzDbSchema](https://github.com/rvegajr/ez-db-schema-core). Here are the key interfaces you'll work with:
+
+```csharp
+// Root interface for database schema
+public interface IDatabase
+{
+    string Name { get; }
+    string DefaultSchema { get; }
+    IEntityDictionary<string, IEntity> Entities { get; }
+}
+
+// Represents a database table or view
+public interface IEntity
+{
+    string TableName { get; }
+    string TableAlias { get; }
+    string DatabaseSchema { get; }
+    IPropertyDictionary<string, IProperty> Properties { get; }
+    IRelationshipReferenceList Relationships { get; }
+}
+
+// Represents a database column
+public interface IProperty
+{
+    string PropertyName { get; }
+    string ColumnName { get; }
+    string DataType { get; }
+    bool IsNullable { get; }
+    bool IsPrimaryKey { get; }
+    bool IsIdentity { get; }
+}
+
+// Represents table relationships
+public interface IRelationship
+{
+    string ConstraintName { get; }
+    string FromTableName { get; }
+    string ToTableName { get; }
+    RelationshipMultiplicityType MultiplicityType { get; }
+    IEntity FromEntity { get; }
+    IEntity ToEntity { get; }
+}
+```
+
+### Using Interfaces in Templates
+
+Your Handlebars templates can access these interfaces directly. Here are some common patterns:
+
+```handlebars
+{{#each Entities}}
+public class {{format "pascalCase" TableName}}
+{
+    {{#each Properties}}
+    {{#if IsPrimaryKey}}[Key]{{/if}}
+    {{#if IsRequired}}[Required]{{/if}}
+    public {{convertType DataType "csharp" IsNullable}} {{format "pascalCase" PropertyName}} { get; set; }
+    {{/each}}
+
+    {{#each Relationships}}
+    {{#if (eq MultiplicityType "OneToMany")}}
+    public virtual ICollection<{{format "pascalCase" ToTableName}}> {{format "pascalCase" ToTableName}} { get; set; }
+        = new List<{{format "pascalCase" ToTableName}}>();
+    {{else}}
+    public virtual {{format "pascalCase" ToTableName}} {{format "pascalCase" ToTableName}} { get; set; }
+    {{/if}}
+    {{/each}}
+}
+{{/each}}
+```
+
+For more detailed examples and patterns, see [AI_USAGE.md](AI_USAGE.md).
+
+## Templating Capabilities
+
+EzDbCodeGen Core is a powerful code generation library that leverages Handlebars templates to generate code from database schemas.
+
+### Features
+
+- **Database Schema Support**: Works with EzDbSchema to read and analyze database structures
+- **Handlebars Templating**: Rich set of custom helpers for code generation
+- **Multi-Language Support**: Generate code for C#, TypeScript, Java, Python, and more
+- **Customizable Output**: Control formatting and layout of generated code
+
+### Templating Helpers
+
+#### FormatEz
+String formatting helper with multiple operations:
+```handlebars
+{{format "camelCase,uppercase" propertyName}}
+{{format "snakeCase,tab1" className}}
+```
+
+Supported operations:
+- Case transformations: camelCase, pascalCase, snakeCase, kebabCase, uppercase, lowercase
+- Indentation: indent2, indent4 (default), indent8
+- Tabbing: tab1, tab2, tab4
+
+#### ConvertTypeEz
+Data type conversion helper:
+```handlebars
+{{convertType sqlType "csharp" nullable}}
+{{convertType "varchar(50)" "typescript"}}
+```
+
+Supported target languages:
+- C# (csharp)
+- TypeScript
+- JavaScript
+- Java
+- Python
+
+#### DocEz
+Documentation generator for properties and relationships:
+```handlebars
+{{doc property "xml"}}
+{{doc relationship "jsdoc"}}
+```
+
+Supported formats:
+- XML (for C#)
+- JSDoc (for TypeScript/JavaScript)
+- JavaDoc (for Java)
+- Docstring (for Python)
+
+#### LayoutEz
+Template structure manager:
+```handlebars
+{{#layout}}
+  {{#region "header"}}
+    // Auto-generated code
+  {{/region}}
+  {{#region "body"}}
+    public class {{className}} {
+      {{> properties}}
+    }
+  {{/region}}
+{{/layout}}
+```
+
+#### CodeFormatEz
+Code formatter for multiple languages:
+```handlebars
+{{formatCode "csharp" codeString}}
+{{formatCode "sql" queryString}}
+```
+
+Supported languages:
+- C#
+- SQL
+- TypeScript/JavaScript
+- HTML
+- CSS
+- Java
+- Python
+
 ## AI Support
 
 This project includes AI support files to help AI assistants understand and work with the codebase:
@@ -151,28 +308,142 @@ Many thanks to the following projects that have helped in this project
 * McMaster.Extensions.CommandLineUtils
 * Handlebars.Net
 
-## HandleBar Custom Functions
+## HandleBar Custom Function Guide
 
-* `{{ ContextAsJson }}` - Will dump the current context as a JSON file on the rendered file, useful for debugging
-* `{{ Prefix $p1 }}` - Will append a string to the beginning of the string passed through $p1
-* `{{ ExtractTableName $p1 }}` - Used the extract the table name from a schema.table object name format
-* `{{ ExtractSchemaName $p1 }}` - Used the extract the schema name from a schema.table object name format
-* `{{ ToSingular $p1 }}` - Will change $p1 to a singular word
-* `{{ Comma }}` - Will output a comma 
-* `{{ ToPlural $p1 }}` - Will change $p1 to a plural word
-* `{{ ToNetType $p1 }}` - Assuming that the string is a sql type, it will return the corresponding .net type with a ? if the property is nullable
-* `{{ ToCodeFriendly $p1 }}` - Will write a string removing code unfriendly characters
-* `{{ PropertyNameSuffix $p1 }}` - Will output a code friendly string 
-* `{{ ToJsType $p1 }}` - Assuming that the string is a sql type, it will return the corresponding javascript type appending "| null" if it is nullable
-* `{{ AsFormattedName $p1 }}` - Strips ID, UID, or id from $p1 
-* `{{ ToSnakeCase $p1 }}` - Will turn $p1 into snake case
-* `{{ ToSingularSnakeCase $p1 }}` - Will turn $p1 into snake case singular
-* `{{ ToTitleCaseSafeFileName $p1 }}` - Will turn $p1 into Title case and safe for a file name (excellent for the <FILE/> clause)
-* `{{ ToCsObjectName $p1 }}` - Will convert $p1 to a string suitable for C# Code name
-* `{{ StringFormat $p1 $p2 }}` - Versatile string function that lets you apply 1 or more formatting tasks on $p1, $p2 can contain one more of 'lower,upper,snake,title,pascal,trim,plural,single,nettype,jstype', performed in order 
-* `{{ EntityCustomAttribute $p1 }}` - Upper string and replacing "US_" to ""
-* `{{ IfPropertyExists $p1 }}` - Will search the parent context to see if the entity name exists, will only write the code after to {{/IfPropertyExists}} if true
-* `{{ eq $p1 $p2 }}` - Compares $p1 and $p2 for equality, useful in conditional blocks
+EzDbCodeGen provides a rich set of Handlebars helpers to make template creation easier and more powerful. This guide documents all available custom functions to help you create effective templates.
+
+### Basic Helpers
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{Debugger}}` | Adds a debug point (useful for development) | `{{Debugger "Checking value"}}` |
+| `{{Comma}}` | Outputs a comma (useful in template loops) | `{{#each Properties}}{{Name}}{{#unless @last}}{{Comma}}{{/unless}}{{/each}}` |
+| `{{ToJson value}}` | Converts a value to JSON format | `{{ToJson Entity}}` |
+| `{{ContextAsJson}}` | Dumps the current context as JSON | `{{ContextAsJson true}}` (true for indented) |
+
+### Type Conversion Helpers
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{ToNetType}}` | Converts database type to .NET type | `{{ToNetType DataType}}` |
+| `{{ToJsType}}` | Converts database type to JavaScript type | `{{ToJsType DataType}}` |
+| `{{AsNullableType type isNullable}}` | Adds nullable marker (?) if needed | `{{AsNullableType "int" IsNullable}}` |
+
+### String Formatting Helpers
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{ToPascalCase}}` | Converts string to PascalCase | `{{ToPascalCase TableName}}` |
+| `{{ToCamelCase}}` | Converts string to camelCase | `{{ToCamelCase PropertyName}}` |
+| `{{ToSnakeCase}}` | Converts string to snake_case | `{{ToSnakeCase TableName}}` |
+| `{{ToSingular}}` | Converts plural to singular | `{{ToSingular TableName}}` |
+| `{{ToPlural}}` | Converts singular to plural | `{{ToPlural EntityName}}` |
+| `{{ToCodeFriendly}}` | Makes string code-friendly | `{{ToCodeFriendly RawName}}` |
+| `{{ExtractTableName}}` | Extracts table name from schema.table | `{{ExtractTableName "dbo.Customer"}}` |
+| `{{ExtractSchemaName}}` | Extracts schema name from schema.table | `{{ExtractSchemaName "dbo.Customer"}}` |
+| `{{AsFormattedName}}` | Formats name by removing common suffixes | `{{AsFormattedName TableName}}` |
+| `{{Prefix prefix value}}` | Adds prefix to string | `{{Prefix "I" EntityName}}` |
+| `{{StringFormat value format1 format2...}}` | Applies multiple string formats | `{{StringFormat TableName "pascal" "singular"}}` |
+
+### Conditional Helpers
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{#IfPropertyExists propertyName}}` | Checks if property exists | `{{#IfPropertyExists "IsNullable"}}...{{else}}...{{/IfPropertyExists}}` |
+| `{{#IfFunctionExists functionName}}` | Checks if function exists | `{{#IfFunctionExists "GetRelationships"}}...{{/IfFunctionExists}}` |
+| `{{#IfCond left op right}}` | Conditional logic with operators | `{{#IfCond Value "==" "string"}}...{{else}}...{{/IfCond}}` |
+| `{{#Switch value}}{{#Case 'option'}}...{{/Case}}{{/Switch}}` | Switch/case logic | `{{#Switch DataType}}{{#Case "int"}}Integer{{/Case}}{{#Default}}String{{/Default}}{{/Switch}}` |
+
+### TypeScript Helpers
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{tsType}}` | Converts to TypeScript type | `{{tsType DataType}}` |
+| `{{tsInterface}}` | Formats name as interface | `{{tsInterface TableName}}` |
+| `{{tsModel}}` | Formats name as model | `{{tsModel TableName}}` |
+| `{{tsService}}` | Formats name as service | `{{tsService TableName}}` |
+| `{{tsComponent}}` | Formats name as component | `{{tsComponent TableName}}` |
+| `{{tsModule}}` | Formats name as module | `{{tsModule TableName}}` |
+| `{{tsRouting}}` | Formats name as routing | `{{tsRouting TableName}}` |
+| `{{tsStore}}` | Formats name as store | `{{tsStore TableName}}` |
+
+### Foreign Key Helpers
+
+| Helper | Description | Example |
+|--------|-------------|---------|
+| `{{POCOModelFKProperties}}` | Generates POCO model foreign key properties | `{{POCOModelFKProperties "    "}}` |
+| `{{POCOModelFKManyToZeroToOne}}` | Generates POCO model many-to-zero-or-one relationships | `{{POCOModelFKManyToZeroToOne "    "}}` |
+| `{{GetForeignKeyProperties}}` | Gets foreign key properties for an entity | `{{#each (GetForeignKeyProperties Entity)}}...{{/each}}` |
+| `{{GetOneToOneReferences}}` | Gets one-to-one references | `{{#each (GetOneToOneReferences Entity)}}...{{/each}}` |
+| `{{GetForeignKeyCollectionsForEntity}}` | Gets foreign key collections | `{{#each (GetForeignKeyCollectionsForEntity Entity)}}...{{/each}}` |
+
+### Template Examples
+
+#### Entity Framework Core Model
+
+```handlebars
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace {{Namespace}}.Models
+{
+    [Table("{{ExtractTableName TableName}}", Schema = "{{ExtractSchemaName TableName}}")]
+    public partial class {{ToPascalCase (ToSingular (ExtractTableName TableName))}}
+    {
+        public {{ToPascalCase (ToSingular (ExtractTableName TableName))}}()
+        {
+            {{#each (GetForeignKeyCollectionsForEntity this)}}
+            {{NavigationProperty}} = new HashSet<{{RelatedEntity}}>();
+            {{/each}}
+        }
+
+        {{#each Properties}}
+        {{#if IsPrimaryKey}}
+        [Key]
+        {{/if}}
+        {{#if IsIdentity}}
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        {{/if}}
+        {{#if MaxLength}}
+        [StringLength({{MaxLength}})]
+        {{/if}}
+        {{#if IsRequired}}
+        [Required]
+        {{/if}}
+        [Column("{{Name}}")]
+        public {{AsNullableType (ToNetType DataType) IsNullable}} {{ToPascalCase Name}} { get; set; }
+        {{/each}}
+
+        {{POCOModelFKProperties "        "}}
+
+        {{#each (GetForeignKeyCollectionsForEntity this)}}
+        public virtual ICollection<{{RelatedEntity}}> {{NavigationProperty}} { get; set; }
+        {{/each}}
+    }
+}
+```
+
+#### TypeScript Interface
+
+```handlebars
+export interface {{tsInterface TableName}} {
+    {{#each Properties}}
+    {{ToCamelCase Name}}: {{tsType DataType}}{{#if IsNullable}} | null{{/if}};
+    {{/each}}
+    
+    {{#each (GetOneToOneReferences this)}}
+    {{ToCamelCase NavigationProperty}}?: {{tsInterface RelatedEntity}};
+    {{/each}}
+    
+    {{#each (GetForeignKeyCollectionsForEntity this)}}
+    {{ToCamelCase NavigationProperty}}?: {{tsInterface RelatedEntity}}[];
+    {{/each}}
+}
+```
+
+For more detailed examples and usage patterns, refer to the [AI_USAGE.md](AI_USAGE.md) file.
 
 ## Recent Changes
 
