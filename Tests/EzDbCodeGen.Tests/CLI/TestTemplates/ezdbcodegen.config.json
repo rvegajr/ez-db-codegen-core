@@ -1,0 +1,17 @@
+{
+  "AppName": "TestApp",
+  "SchemaName": "dbo",
+  "ConnectionString": "Server=localhost;Database=TestDB;User Id=sa;Password=password;",
+  "TemplateFileNameOrPath": "TestTemplates",
+  "OutputPath": "TestOutput",
+  "Namespace": "TestApp",
+  "EntitySecurity": {
+    "Customer": {
+      "Secured": false
+    },
+    "Order": {
+      "Secured": false
+    }
+  },
+  "Debug": true
+}

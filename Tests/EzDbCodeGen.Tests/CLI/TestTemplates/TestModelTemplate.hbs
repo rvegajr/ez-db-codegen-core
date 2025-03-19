@@ -1,0 +1,39 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+
+namespace {{Namespace}}.Models
+{
+    {{debug "Entity Data"}}
+    [Table("{{TableName}}", Schema = "{{SchemaName}}")]
+    public partial class {{EntityName}}
+    {
+        {{#if HasRelationships}}
+        public {{EntityName}}()
+        {
+            {{#each OneToManyRelationships}}
+            {{TargetPropertyName}} = new HashSet<{{TargetEntityName}}>();
+            {{/each}}
+        }
+        {{/if}}
+
+        {{#each Properties}}
+        {{debug this}}
+        {{#if IsPrimaryKey}}[Key]{{/if}}
+        {{#if MaxLength}}[MaxLength({{MaxLength}})]{{/if}}
+        {{#if IsForeignKey}}[ForeignKey("{{Name}}")]{{/if}}
+        {{#if IsIdentity}}[DatabaseGenerated(DatabaseGeneratedOption.Identity)]{{/if}}
+        public {{NetType}} {{Name}} { get; set; }{{#if IsNullable}} = null!;{{/if}}
+
+        {{/each}}
+
+        {{#each OneToManyRelationships}}
+        public virtual ICollection<{{TargetEntityName}}> {{TargetPropertyName}} { get; set; }
+        {{/each}}
+
+        {{#each ManyToOneRelationships}}
+        public virtual {{TargetEntityName}} {{TargetPropertyName}} { get; set; }
+        {{/each}}
+    }
+}
