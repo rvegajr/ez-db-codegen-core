@@ -1,38 +1,63 @@
-﻿using System;
-using EzDbCodeGen.Core.Extentions.Strings;
-using EzDbSchema.Core.Extentions;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using EzDbCodeGen.Core.Extensions;
+using EzDbSchema.Core.Extentions;
+
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
-namespace EzDbCodeGen.Core
+namespace EzDbCodeGen.Core.Classes
 {
-    public class DirectoryName
+    public class DirectoryName : IEquatable<DirectoryName>
     {
-        readonly string _value;
-        public DirectoryName(string value)
+        private string _value;
+        private int _hashCode;
+
+        public DirectoryName(string d)
         {
-            this._value = value;
+            _value = d;
+            _hashCode = d.GetStableHashCode();
         }
-        public static implicit operator string(DirectoryName d)
-        {
-            return d._value;
-        }
+
         public static implicit operator DirectoryName(string d)
         {
             return new DirectoryName(d);
         }
+
+        public static implicit operator string(DirectoryName d)
+        {
+            return d._value;
+        }
+
+        public override bool Equals(object? obj)
+        {
+            if (obj is DirectoryName other)
+            {
+                return Equals(other);
+            }
+            return false;
+        }
+
+        public bool Equals(DirectoryName? other)
+        {
+            if (other is null)
+            {
+                return false;
+            }
+            return _hashCode == other._hashCode;
+        }
+
         public override int GetHashCode()
         {
-            return _value.GetStableHashCode();
+            return _hashCode;
         }
-        public override bool Equals(object obj)
+
+        public override string ToString()
         {
-            return Equals(obj as FileName);
-        }
-        public bool Equals(FileName obj)
-        {
-            return obj != null && obj.GetHashCode() == this.GetHashCode();
+            return _value;
         }
     }
 }

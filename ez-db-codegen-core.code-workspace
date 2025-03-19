@@ -1,0 +1,14 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../ez-db-model-api"
+		},
+		{
+			"path": "../ez-db-schema-core"
+		}
+	],
+	"settings": {}
+}

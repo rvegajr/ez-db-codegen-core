@@ -1,12 +1,14 @@
-﻿using EzDbCodeGen.Core.Enums;
-using EzDbCodeGen.Core.Extentions.Strings;
+using EzDbCodeGen.Core.Enums;
+using EzDbCodeGen.Core.Extensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Xml;
 using System.Xml.Xsl;
 using System.Runtime.CompilerServices;
+
 [assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
 [assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
 
@@ -81,12 +83,20 @@ namespace EzDbCodeGen.Core.Classes
                         var PathForWildcard = PathToSearchFor.Split('*')[0];
                         //First check and see if wildcard exists
                         var nodesWc = xmldoc.SelectNodes(@"//x:Compile[@Include='" + PathToSearchFor + @"']", mgr);
-                        if (nodesWc.Count == 0)
+                        if (nodesWc?.Count == 0)
                         {
                             var nodes = xmldoc.SelectNodes(@"//x:Compile[starts-with(@Include, '" + PathForWildcard + @"')]", mgr);
-                            for (int i = nodes.Count - 1; i >= 0; i--)
+                            if (nodes != null)
                             {
-                                nodes[i].ParentNode.RemoveChild(nodes[i]);
+                                for (int i = nodes.Count - 1; i >= 0; i--)
+                                {
+                                    var node = nodes[i];
+                                    var parentNode = node?.ParentNode;
+                                    if (node != null && parentNode != null)
+                                    {
+                                        parentNode.RemoveChild(node);
+                                    }
+                                }
                             }
                             ItemGroupBuffer.Append(@"<Compile Include=""" + PathToSearchFor + @""" />");
                             UpdateXML = true;
@@ -94,36 +104,61 @@ namespace EzDbCodeGen.Core.Classes
                     }
                     else  // find the node in the project and remove 
                     {
-                        //var nodes = xmldoc.SelectNodes(@"//x:Compile[lower-case(@Include)='" + PathToSearchFor.ToLower() + @"']", mgr);
-                        //Perform a case insensitive search for the file pattern and if we find it,  then we can set the case correctly and remove any duplicates
+                        //Perform a case insensitive search for the file pattern and if we find it, then we can set the case correctly and remove any duplicates
                         var nodes = xmldoc.SelectNodes(@"//x:Compile[translate(@Include,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')='" + PathToSearchFor.ToLower() + @"']", mgr);
                         
-                        if ((PathToSearchForKeyWithAction.Value == TemplateFileAction.Delete) && (nodes.Count > 0)) { 
-                            for (int i = nodes.Count - 1; i >= 0; i--) nodes[i].ParentNode.RemoveChild(nodes[i]);
-                            UpdateXML = true;
-                        } else if ((PathToSearchForKeyWithAction.Value == TemplateFileAction.Add) && (nodes.Count == 0))
+                        if (nodes != null)
                         {
-                            ItemGroupBuffer.Append(@"<Compile Include=""" + PathToSearchFor + @""" />");
-                            UpdateXML = true;
-                        } else if (nodes.Count > 0)
-                        {//This will remove duplicates and ensure the name that we have matches the case for files
-                            for (int i = nodes.Count - 1; i >= 0; i--)
-                            {
-                                if (i== nodes.Count - 1)
+                            if ((PathToSearchForKeyWithAction.Value == TemplateFileAction.Delete) && (nodes.Count > 0))
+                            { 
+                                for (int i = nodes.Count - 1; i >= 0; i--)
                                 {
-                                    nodes[i].Attributes["Include"].InnerText = PathToSearchFor;
+                                    var node = nodes[i];
+                                    var parentNode = node?.ParentNode;
+                                    if (node != null && parentNode != null)
+                                    {
+                                        parentNode.RemoveChild(node);
+                                    }
                                 }
-                                else
+                                UpdateXML = true;
+                            }
+                            else if ((PathToSearchForKeyWithAction.Value == TemplateFileAction.Add) && (nodes.Count == 0))
+                            {
+                                ItemGroupBuffer.Append(@"<Compile Include=""" + PathToSearchFor + @""" />");
+                                UpdateXML = true;
+                            }
+                            else if (nodes.Count > 0)
+                            {//This will remove duplicates and ensure the name that we have matches the case for files
+                                for (int i = nodes.Count - 1; i >= 0; i--)
                                 {
-                                    nodes[i].ParentNode.RemoveChild(nodes[i]);
-                                    UpdateXML = true;
+                                    var node = nodes[i];
+                                    if (node != null)
+                                    {
+                                        if (i == nodes.Count - 1)
+                                        {
+                                            var includeAttr = node.Attributes?["Include"];
+                                            if (includeAttr != null && !string.IsNullOrEmpty(PathToSearchFor))
+                                            {
+                                                includeAttr.InnerText = PathToSearchFor;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            var parentNode = node.ParentNode;
+                                            if (parentNode != null)
+                                            {
+                                                parentNode.RemoveChild(node);
+                                                UpdateXML = true;
+                                            }
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
-
                 }
-                if (ItemGroupBuffer.Length>0)
+
+                if (ItemGroupBuffer.Length > 0 && xmldoc.DocumentElement != null)
                 {
                     XmlDocumentFragment docFrag = xmldoc.CreateDocumentFragment();
 
@@ -133,36 +168,52 @@ namespace EzDbCodeGen.Core.Classes
                     //Add the children of the document fragment to the original document.
                     xmldoc.DocumentElement.AppendChild(docFrag);
                     UpdateXML = true;
-
                 }
+
                 //Clean up ItemGroup nodes that do not have any child nodes
                 var nodesEmpty = xmldoc.SelectNodes(@"//x:ItemGroup[not(node())]", mgr);
-                if (nodesEmpty.Count > 0) UpdateXML = true;
-                for (int i = nodesEmpty.Count - 1; i >= 0; i--)
+                if (nodesEmpty?.Count > 0)
                 {
                     UpdateXML = true;
-                    nodesEmpty[i].ParentNode.RemoveChild(nodesEmpty[i]);
-                }
-                //While we are here,  lets loop through the solution file and clean up Include References that no longer exist
-                var nodeToCheck = xmldoc.SelectNodes(@"//x:Compile[@Include]", mgr);
-                var ProjectPath = Path.GetDirectoryName(ProjectFile).PathEnds();
-                foreach (XmlElement nod in nodeToCheck)
-                {
-                    var FileToCheck = ProjectPath + nod.Attributes["Include"].InnerText;
-                    //Ignore wile card paths in the file check
-                    if ((!FileToCheck.EndsWith("*")) && (!File.Exists(FileToCheck))) 
+                    for (int i = nodesEmpty.Count - 1; i >= 0; i--)
                     {
-                        nod.ParentNode.RemoveChild(nod);
-                        UpdateXML = true;
+                        var node = nodesEmpty[i];
+                        var parentNode = node?.ParentNode;
+                        if (node != null && parentNode != null)
+                        {
+                            parentNode.RemoveChild(node);
+                        }
+                    }
+                }
+
+                //While we are here, lets loop through the solution file and clean up Include References that no longer exist
+                var nodeToCheck = xmldoc.SelectNodes(@"//x:Compile[@Include]", mgr);
+                var ProjectPath = Path.GetDirectoryName(ProjectFile)?.PathEnds() ?? string.Empty;
+                if (nodeToCheck != null)
+                {
+                    foreach (XmlElement nod in nodeToCheck)
+                    {
+                        var includeAttr = nod?.Attributes?["Include"];
+                        if (includeAttr == null) continue;
+                        var FileToCheck = ProjectPath + includeAttr.InnerText;
+                        //Ignore wile card paths in the file check
+                        if ((!FileToCheck.EndsWith("*")) && (!File.Exists(FileToCheck))) 
+                        {
+                            nod?.ParentNode?.RemoveChild(nod);
+                            UpdateXML = true;
+                        }
                     }
                 }
                 if (clearObjAndBin)
                 {
                     // Figure out output path and clear all object and bin
                     var nodeOutputPath = xmldoc.SelectNodes(@"//x:OutputPath", mgr);
-                    foreach (XmlElement nod in nodeOutputPath)
+                    if (nodeOutputPath != null)
                     {
-                        var OutputPath = (ProjectPath + nod.InnerText).PathEnds();
+                        foreach (XmlElement nod in nodeOutputPath)
+                        {
+                            if (nod?.InnerText == null) continue;
+                            var OutputPath = (ProjectPath + nod.InnerText).PathEnds();
                         var ObjPath = (ProjectPath + "obj").PathEnds();
                         try
                         {
@@ -174,6 +225,7 @@ namespace EzDbCodeGen.Core.Classes
                             System.Diagnostics.Trace.WriteLine($"ModifyClassPath: Clearing {OutputPath}, but {ex.Message}");
                         }
                     }
+                }
                 }
 
                 if (UpdateXML)

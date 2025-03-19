@@ -1,7 +1,9 @@
-﻿using System.Net;
+using System;
 using System.IO;
 using System.IO.Compression;
-using System;
+using System.Net.Http;
+using System.Threading.Tasks;
+
 namespace EzDbCodeGen.Cli;
 
 public static class WebFileHelper
@@ -27,7 +29,18 @@ public static class WebFileHelper
     {
         if (FileToRenameTo.Length == 0) FileToRenameTo = FileToCopy;
         var targetFileName = $"{targetPath}{FileToRenameTo}";
-        System.IO.Directory.CreateDirectory(Path.GetDirectoryName(targetFileName));
+        if (!string.IsNullOrEmpty(targetPath))
+        {
+            string? directoryName = Path.GetDirectoryName(targetFileName);
+            if (!string.IsNullOrEmpty(directoryName))
+            {
+                System.IO.Directory.CreateDirectory(directoryName);
+            }
+        }
+        else
+        {
+            throw new ArgumentException("Target path cannot be null or empty", nameof(targetPath));
+        }
         File.Copy($"{sourcePath}{FileToCopy}", targetFileName, true);
         System.Console.WriteLine($"Copying {FileToCopy} into {targetFileName}", FileToCopy, targetFileName);
         return targetFileName;
@@ -39,88 +52,68 @@ public static class WebFileHelper
         return FileToChange;
     }
 
-    public static string CurlGitRepoZip(string destinationPath, string user="rvegajr", string repo="ez-db-codegen-core", string branch="master")
-    {
+    // Factory for HttpClient to make testing easier
+    private static Func<HttpClient> _httpClientFactory = () => new HttpClient();
 
+    // For testing purposes only
+    public static void SetHttpClientFactory(Func<HttpClient> factory)
+    {
+        _httpClientFactory = factory ?? throw new ArgumentNullException(nameof(factory));
+    }
+
+    // Reset the factory to default (for cleanup after tests)
+    public static void ResetHttpClientFactory()
+    {
+        _httpClientFactory = () => new HttpClient();
+    }
+
+    public static async Task<string> CurlGitRepoZip(string destinationPath, string user="rvegajr", string repo="ez-db-codegen-core", string branch="master")
+    {
         var sourceUrl = string.Format("https://github.com/{0}/{1}/archive/{2}.zip", user, repo, branch);
-        WebClient Client = new WebClient();
-        System.IO.Directory.CreateDirectory(destinationPath);
+        if (!string.IsNullOrEmpty(destinationPath))
+        {
+            System.IO.Directory.CreateDirectory(destinationPath);
+        }
+        else
+        {
+            throw new ArgumentException("Destination path cannot be null or empty", nameof(destinationPath));
+        }
         var targetGitRepoZip = destinationPath + repo + ".zip";
-        Client.DownloadFile(sourceUrl, targetGitRepoZip);
+
+        using (var httpClient = _httpClientFactory())
+        using (var response = await httpClient.GetAsync(sourceUrl, HttpCompletionOption.ResponseHeadersRead))
+        {
+            response.EnsureSuccessStatusCode();
+            using (var stream = await response.Content.ReadAsStreamAsync())
+            using (var fileStream = File.Create(targetGitRepoZip))
+            {
+                await stream.CopyToAsync(fileStream);
+            }
+        }
+
         ZipFile.ExtractToDirectory(targetGitRepoZip, destinationPath);
         if (File.Exists(targetGitRepoZip)) File.Delete(targetGitRepoZip);
-        System.Console.WriteLine(string.Format("Git repo downloaded and extracted"));
+        System.Console.WriteLine("Git repo downloaded and extracted");
         return destinationPath;
     }
-    public static void DownloadFile(string sourceURL, string destinationPath)
+    
+    public static async Task DownloadFile(string sourceURL, string destinationPath)
     {
-        long fileSize = 0;
-        int bufferSize = 1024;
-        bufferSize *= 1000;
-        long existLen = 0;
-
-        System.IO.FileStream saveFileStream;
-        if (System.IO.File.Exists(destinationPath))
+        var fileMode = File.Exists(destinationPath) ? FileMode.Append : FileMode.Create;
+        
+        using (var httpClient = _httpClientFactory())
+        using (var response = await httpClient.GetAsync(sourceURL, HttpCompletionOption.ResponseHeadersRead))
         {
-            System.IO.FileInfo destinationFileInfo = new System.IO.FileInfo(destinationPath);
-            existLen = destinationFileInfo.Length;
-        }
-
-        if (existLen > 0)
-            saveFileStream = new System.IO.FileStream(destinationPath,
-                                                      System.IO.FileMode.Append,
-                                                      System.IO.FileAccess.Write,
-                                                      System.IO.FileShare.ReadWrite);
-        else
-            saveFileStream = new System.IO.FileStream(destinationPath,
-                                                      System.IO.FileMode.Create,
-                                                      System.IO.FileAccess.Write,
-                                                      System.IO.FileShare.ReadWrite);
-
-        System.Net.HttpWebRequest httpReq;
-        System.Net.HttpWebResponse httpRes;
-        httpReq = (System.Net.HttpWebRequest)System.Net.HttpWebRequest.Create(sourceURL);
-        httpReq.AddRange((int)existLen);
-        System.IO.Stream resStream;
-        httpRes = (System.Net.HttpWebResponse)httpReq.GetResponse();
-        resStream = httpRes.GetResponseStream();
-
-        fileSize = httpRes.ContentLength;
-
-        int byteSize;
-        byte[] downBuffer = new byte[bufferSize];
-
-        while ((byteSize = resStream.Read(downBuffer, 0, downBuffer.Length)) > 0)
-        {
-            saveFileStream.Write(downBuffer, 0, byteSize);
-        }
-    }
-}
-
-public static class StringHelper
-{
-    public static string EnsureTrustServerCertificate(string connectionString)
-    {
-        // Check if the "TrustServerCertificate=True;" part exists in the connection string
-        if (!HasTrustServerCertificate(connectionString))
-        {
-            // Check if the connection string ends with a semicolon
-            if (!connectionString.EndsWith(";"))
+            response.EnsureSuccessStatusCode();
+            using (var stream = await response.Content.ReadAsStreamAsync())
+            using (var fileStream = new FileStream(destinationPath, fileMode, FileAccess.Write, FileShare.ReadWrite))
             {
-                // If not, append one before adding the TrustServerCertificate part
-                connectionString += ";";
+                if (fileMode == FileMode.Append)
+                {
+                    fileStream.Seek(0, SeekOrigin.End);
+                }
+                await stream.CopyToAsync(fileStream);
             }
-
-            // Append "TrustServerCertificate=True;" to the connection string
-            connectionString += "TrustServerCertificate=True;";
         }
-
-        return connectionString;
-    }
-
-    public static bool HasTrustServerCertificate(string connectionString)
-    {
-        // Check if the "TrustServerCertificate=True;" part exists in the connection string
-        return connectionString.Contains("TrustServerCertificate=True;", StringComparison.OrdinalIgnoreCase);
     }
 }

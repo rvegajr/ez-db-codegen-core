@@ -1,185 +1,149 @@
-﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.IO;
+using System.Linq;
 using System.Xml;
 using System.Xml.Linq;
-using System.Runtime.CompilerServices;
-[assembly: InternalsVisibleTo("EzDbCodeGen.Cli")]
-[assembly: InternalsVisibleTo("EzDbCodeGen.Tests")]
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace EzDbCodeGen.Core.Classes
 {
-    internal static class SettingsExtention {
-        /// <summary>
-        /// Gets the setting from file. For format that string must be in should be @{FILENAME}>{XPATH} 
-        /// Where file name is the settings file in either XML or JSON.  for example @C:/Inetpub/wwwroot/web.config>/xpath/@attribute
-        /// </summary>
-        /// <returns>if the string isng in the pattern noted (with @ and >), then it will return itself, otherwise it will return the value if found</returns>
-        public static string SettingResolution(this string fileName)
-        {
-            return SettingsHelper.GetSettingFromFile(fileName);
-        }
-    }
-    internal class SettingsHelper
+    public static class SettingsHelper
     {
-        public SettingsHelper()
+        private static readonly JsonSerializerSettings DefaultJsonSettings = new()
         {
+            Formatting = Newtonsoft.Json.Formatting.Indented,
+            NullValueHandling = NullValueHandling.Ignore,
+            DefaultValueHandling = DefaultValueHandling.Ignore,
+            TypeNameHandling = TypeNameHandling.Auto,
+            PreserveReferencesHandling = PreserveReferencesHandling.Objects
+        };
 
-        }
         /// <summary>
-        /// Gets the setting from file.
+        /// Loads settings from a file. The file can be either JSON or XML format.
         /// </summary>
-        /// <param name="fileparm">For format of this parm needs to be @{FILENAME}>{XPATH} Where file name is the settings file in 
-        /// either XML or JSON.  for example @C:/Inetpub/wwwroot/web.config>/ </param>
-        /// <returns>if the string can't result, then it will return itself, otherwise </returns>
-        public static string GetSettingFromFile(string fileparm)
+        /// <typeparam name="T">The type of settings object to deserialize</typeparam>
+        /// <param name="filePath">Path to the settings file</param>
+        /// <returns>The deserialized settings object</returns>
+        public static T LoadSettings<T>(string filePath) where T : class, new()
         {
-            var retValue = fileparm;
-            if ((fileparm.StartsWith("@")) && (fileparm.Contains(">")))
-            {
-                fileparm = fileparm.Substring(1);
-                var arrParts = fileparm.Split('>');
-                var filename = arrParts[0].Trim();
-                var xpath = arrParts[1].Trim();
-                SettingsHelper settings = new SettingsHelper();
-                settings.AppSettingsFileName = filename;
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException($"Settings file not found: {filePath}");
 
-                /*Using Connection string Shortcut Capital "CS" will translate to /configuration/connectionStrings/add[@name='DatabaseContext']/@connectionString
-                 * The syntax is CS[SETTINGNAMEHERE], so the example above would be CS['SETTINGNAMEHERE'] 
-                 * XML:
-                 * Using Connection string Shortcut Capital "AS" will translate to /configuration/appSettings/add[@key='DatabaseContext']/@value
-                 * JSON:
-                 * Using Connection string Shortcut Capital "AS" will translate to /root/DefaultSettings/Settings/XXXX where XXXX = ConnectionString
-                 */
-                if (xpath.StartsWith("CS"))
-                {
-                    xpath = xpath.Replace("CS[", "/configuration/connectionStrings/add[@name='");
-                    xpath = xpath.Replace("]", "']/@connectionString");
-                } else if (xpath.StartsWith("AS"))
-                {
-                    if (settings.isJson)
+            var extension = Path.GetExtension(filePath).ToLower();
+            var content = File.ReadAllText(filePath);
+
+            return extension switch
+            {
+                ".json" => JsonConvert.DeserializeObject<T>(content, DefaultJsonSettings) ?? new T(),
+                ".xml" => LoadXmlSettings<T>(content),
+                _ => throw new NotSupportedException($"Unsupported file extension: {extension}")
+            };
+        }
+
+        /// <summary>
+        /// Saves settings to a file in either JSON or XML format.
+        /// </summary>
+        /// <typeparam name="T">The type of settings object to serialize</typeparam>
+        /// <param name="settings">The settings object to save</param>
+        /// <param name="filePath">Path where to save the settings file</param>
+        /// <param name="asXml">If true, save as XML; if false, save as JSON</param>
+        public static void SaveSettings<T>(T settings, string filePath, bool asXml = false) where T : class
+        {
+            if (settings == null)
+                throw new ArgumentNullException(nameof(settings));
+
+            var content = asXml
+                ? ConvertToXml(settings)
+                : JsonConvert.SerializeObject(settings, DefaultJsonSettings);
+
+            File.WriteAllText(filePath, content);
+        }
+
+        private static T LoadXmlSettings<T>(string xmlContent) where T : class, new()
+        {
+            var xDoc = XDocument.Parse(xmlContent);
+            var jsonContent = ConvertXmlToJson(xDoc);
+            return JsonConvert.DeserializeObject<T>(jsonContent, DefaultJsonSettings) ?? new T();
+        }
+
+        private static string ConvertToXml<T>(T obj) where T : class
+        {
+            var json = JsonConvert.SerializeObject(obj, DefaultJsonSettings);
+            var jsonObj = JObject.Parse(json);
+            var xDoc = new XDocument();
+            var root = new XElement(typeof(T).Name);
+            ConvertJsonToXml(jsonObj, root);
+            xDoc.Add(root);
+            return xDoc.ToString();
+        }
+
+        private static void ConvertJsonToXml(JToken token, XElement parent)
+        {
+            switch (token.Type)
+            {
+                case JTokenType.Object:
+                    foreach (var property in ((JObject)token).Properties())
                     {
-                        xpath = xpath.Replace("AS[", "/root/DefaultSettings/Settings/");
-                        xpath = xpath.Replace("]", "");
-
+                        var element = new XElement(property.Name);
+                        ConvertJsonToXml(property.Value, element);
+                        parent.Add(element);
                     }
-                    else if (settings.isXml)
+                    break;
+
+                case JTokenType.Array:
+                    foreach (var item in ((JArray)token))
                     {
-                        xpath = xpath.Replace("AS[", "/configuration/appSettings/add[@key='");
-                        xpath = xpath.Replace("]", "']/@value");
-
+                        var element = new XElement("Item");
+                        ConvertJsonToXml(item, element);
+                        parent.Add(element);
                     }
-                }
-                retValue = settings.FindValue(xpath);
-            }
-            return retValue;
-        }
-        private string appSettingsFileName = "";
-        public bool isJson = false;
-        public bool isXml = false;
-        /// <summary>
-        /// Gets or sets the name of the source file.  This will also cause the reload of the config file
-        /// </summary>
-        /// <value>
-        /// The name of the source file.
-        /// </value>
-        public string AppSettingsFileName
-        {
-            get
-            {
-                return appSettingsFileName;
-            }
-            set
-            {
-                appSettingsFileName = value;
-                ParseAppSettingsFileName(appSettingsFileName);
+                    break;
+
+                default:
+                    parent.Value = token.ToString();
+                    break;
             }
         }
 
-        /// <summary>
-        /// Finds the value using XPath and will return what is in InnerText.  Please note that if you are reading a JSON Setting file, the encompassing node will be 'root'
-        /// </summary>
-        /// <param name="XPath">The xpath.</param>
-        /// <returns></returns>
-        public string FindValue(string XPath)
+        private static string ConvertXmlToJson(XDocument xDoc)
         {
-            if (xmldoc == null) return "";
-            var xnodes = xmldoc.SelectNodes(XPath);
-            var returnValue = "";
-            if (xnodes.Count > 0)
+            var jsonObj = new JObject();
+            foreach (var element in xDoc.Root?.Elements() ?? Enumerable.Empty<XElement>())
             {
-                var firstNode = xnodes[0];
-                returnValue = firstNode.InnerText;
+                ConvertXmlElementToJson(element, jsonObj);
             }
-            return returnValue;
+            return jsonObj.ToString();
         }
 
-        /// <summary>
-        /// Finds the value using XPath and will return what is in InnerText.  Please note that if you are reading a JSON Setting file, the encompassing node will be 'root'
-        /// </summary>
-        /// <param name="XPath">The xpath.</param>
-        /// <returns></returns>
-        public string FindValue(string XPath, string AttributeName)
+        private static void ConvertXmlElementToJson(XElement element, JObject parent)
         {
-            if (xmldoc == null) return "";
-            var xnodes = xmldoc.SelectNodes(XPath);
-            var returnValue = "";
-            if (xnodes.Count > 0)
+            if (!element.HasElements)
             {
-                var firstNode = xnodes[0];
-                returnValue = ((XmlElement)firstNode).Attributes[AttributeName].Value;
+                parent[element.Name.LocalName] = element.Value;
+                return;
             }
-            return returnValue;
-        }
 
-        private XmlDocument xmldoc = null;
-        private bool ParseAppSettingsFileName(string FileName)
-        {
-            try
+            if (element.Elements().All(e => e.Name.LocalName == "Item"))
             {
-                isJson = false;
-                isXml = false;
-                var ext = System.IO.Path.GetExtension(FileName).ToLower();
-                var content = System.IO.File.ReadAllText(FileName);
-                if (ext.EndsWith("json"))
+                var array = new JArray();
+                foreach (var item in element.Elements())
                 {
-                    isJson = true;
-                    xmldoc = JsonConvert.DeserializeXNode(content, "root").ToXmlDocument();
+                    var obj = new JObject();
+                    ConvertXmlElementToJson(item, obj);
+                    array.Add(obj);
                 }
-                else if ((ext.EndsWith("xml")) || (ext.EndsWith("config")))
+                parent[element.Name.LocalName] = array;
+            }
+            else
+            {
+                var obj = new JObject();
+                foreach (var child in element.Elements())
                 {
-                    isXml = true;
-                    xmldoc = new XmlDocument();
-                    xmldoc.LoadXml(content);
+                    ConvertXmlElementToJson(child, obj);
                 }
-                return true;
-            }
-            catch (Exception)
-            {
-
-                throw;
-            }
-        }
-    }
-    internal static class DocumentExtensions
-    {
-        public static XmlDocument ToXmlDocument(this XDocument xDocument)
-        {
-            var xmlDocument = new XmlDocument();
-            using (var xmlReader = xDocument.CreateReader())
-            {
-                xmlDocument.Load(xmlReader);
-            }
-            return xmlDocument;
-        }
-
-        public static XDocument ToXDocument(this XmlDocument xmlDocument)
-        {
-            using (var nodeReader = new XmlNodeReader(xmlDocument))
-            {
-                nodeReader.MoveToContent();
-                return XDocument.Load(nodeReader);
+                parent[element.Name.LocalName] = obj;
             }
         }
     }

@@ -2,71 +2,41 @@
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <TargetFramework>net8.0</TargetFramework>
-	<Version>8.0.1.0</Version>	
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
     <PackAsTool>true</PackAsTool>
-    <ToolCommandName>ezdbcg</ToolCommandName>
-    <PackageOutputPath>../../artifacts</PackageOutputPath>
-    <AssemblyVersion>8.0.1.0</AssemblyVersion>
-    <FileVersion>8.0.1.0</FileVersion>
-    <InformationalVersion>8.0.1+Branch.develop.Sha.0b0165affe6e0ba0bbb714a5d5d210b82c61c04f</InformationalVersion>
-    <StartupObject>EzDbCodeGen.Cli.Program</StartupObject>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <DebugType>embedded</DebugType>
-    <Copyright>Noctusoft 2018-2024</Copyright>
-    <PackageReleaseNotes>Added .net 8.0 target</PackageReleaseNotes>
+    <ToolCommandName>ezdbcodegen</ToolCommandName>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>EzDbCodeGen.Cli</PackageId>
     <PackageReadmeFile>README.md</PackageReadmeFile>
-	<GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <OutputPath>..\..\bin\$(Configuration)</OutputPath>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <WarningLevel>4</WarningLevel>
-	  <DebugType>portable</DebugType>
-	  <DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <Optimize>False</Optimize>
-	<DebugType>portable</DebugType>
-	<DebugSymbols>true</DebugSymbols>
-  </PropertyGroup>
+
   <ItemGroup>
-    <None Remove="ezdbcodegen.config.json" />
+    <None Include="..\..\README.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\AI_INDEX.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\AI_USAGE.md" Pack="true" PackagePath="\" />
+    <None Include="..\..\Templates\**\*" Pack="true" PackagePath="content\Templates" />
   </ItemGroup>
+
   <ItemGroup>
-    <Content Include="ezdbcodegen.config.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="$(McMasterExtensionsCommandLineUtilsVersion)" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="..\..\README.md">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="4.1.1" />
-  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\EzDbCodeGen.Core\EzDbCodeGen.Core.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Service Include="{508349b6-6b84-4df5-91f0-309beebad82d}" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="Templates\SchemaRender.hbs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Templates\SchemaRenderAsFiles.hbs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Templates\SchemaRenderAsFilesNoOutput.hbs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="EzDbSchema" Version="8.0.2" />
-    <PackageReference Include="FastMemberMT" Version="8.0.1" />
-    <PackageReference Include="Handlebars.Net" Version="2.1.4" />
-    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
-	<PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.0" />
-	<PackageReference Include="System.Json" Version="4.7.1" />
-  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>True</Optimize>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <Optimize>True</Optimize>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
 </Project>

@@ -1,0 +1,58 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using {{Namespace}}.Models;
+using {{Namespace}}.Data;
+
+namespace {{Namespace}}.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class {{EntityName}}Controller : ControllerBase
+    {
+        private readonly ApplicationDbContext _context;
+
+        public {{EntityName}}Controller(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/{{EntityName}}
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<{{EntityName}}>>> Get{{EntityName}}s()
+        {
+            return await _context.{{EntityName}}s
+                {{#each OneToManyRelationships}}
+                .Include(e => e.{{TargetPropertyName}})
+                {{/each}}
+                {{#each ManyToOneRelationships}}
+                .Include(e => e.{{TargetPropertyName}})
+                {{/each}}
+                .ToListAsync();
+        }
+
+        // GET: api/{{EntityName}}/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<{{EntityName}}>> Get{{EntityName}}(int id)
+        {
+            var entity = await _context.{{EntityName}}s
+                {{#each OneToManyRelationships}}
+                .Include(e => e.{{TargetPropertyName}})
+                {{/each}}
+                {{#each ManyToOneRelationships}}
+                .Include(e => e.{{TargetPropertyName}})
+                {{/each}}
+                .FirstOrDefaultAsync(e => e.{{PrimaryKeyName}} == id);
+
+            if (entity == null)
+            {
+                return NotFound();
+            }
+
+            return entity;
+        }
+    }
+}

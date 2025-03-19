@@ -1,0 +1,117 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using {{Namespace}}.Data;
+using {{Namespace}}.Models;
+
+namespace {{Namespace}}.Controllers
+{
+    [Route("api/[controller]")]
+    [ApiController]
+    public class {{EntityName}}Controller : ControllerBase
+    {
+        private readonly ApplicationDbContext _context;
+
+        public {{EntityName}}Controller(ApplicationDbContext context)
+        {
+            _context = context;
+        }
+
+        // GET: api/{{EntityName}}
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<{{EntityName}}>>> Get{{EntityName}}s()
+        {
+            return await _context.{{EntityName}}s
+                {{#each Relationships}}
+                {{#if (eq ToTableName ../TableName)}}
+                .Include(x => x.{{FromTableName}})
+                {{/if}}
+                {{/each}}
+                .ToListAsync();
+        }
+
+        // GET: api/{{EntityName}}/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<{{EntityName}}>> Get{{EntityName}}(int id)
+        {
+            var {{entityNameLower}} = await _context.{{EntityName}}s
+                {{#each Relationships}}
+                {{#if (eq ToTableName ../TableName)}}
+                .Include(x => x.{{FromTableName}})
+                {{/if}}
+                {{/each}}
+                .FirstOrDefaultAsync(x => x.{{PrimaryKeyName}} == id);
+
+            if ({{entityNameLower}} == null)
+            {
+                return NotFound();
+            }
+
+            return {{entityNameLower}};
+        }
+
+        // POST: api/{{EntityName}}
+        [HttpPost]
+        public async Task<ActionResult<{{EntityName}}>> Post{{EntityName}}({{EntityName}} {{entityNameLower}})
+        {
+            _context.{{EntityName}}s.Add({{entityNameLower}});
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(Get{{EntityName}}), new { id = {{entityNameLower}}.{{PrimaryKeyName}} }, {{entityNameLower}});
+        }
+
+        // PUT: api/{{EntityName}}/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Put{{EntityName}}(int id, {{EntityName}} {{entityNameLower}})
+        {
+            if (id != {{entityNameLower}}.{{PrimaryKeyName}})
+            {
+                return BadRequest();
+            }
+
+            _context.Entry({{entityNameLower}}).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!{{EntityName}}Exists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
+        }
+
+        // DELETE: api/{{EntityName}}/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> Delete{{EntityName}}(int id)
+        {
+            var {{entityNameLower}} = await _context.{{EntityName}}s.FindAsync(id);
+            if ({{entityNameLower}} == null)
+            {
+                return NotFound();
+            }
+
+            _context.{{EntityName}}s.Remove({{entityNameLower}});
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool {{EntityName}}Exists(int id)
+        {
+            return _context.{{EntityName}}s.Any(e => e.{{PrimaryKeyName}} == id);
+        }
+    }
+}

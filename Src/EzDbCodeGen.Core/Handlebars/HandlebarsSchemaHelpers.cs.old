@@ -1,0 +1,97 @@
+using HandlebarsDotNet;
+using System.Diagnostics;
+
+namespace EzDbCodeGen.Core.Handlebars
+{
+    internal static class HandlebarsSchemaHelpers
+    {
+        internal static void RegisterHelpers(IHandlebars handlebars)
+        {
+            handlebars.RegisterHelper("HasForeignKeys", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('HasForeignKeys')";
+                try
+                {
+                    var entity = (IEntity)context.Value;
+                    var hasForeignKeys = entity.Properties.Values.Any(p => 
+                        p.RelatedTo?.Any(r => r.Type == "ForeignKey") ?? false);
+                    writer.WriteSafeString(hasForeignKeys.ToString().ToLower());
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"{PROC_NAME}: {ex.Message}");
+                    throw;
+                }
+            });
+
+            handlebars.RegisterHelper("GetForeignKeyProperties", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('GetForeignKeyProperties')";
+                try
+                {
+                    var entity = (IEntity)context.Value;
+                    var foreignKeys = entity.Properties.Values
+                        .Where(p => p.RelatedTo?.Any(r => r.Type == "ForeignKey") ?? false)
+                        .Select(p => $"{p.Name}:{p.RelatedTo.First(r => r.Type == "ForeignKey").ToTableName}")
+                        .ToList();
+                    writer.WriteSafeString(string.Join(";", foreignKeys) + ";");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"{PROC_NAME}: {ex.Message}");
+                    throw;
+                }
+            });
+
+            handlebars.RegisterHelper("GetUniqueConstraints", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('GetUniqueConstraints')";
+                try
+                {
+                    var entity = (IEntity)context.Value;
+                    var uniqueProperties = entity.Properties.Values
+                        .Where(p => p.CustomAttributes?.ContainsKey("IsUnique") ?? false)
+                        .Select(p => p.Name)
+                        .ToList();
+                    writer.WriteSafeString(string.Join(";", uniqueProperties) + ";");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"{PROC_NAME}: {ex.Message}");
+                    throw;
+                }
+            });
+
+            handlebars.RegisterHelper("GetIndexes", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('GetIndexes')";
+                try
+                {
+                    var entity = (IEntity)context.Value;
+                    var indexes = entity.Properties.Values
+                        .Where(p => p.CustomAttributes?.ContainsKey("Index") ?? false)
+                        .GroupBy(p => p.CustomAttributes?["Index"])
+                        .Select(g => $"{g.Key}:{string.Join(",", g.Select(p => p.Name).OrderBy(n => n))}")
+                        .OrderBy(s => s)
+                        .ToList();
+                    writer.WriteSafeString(string.Join(";", indexes) + ";");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"{PROC_NAME}: {ex.Message}");
+                    throw;
+                }
+            });
+
+            handlebars.RegisterHelper("IsTemporalTable", (writer, context, parameters) => {
+                var PROC_NAME = "Handlebars.RegisterHelper('IsTemporalTable')";
+                try
+                {
+                    var entity = (IEntity)context.Value;
+                    writer.WriteSafeString(entity.IsTemporalView ? "true" : "false");
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"{PROC_NAME}: {ex.Message}");
+                    throw;
+                }
+            });
+        }
+    }
+}

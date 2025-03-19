@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <OutputPath>..\..\bin\$(Configuration)</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Remove duplicate package references that are already in Directory.Build.props -->
+    <PackageReference Include="EzDbSchema.Core" Version="8.4.1" />
+    <PackageReference Include="EzDbSchema.MsSql" Version="8.4.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="8.0.0" />
+    <!-- McMaster.Extensions.CommandLineUtils is already included in Directory.Build.props -->
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\Src\EzDbCodeGen.Core\EzDbCodeGen.Core.csproj" />
+    <ProjectReference Include="..\..\Src\EzDbCodeGen.Cli\EzDbCodeGen.Cli.csproj" />
+    <ProjectReference Include="..\..\..\ez-db-schema-core\Src\EzDbSchema.Core\EzDbSchema.Core.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <Optimize>True</Optimize>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <Optimize>True</Optimize>
+    <DebugType>portable</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="EFCore\Templates\EFCoreController.hbs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="EFCore\Templates\EFCoreModel.hbs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="CLI\TestTemplates\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>
