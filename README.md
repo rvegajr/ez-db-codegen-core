@@ -176,6 +176,16 @@ Many thanks to the following projects that have helped in this project
 
 ## Recent Changes
 
+### 8.5.0 (March 2025)
+- Major refactoring with improved code organization
+- Enhanced dotnet tool installation and usage experience
+- Consolidated projects into fewer, more focused components
+- Fixed all test issues, particularly in TestableCodeGenerator class
+- Added proper Handlebars helpers for security and debugging
+- Implemented null-safe handling throughout the codebase
+- Added new templates in a dedicated Templates directory
+- Improved documentation for dotnet tool usage
+
 ### 8.4.2 (March 2025)
 - Fixed EF Core code generation tests and implementation
 - Added entity name normalization for consistent casing

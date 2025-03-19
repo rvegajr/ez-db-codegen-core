@@ -2,9 +2,6 @@
 	"folders": [
 		{
 			"path": "../../.."
-		},
-		{
-			"path": "../../../../ez-db-schema-core"
 		}
 	],
 	"settings": {}
