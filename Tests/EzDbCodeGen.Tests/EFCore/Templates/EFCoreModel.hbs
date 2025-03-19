@@ -1,0 +1,40 @@
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
+
+namespace {{Namespace}}.Models
+{
+    [Table("{{TableName}}", Schema = "{{SchemaName}}")]
+    public partial class {{EntityName}}
+    {
+        public {{EntityName}}()
+        {
+            {{#each Relationships}}
+            {{#if IsCollection}}
+            {{NavigationProperty}} = new HashSet<{{RelatedEntity}}>();
+            {{/if}}
+            {{/each}}
+        }
+
+        {{#each Properties}}
+        {{#if IsPrimaryKey}}
+        [Key]
+        {{/if}}
+        {{#if IsNullable}}
+        public {{DataType}}? {{PropertyName}} { get; set; }
+        {{else}}
+        public {{DataType}} {{PropertyName}} { get; set; }
+        {{/if}}
+        {{/each}}
+
+        {{#each Relationships}}
+        {{#if IsCollection}}
+        public virtual ICollection<{{RelatedEntity}}> {{NavigationProperty}} { get; set; }
+        {{else}}
+        public virtual {{RelatedEntity}} {{NavigationProperty}} { get; set; }
+        {{/if}}
+        {{/each}}
+    }
+}
