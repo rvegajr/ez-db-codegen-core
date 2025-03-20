@@ -1,7 +1,7 @@
 <Project>
   <PropertyGroup>
     <Id>EzDbCodeGen</Id>
-    <Version>8.5.4</Version>
+    <Version>8.5.5</Version>
     <Title>EzDbCodeGen - Easy Database Code Generator</Title>
     <Authors>Ricky Vega</Authors>
     <Owners>Ricardo Vega Jr.</Owners>
@@ -12,7 +12,7 @@
     <RepositoryUrl>https://github.com/rvegajr/ez-db-codegen-core.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>Code Generation;Database;SQL Server;Handlebars</PackageTags>
-    <PackageReleaseNotes>Enhanced connection testing with improved error handling and timeout configuration.</PackageReleaseNotes>
+    <PackageReleaseNotes>Fixed configuration file handling in tests and improved error handling for configuration loading.</PackageReleaseNotes>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <TargetFramework>net8.0</TargetFramework>
     <LangVersion>latest</LangVersion>

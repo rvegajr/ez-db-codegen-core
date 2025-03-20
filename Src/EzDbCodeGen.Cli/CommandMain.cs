@@ -20,6 +20,7 @@ using EzDbSchema.MsSql;
 using EzDbCodeGen.Core.Enums;
 using EzDbCodeGen.Core.Services;
 using EzDbCodeGen.Cli.Extensions;
+using EzDbCodeGen.Core.Classes;
 
 namespace EzDbCodeGen.Cli;
 
@@ -49,8 +50,11 @@ public class CommandMain
     [Option("--save-settings", "Save current settings for future use", CommandOptionType.NoValue)]
     public bool SaveSettings { get; set; }
     
-    [Option("--init-config", "Initialize a new configuration file", CommandOptionType.SingleValue)]
+    [Option("--init-config", "Initialize a new configuration file at the specified path", CommandOptionType.SingleValue)]
     public string InitConfigPath { get; set; } = string.Empty;
+
+    [Option("--generate-config", "Generate a sample configuration file in the current working directory", CommandOptionType.NoValue)]
+    public bool GenerateConfig { get; set; }
 
     [Option("--test-connection", Description = "Test the connection string without running the generator")]
     public bool TestConnection { get; set; }
@@ -216,12 +220,20 @@ public class CommandMain
                 return (int)ReturnCode.Ok;
             }
             
+            // Check if we need to generate a sample configuration file in the working directory
+            if (GenerateConfig)
+            {
+                string sampleConfigPath = Path.Combine(Directory.GetCurrentDirectory(), "ezdbcodegen.config.json");
+                return InitializeConfigurationFile(sampleConfigPath);
+            }
+            
             // Check if we need to initialize a new configuration file
             if (!string.IsNullOrEmpty(InitConfigPath))
             {
                 return InitializeConfigurationFile(InitConfigPath);
             }
 
+            // Test connection if requested
             if (TestConnection)
             {
                 if (string.IsNullOrEmpty(ConnectionString))
@@ -299,31 +311,45 @@ public class CommandMain
             // Set some default values
             config.SetConfigValue("Namespace", AppName);
             config.SetConfigValue("OutputPath", OutputPath);
-            config.SetConfigValue("TemplatesPath", Path.Combine(Environment.CurrentDirectory, "Templates"));
-            config.SetConfigValue("Database", new Dictionary<string, object>
+            config.ConnectionString = ConnectionString;
+            
+            // Set up a sample database configuration
+            config.Database = new EzDbCodeGen.Core.Config.Database
             {
-                { "Schema", SchemaName },
-                { "ConnectionString", ConnectionString }
-            });
+                SchemaName = SchemaName,
+                DefaultSchema = "dbo"
+            };
             
-            // Add default template settings
-            config.Templates = new List<string>();
-            config.TemplateFileNameFilter = new List<string>();
+            // Add some sample pluralizer rules
+            config.PluralizerCrossReference = new List<EzDbCodeGen.Core.Config.PluralSingle>
+            {
+                new EzDbCodeGen.Core.Config.PluralSingle { SingleWord = "Person", PluralWord = "People" },
+                new EzDbCodeGen.Core.Config.PluralSingle { SingleWord = "Child", PluralWord = "Children" }
+            };
             
-            // Set source file name
-            config.SourceFileName = configPath;
+            // Add some sample data type mappings
+            config.DataTypeMap = new List<EzDbCodeGen.Core.Config.DataTypeMap>
+            {
+                new EzDbCodeGen.Core.Config.DataTypeMap { DataType = "varchar", TargetDataType = "string" },
+                new EzDbCodeGen.Core.Config.DataTypeMap { DataType = "int", TargetDataType = "int" }
+            };
             
-            // Save the configuration to the specified path
-            config.SaveToFile(configPath);
+            // Serialize the configuration to JSON with indentation
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true
+            };
+            string json = JsonSerializer.Serialize(config, options);
             
-            Console.WriteLine($"Configuration file created at: {configPath}");
-            Console.WriteLine("You can now edit this file to customize your code generation settings.");
+            // Write the configuration file
+            WriteOutputFile(configPath, json);
             
+            Console.WriteLine($"{Prefix}Configuration file created successfully at: {configPath}");
             return (int)ReturnCode.Ok;
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Error creating configuration file: {ex.Message}");
+            Console.Error.WriteLine($"{Prefix}Failed to create configuration file: {ex.Message}");
             return (int)ReturnCode.Error;
         }
     }

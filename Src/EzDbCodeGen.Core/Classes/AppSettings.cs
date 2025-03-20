@@ -107,8 +107,16 @@ namespace EzDbCodeGen.Internal
         /// </summary>
         internal AppSettings()
         {
-            // Use a default config path but don't require it to exist
-            this.ConfigurationFileName = "{ASSEMBLY_PATH}ezdbcodegen.config.json".ResolvePathVars(Environment.GetEnvironmentVariable);
+            // Try current working directory first, then try assembly path
+            string workingDirConfig = Path.Combine(Directory.GetCurrentDirectory(), "ezdbcodegen.config.json");
+            if (File.Exists(workingDirConfig))
+            {
+                this.ConfigurationFileName = workingDirConfig;
+            }
+            else
+            {
+                this.ConfigurationFileName = "{ASSEMBLY_PATH}ezdbcodegen.config.json".ResolvePathVars(Environment.GetEnvironmentVariable);
+            }
         }
 
         /// <summary>

@@ -313,13 +313,13 @@ namespace EzDbCodeGen.Core
                 else
                 {
                     ErrorMessage(string.Format("WARNING!  Configuration file was not found at {0}", ConfigurationFileName));
-
+                    EzDbConfig = new Configuration();
+                    StatusMessage("Created default configuration since none was found");
                 }
 
                 CurrentTask = "Performing Validations";
 				if (originalTemplateDataInputSource == null) throw new Exception(@"There must be an Template Source passed through originalTemplateInputSource!");
 				CurrentTask = "Loading Source Schema";
-				if (EzDbConfig == null) throw new ArgumentNullException(nameof(EzDbConfig), "Configuration must not be null");
 				IDatabase schema = originalTemplateDataInputSource.LoadSchema(EzDbConfig);
                 schema.Name = this.SchemaName;
                 if (!string.IsNullOrEmpty(this.SchemaDumpFileName))
