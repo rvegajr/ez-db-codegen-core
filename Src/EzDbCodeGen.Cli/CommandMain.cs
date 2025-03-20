@@ -18,6 +18,7 @@ using EzDbSchema.Core.Objects;
 using EzDbSchema.Internal;
 using EzDbSchema.MsSql;
 using EzDbCodeGen.Core.Enums;
+using EzDbCodeGen.Core.Services;
 using EzDbCodeGen.Cli.Extensions;
 
 namespace EzDbCodeGen.Cli;
@@ -51,8 +52,46 @@ public class CommandMain
     [Option("--init-config", "Initialize a new configuration file", CommandOptionType.SingleValue)]
     public string InitConfigPath { get; set; } = string.Empty;
 
+    [Option("--test-connection", Description = "Test the connection string without running the generator")]
+    public bool TestConnection { get; set; }
+
+    [Option("--connection-timeout", Description = "Connection timeout in seconds for connection testing")]
+    public int? ConnectionTimeout { get; set; }
+
     private Settings Settings { get; set; } = new();
     private string SampleFilesPath { get; set; } = string.Empty;
+    private readonly IConnectionTester _connectionTester;
+
+    public CommandMain()
+    {
+        _connectionTester = new MsSqlConnectionTester();
+    }
+
+    // For testing purposes
+    internal CommandMain(IConnectionTester connectionTester)
+    {
+        _connectionTester = connectionTester ?? throw new ArgumentNullException(nameof(connectionTester));
+    }
+
+    private async Task<int> ValidateConnectionAsync(string connectionString)
+    {
+        if (string.IsNullOrEmpty(connectionString))
+        {
+            Console.Error.WriteLine($"{Prefix}Connection string is required for connection test");
+            return (int)ReturnCode.Error;
+        }
+
+        var (code, message) = await _connectionTester.TestConnectionAsync(connectionString, ConnectionTimeout);
+        
+        if (code == ReturnCode.Ok)
+        {
+            Console.WriteLine($"{Prefix}{message}");
+            return (int)ReturnCode.Ok;
+        }
+        
+        Console.Error.WriteLine($"{Prefix}{message}");
+        return (int)ReturnCode.Error;
+    }
 
     private void StatusChangeEventHandler(object? sender, StatusChangeEventArgs e)
     {
@@ -163,7 +202,7 @@ public class CommandMain
     }
 
     [System.ComponentModel.EditorBrowsable(System.ComponentModel.EditorBrowsableState.Never)]
-    protected virtual int OnExecute()
+    protected virtual async Task<int> OnExecuteAsync()
     {
         try
         {
@@ -183,25 +222,22 @@ public class CommandMain
                 return InitializeConfigurationFile(InitConfigPath);
             }
 
+            if (TestConnection)
+            {
+                if (string.IsNullOrEmpty(ConnectionString))
+                {
+                    Console.Error.WriteLine($"{Prefix}Connection string is required for connection test");
+                    return (int)ReturnCode.Error;
+                }
+
+                return await ValidateConnectionAsync(ConnectionString);
+            }
+
+            // If connection test passes or isn't requested, continue with normal execution
             var configPath = Path.Combine(Environment.CurrentDirectory, "").PathEnds() + "ezdbcodegen.config.json";
             if (FileExists(configPath))
             {
-                var settingsJsonOptions = new JsonSerializerOptions
-                {
-                    PropertyNameCaseInsensitive = true,
-                    WriteIndented = true
-                };
-                Settings = JsonSerializer.Deserialize<Settings>(ReadFileContent(configPath), settingsJsonOptions) ?? new Settings();
-
-                if (Settings.AutoRun)
-                {
-                    Console.WriteLine("Using saved settings from 'ezdbcodegen.config.json'");
-                    ConnectionString = Settings.ConnectionString ?? "";
-                    TemplateFileNameOrPath = Settings.TemplateFileNameOrPath ?? "";
-                    AppName = Settings.AppName;
-                    SchemaName = Settings.SchemaName;
-                    Verbose = Settings.Verbose;
-                }
+                LoadSettings(configPath);
             }
 
             AppSettings.Instance.VerboseMessages = Verbose;
@@ -289,6 +325,26 @@ public class CommandMain
         {
             Console.WriteLine($"Error creating configuration file: {ex.Message}");
             return (int)ReturnCode.Error;
+        }
+    }
+
+    private void LoadSettings(string configPath)
+    {
+        var settingsJsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = true
+        };
+        Settings = JsonSerializer.Deserialize<Settings>(ReadFileContent(configPath), settingsJsonOptions) ?? new Settings();
+
+        if (Settings.AutoRun)
+        {
+            Console.WriteLine("Using saved settings from 'ezdbcodegen.config.json'");
+            ConnectionString = Settings.ConnectionString ?? "";
+            TemplateFileNameOrPath = Settings.TemplateFileNameOrPath ?? "";
+            AppName = Settings.AppName;
+            SchemaName = Settings.SchemaName;
+            Verbose = Settings.Verbose;
         }
     }
 }

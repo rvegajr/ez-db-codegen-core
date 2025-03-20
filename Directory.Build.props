@@ -1,16 +1,19 @@
 <Project>
   <PropertyGroup>
     <Id>EzDbCodeGen</Id>
-    <Version>8.5.1</Version>
+    <Version>8.5.4</Version>
     <Title>EzDbCodeGen - Easy Database Code Generator</Title>
-    <Authors>Ricardo Vega Jr.</Authors>
+    <Authors>Ricky Vega</Authors>
     <Owners>Ricardo Vega Jr.</Owners>
-    <Description>A powerful .NET library for database-driven code generation. Generate models, repositories, and APIs from your database schema.</Description>
+    <Product>EzDbCodeGen</Product>
+    <Description>Code Generation Tool For Databases</Description>
+    <Copyright>2019-2025</Copyright>
     <PackageProjectUrl>https://github.com/rvegajr/ez-db-codegen-core</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/rvegajr/ez-db-codegen-core</RepositoryUrl>
-    <PackageTags>code-generation;database;orm;api;dotnet;csharp</PackageTags>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/rvegajr/ez-db-codegen-core.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+    <PackageTags>Code Generation;Database;SQL Server;Handlebars</PackageTags>
+    <PackageReleaseNotes>Enhanced connection testing with improved error handling and timeout configuration.</PackageReleaseNotes>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <TargetFramework>net8.0</TargetFramework>
     <LangVersion>latest</LangVersion>
     <ImplicitUsings>enable</ImplicitUsings>

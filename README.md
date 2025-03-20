@@ -61,6 +61,46 @@ dotnet ezdbcg -a MyApplication -s dbo -t ./Templates/Entity.hbs -c "Server=local
 dotnet ezdbcg -a MyApplication -s dbo -c "Server=localhost;Database=MyDB;Trusted_Connection=True;" --save-settings
 ```
 
+### Connection Testing
+
+The `--test-connection` parameter allows you to validate your database connection string before running the code generation process. The tool will:
+
+1. Validate the connection string format
+2. Attempt to connect to the database server
+3. Verify database existence and accessibility
+4. Check user permissions
+
+#### Error Handling
+
+The connection test will provide specific feedback for different failure scenarios:
+
+- Invalid connection string format
+- Database server unreachable
+- Database does not exist
+- Insufficient permissions
+- Network connectivity issues
+
+Each error will return a specific error code and descriptive message to help diagnose and fix the issue.
+
+### CLI Usage
+
+```bash
+# Basic usage
+ezdbcg -t <template-path> -c <connection-string> -o <output-path>
+
+# Test database connection
+ezdbcg --test-connection -c "Server=localhost;Database=MyDb;User Id=sa;Password=****"
+
+# Additional options
+ezdbcg -t <template-path> \
+       -c <connection-string> \
+       -o <output-path> \
+       -a MyApp \              # Application name
+       -s MySchema \           # Schema name
+       -v \                    # Verbose output
+       --save-settings        # Save settings for future use
+```
+
 ### In-Memory Testing
 
 For testing purposes, EzDbCodeGen supports an in-memory mode that doesn't require a real database connection. This is particularly useful for unit tests and CI/CD pipelines.

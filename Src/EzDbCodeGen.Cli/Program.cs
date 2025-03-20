@@ -40,7 +40,7 @@ public class Program
             // Normal command processing
             var cmdApp = new CommandLineApplication<CommandMain>();
             cmdApp.Conventions.UseDefaultConventions();
-            return cmdApp.Execute(args);
+            return cmdApp.ExecuteAsync(args).GetAwaiter().GetResult();
         }
         catch (Exception ex)
         {

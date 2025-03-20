@@ -1190,7 +1190,170 @@ Common issues and solutions:
    - Check format specification
    - Verify helper usage
 
-## EzDbSchema.Core Integration
+## Connection Testing
+
+The CLI tool provides robust connection testing capabilities through an interface-first design:
+
+```bash
+# Test connection with basic settings
+ezdbcg --test-connection -c "Server=localhost;Database=MyDb;User Id=sa;Password=****"
+
+# Test connection with custom timeout (in seconds)
+ezdbcg --test-connection --connection-timeout 10 -c "Server=localhost;Database=MyDb;User Id=sa;Password=****"
+
+# Test connection with SSL/TLS trust for development
+ezdbcg --test-connection -c "Server=localhost;Database=MyDb;User Id=sa;Password=****;TrustServerCertificate=True"
+```
+
+### Error Handling
+
+The connection tester provides detailed feedback for various failure scenarios:
+
+1. **Connection String Format**
+   - Empty or null connection string
+   - Missing required parameters (e.g., database name)
+   - Invalid connection string format
+
+2. **Authentication Issues**
+   - Invalid credentials
+   - Insufficient permissions
+   - Missing or incorrect user/password
+
+3. **Network and Security**
+   - Server unreachable
+   - SSL/TLS certificate validation failures
+   - Connection timeouts
+   - Pre-login handshake errors
+
+4. **Database Access**
+   - Database does not exist
+   - Database not accessible
+   - Server configuration issues
+
+### Interface-Based Design
+
+The connection testing feature follows our interface-first approach:
+
+```csharp
+// Core interface for connection testing
+public interface IConnectionTester
+{
+    Task<(ReturnCode Code, string Message)> TestConnectionAsync(string connectionString, int? timeoutSeconds = null);
+}
+
+// Usage in CLI
+var tester = new MsSqlConnectionTester();
+var (code, message) = await tester.TestConnectionAsync(connectionString, timeoutSeconds: 10);
+```
+
+This design allows for:
+- Easy extension to other database providers
+- Consistent error handling across implementations
+- Clean separation of concerns
+- Testable components
+
+```
+## Connection Testing
+
+The CLI tool provides robust connection testing capabilities through an interface-first design:
+
+```bash
+# Test connection with basic settings
+ezdbcg --test-connection -c "Server=localhost;Database=MyDb;User Id=sa;Password=****"
+
+# Test connection with custom timeout (in seconds)
+ezdbcg --test-connection --connection-timeout 10 -c "Server=localhost;Database=MyDb;User Id=sa;Password=****"
+
+# Test connection with SSL/TLS trust for development
+ezdbcg --test-connection -c "Server=localhost;Database=MyDb;User Id=sa;Password=****;TrustServerCertificate=True"
+```
+
+### Error Handling
+
+The connection tester provides detailed feedback for various failure scenarios:
+
+1. **Connection String Format**
+   - Empty or null connection string
+   - Missing required parameters (e.g., database name)
+   - Invalid connection string format
+
+2. **Authentication Issues**
+   - Invalid credentials
+   - Insufficient permissions
+   - Missing or incorrect user/password
+
+3. **Network and Security**
+   - Server unreachable (with timeout details)
+   - SSL/TLS certificate validation failures
+   - Connection timeouts (customizable)
+   - Pre-login handshake errors
+
+4. **Database Access**
+   - Database does not exist
+   - Database not accessible
+   - Server configuration issues
+
+### Interface-Based Design
+
+The connection testing feature follows our interface-first approach:
+
+```csharp
+// Core interface for connection testing
+public interface IConnectionTester
+{
+    Task<(ReturnCode Code, string Message)> TestConnectionAsync(
+        string connectionString, 
+        int? timeoutSeconds = null
+    );
+}
+
+// Example usage in code
+var tester = new MsSqlConnectionTester();
+var (code, message) = await tester.TestConnectionAsync(
+    connectionString,
+    timeoutSeconds: 10 // Optional timeout
+);
+```
+
+This design allows for:
+- Easy extension to other database providers
+- Consistent error handling across implementations
+- Clean separation of concerns
+- Testable components
+- Customizable timeouts
+
+### Best Practices
+
+1. **Connection String Security**
+   ```csharp
+   // Use connection builder for safe string manipulation
+   var builder = new SqlConnectionStringBuilder(connectionString)
+   {
+       TrustServerCertificate = true,
+       ConnectTimeout = 30
+   };
+   ```
+
+2. **Error Handling**
+   ```csharp
+   try
+   {
+       var result = await tester.TestConnectionAsync(connectionString);
+       // Handle result based on ReturnCode
+   }
+   catch (Exception ex)
+   {
+       // Handle unexpected errors
+   }
+   ```
+
+3. **Timeout Configuration**
+   - Default timeout: 30 seconds
+   - Configurable via CLI: `--connection-timeout`
+   - Overridable in connection string
+   - Respects existing timeout settings
+
+### EzDbSchema.Core Integration
 
 ### Common Integration Issues
 
@@ -1393,4 +1556,204 @@ public static string ResolveTypeName(string sqlType, bool isNullable)
 {{/each}}
 ```
 
-Remember to maintain compatibility with EzDbSchema.Core 8.4.1 and EzDbSchema.MsSql 8.4.0 while leveraging new .NET 8.0 features where appropriate.
+## EzDbCodeGen Core Integration
+
+### Common Integration Issues
+
+1. **Handling Custom Attributes**:
+```csharp
+// Template pattern for accessing custom attributes safely
+{{#each Properties}}
+    {{#if CustomAttributes}}
+    /// <summary>
+    /// {{lookup CustomAttributes "Description"}}
+    /// </summary>
+    {{#if (lookup CustomAttributes "Deprecated")}}
+    [Obsolete("{{lookup CustomAttributes "Deprecated"}}")]
+    {{/if}}
+    public {{convertType DataType "csharp" IsNullable}} {{format "pascalCase" Name}} { get; set; }
+    {{/if}}
+{{/each}}
+```
+
+2. **Property Access Extensions**:
+```handlebars
+{{#layout}}
+  {{#region "extensions"}}
+    public static class PropertyExtensions
+    {
+        public static T GetAttributeValue<T>(this KeyValuePair<string, IProperty> property, string key, T defaultValue = default)
+        {
+            if (property.Value?.CustomAttributes == null) return defaultValue;
+            return property.Value.CustomAttributes.TryGetValue(key, out var value) 
+                ? (T)value 
+                : defaultValue;
+        }
+    }
+  {{/region}}
+{{/layout}}
+```
+
+3. **JSON Serialization Conflicts**:
+```handlebars
+{{#layout}}
+  {{#region "header"}}
+    #if NET8_0_OR_GREATER
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+    #else
+    using Newtonsoft.Json;
+    #endif
+  {{/region}}
+
+  {{#region "class"}}
+    #if NET8_0_OR_GREATER
+    [JsonSourceGenerationOptions(PropertyNamingPolicy = JsonKnownNamingPolicy.CamelCase)]
+    #else
+    [JsonObject(NamingStrategyType = typeof(CamelCaseNamingStrategy))]
+    #endif
+    public class {{format "pascalCase" table.Name}}
+    {
+        {{#each Properties}}
+        #if NET8_0_OR_GREATER
+        [JsonPropertyName("{{format "camelCase" Name}}")]
+        #else
+        [JsonProperty("{{format "camelCase" Name}}")]
+        #endif
+        public {{convertType DataType "csharp" IsNullable}} {{format "pascalCase" Name}} { get; set; }
+        {{/each}}
+    }
+  {{/region}}
+{{/layout}}
+```
+
+### Namespace Resolution
+
+When dealing with namespace conflicts:
+
+```handlebars
+{{#layout}}
+  {{#region "header"}}
+    using CoreExtensions = EzDbSchema.Core.Extensions;
+    using LocalExtensions = YourNamespace.Extensions;
+  {{/region}}
+
+  {{#region "implementation"}}
+    public class {{format "pascalCase" table.Name}}Repository
+    {
+        public void ProcessProperty(IProperty property)
+        {
+            var coreValue = CoreExtensions.PropertyExtensions.GetValue(property);
+            var localValue = LocalExtensions.PropertyExtensions.GetValue(property);
+        }
+    }
+  {{/region}}
+{{/layout}}
+```
+
+### Schema Version Compatibility
+
+Template patterns for handling different schema versions:
+
+```handlebars
+{{#layout}}
+  {{#region "version_check"}}
+    {{#if (gt SchemaVersion "8.4.0")}}
+    // New schema features
+    public required string NewFeature { get; set; }
+    {{else}}
+    // Legacy compatibility
+    public string NewFeature { get; set; } = null!;
+    {{/if}}
+  {{/region}}
+{{/layout}}
+```
+
+### Best Practices for Schema Integration
+
+1. **Version Handling**:
+   ```csharp
+   // Check schema version in template
+   var schemaVersion = schema.Version ?? "8.4.0";
+   var useNewFeatures = Version.Parse(schemaVersion) >= Version.Parse("8.4.1");
+   ```
+
+2. **Property Type Safety**:
+   ```csharp
+   // Safe property type conversion
+   public static string GetSafeTypeName(IProperty property)
+   {
+       if (string.IsNullOrEmpty(property?.DataType))
+           return "object";
+       
+       return property.DataType.ToLowerInvariant() switch
+       {
+           "nvarchar" or "varchar" or "char" => "string",
+           "int" or "bigint" => "int",
+           "bit" => "bool",
+           "datetime" or "datetime2" => "DateTime",
+           _ => "object"
+       };
+   }
+   ```
+
+3. **Relationship Handling**:
+```handlebars
+{{#each Relationships}}
+{{#if (eq Multiplicity "OneToMany")}}
+public virtual ICollection<{{format "pascalCase" ReferencedTable}}> {{format "pascalCase" PropertyName}} { get; set; } 
+    = new List<{{format "pascalCase" ReferencedTable}}>();
+{{else}}
+public virtual {{format "pascalCase" ReferencedTable}} {{format "pascalCase" PropertyName}} { get; set; } = null!;
+{{/if}}
+{{/each}}
+```
+
+### Error Prevention
+
+Common error patterns and their solutions:
+
+1. **Missing References**:
+```csharp
+// Add package reference check in template
+{{#layout}}
+  {{#region "package_check"}}
+    #if !EZDBSCHEMA_CORE_REFERENCE
+    #error Please add a reference to EzDbSchema.Core package
+    #endif
+  {{/region}}
+{{/layout}}
+```
+
+2. **Type Resolution**:
+```csharp
+// Safe type resolution helper
+public static string ResolveTypeName(string sqlType, bool isNullable)
+{
+    var baseType = sqlType.Split('(')[0].ToLowerInvariant();
+    var csharpType = baseType switch
+    {
+        "nvarchar" or "varchar" or "char" => "string",
+        "int" => "int",
+        "bigint" => "long",
+        "bit" => "bool",
+        "decimal" or "money" => "decimal",
+        "datetime" or "datetime2" => "DateTime",
+        "uniqueidentifier" => "Guid",
+        _ => "object"
+    };
+    
+    return csharpType == "string" ? csharpType : isNullable ? $"{csharpType}?" : csharpType;
+}
+```
+
+3. **Null Checking**:
+```handlebars
+{{#each Properties}}
+{{#if (and DataType (not IsNullable))}}
+    [Required]
+    public {{convertType DataType "csharp" false}} {{format "pascalCase" Name}} { get; set; }
+{{else}}
+    public {{convertType DataType "csharp" true}}? {{format "pascalCase" Name}} { get; set; }
+{{/if}}
+{{/each}}
